@@ -54,7 +54,8 @@
     "resend": "^3.5.0",
     "stripe": "^13.3.0",
     "ai": "^3.0.0",
-    "@ai-sdk/openai": "^0.0.1"
+    "@ai-sdk/openai": "^0.0.1",
+    "svelte-sonner": "^0.3.0"
   },
   "overrides": {
     "@supabase/auth-ui-svelte": {
