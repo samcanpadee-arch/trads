@@ -1,25 +1,20 @@
 // src/routes/api/chat/+server.ts
-import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { OPENAI_API_KEY, OPENAI_ORG_ID } from '$env/static/private';
+import { streamText, type UIMessage, convertToModelMessages } from 'ai';
+import { OPENAI_API_KEY } from '$env/static/private';
 
-const openai = createOpenAI({
-  apiKey: OPENAI_API_KEY,
-  // include org if you actually use orgs; otherwise remove this line
-  organization: OPENAI_ORG_ID || undefined
-});
+const openai = createOpenAI({ apiKey: OPENAI_API_KEY });
 
 export async function POST({ request }) {
-  const { messages } = await request.json();
+  const { messages }: { messages: UIMessage[] } = await request.json();
 
-  // ✅ AI SDK v5 + OpenAI v2 style
-  const result = await streamText({
-    model: openai('gpt-4o-mini'),
-    messages
+  const result = streamText({
+    model: openai('gpt-4o-mini'), // or 'gpt-4o' if you want
+    messages: convertToModelMessages(messages)
   });
 
-  // ✅ IMPORTANT: this returns the AI data stream format that the
-  // Vercel Svelte chat UI parses (the template expects this)
-  return result.toAIStreamResponse();
+  // IMPORTANT: return UI message protocol for the Svelte Chat class
+  return result.toUIMessageStreamResponse();
 }
+
 
