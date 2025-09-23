@@ -1,8 +1,8 @@
 <script lang="ts">
   import { useChat } from '@ai-sdk/svelte';
 
-  // Reuse the working API endpoint
-  const { messages, input, handleInput, handleSubmit, isLoading } = useChat({
+  // Uncontrolled input version: no bind:, no handleInput
+  const { messages, handleSubmit, isLoading } = useChat({
     api: '/api/chat'
   });
 </script>
@@ -21,13 +21,14 @@
   </div>
 
   <form on:submit|preventDefault={handleSubmit} class="join w-full">
+    <!-- IMPORTANT: name="input" so useChat can read it -->
     <input
       class="input input-bordered join-item w-full"
       placeholder="Type your message…"
-      bind:value={input}
-      on:input={handleInput}
+      name="input"
+      autocomplete="off"
     />
-    <button class="btn btn-primary join-item" disabled={isLoading || !input.trim()}>
+    <button class="btn btn-primary join-item" disabled={isLoading}>
       Send
     </button>
   </form>
