@@ -16,5 +16,5 @@ export async function POST({ request }) {
   });
 
   // ✅ what useChat expects
-  return result.toDataStreamResponse();
+return result.toDataStreamResponse();
 }
