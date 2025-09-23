@@ -92,6 +92,30 @@
         </a>
       </li>
       <li>
+  <a
+    href="/chat"
+    class={adminSection === "chat" ? "active" : ""}
+    onclick={closeDrawer}
+  >
+    <!-- simple chat icon; we can swap later -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8-1.436 0-2.796-.255-4-.72L3 20l.72-5A7.966 7.966 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
+    </svg>
+    Chat
+  </a>
+</li>
+      <li>
         <a
           href="/account/billing"
           class={adminSection === "billing" ? "active" : ""}
