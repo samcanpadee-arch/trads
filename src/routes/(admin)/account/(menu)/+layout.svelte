@@ -109,59 +109,6 @@
           </svg>
           Billing
         </a>
-        <li>
-          <a href="/account/chat" class="gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <rect x="3" y="4" width="18" height="14" rx="2" ry="2"></rect>
-              <path d="M7 9h10M7 13h6"></path>
-            </svg>
-            Chat
-          </a>
-        </li>
-        <li>
-          <a href="/account/assistant" class="gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <path d="M12 4l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"></path>
-            </svg>
-            AI Assistant
-          </a>
-        </li>
-        <li>
-          <a href="/account/caption" class="gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <rect x="4" y="5" width="16" height="12" rx="2" ry="2"></rect>
-              <circle cx="10" cy="11" r="2"></circle>
-              <path d="M8 15l3-3 3 3"></path>
-            </svg>
-            Caption
-          </a>
-        </li>              <li>
-          <a href="/account/chat" class="gap-2" onclick={closeDrawer}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <rect x="3" y="4" width="18" height="14" rx="2" ry="2"></rect>
-              <path d="M7 9h10M7 13h6"></path>
-            </svg>
-            Chat
-          </a>
-        </li>
-        <li>
-          <a href="/account/assistant" class="gap-2" onclick={closeDrawer}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <path d="M12 4l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"></path>
-            </svg>
-            AI Assistant
-          </a>
-        </li>
-        <li>
-          <a href="/account/caption" class="gap-2" onclick={closeDrawer}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-              <rect x="4" y="5" width="16" height="12" rx="2" ry="2"></rect>
-              <circle cx="10" cy="11" r="2"></circle>
-              <path d="M8 15l3-3 3 3"></path>
-            </svg>
-            Caption
-          </a>
-        </li>
 <li>        <a href="/account/settings"
           class={adminSection === "settings" ? "active" : ""}
           onclick={closeDrawer}
