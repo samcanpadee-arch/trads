@@ -1,32 +1,33 @@
 <script lang="ts">
-  import { createChat } from "@ai-sdk/svelte"
-
-  // Use our working API route
-  const { messages, setInput, handleSubmit, isLoading } = createChat({
-    api: "/api/chat",
-  })
-
-  function onInput(e: Event) {
-    const t = e.target as HTMLInputElement
-    setInput(t.value)
-  }
+  // Minimal Account landing page (no external chat libs)
 </script>
 
-<div class="flex flex-col gap-4 h-full">
-  <div class="flex-1 overflow-auto space-y-2">
-    {#each $messages as m}
-      <div class={m.role === "user" ? "chat chat-end" : "chat chat-start"}>
-        <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
-      </div>
-    {/each}
-  </div>
+<div class="space-y-6">
+  <h1 class="text-2xl font-semibold">Account</h1>
+  <p class="opacity-70 text-sm">
+    Welcome to your account. Use the sidebar to navigate between sections.
+  </p>
 
-  <form class="join w-full" on:submit|preventDefault={handleSubmit}>
-    <input
-      class="input input-bordered join-item w-full"
-      placeholder="Type your message…"
-      on:input={onInput}
-    />
-    <button class="btn join-item" disabled={$isLoading}>Send</button>
-  </form>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <a href="/account/chat" class="card bg-base-100 border hover:shadow">
+      <div class="card-body">
+        <h2 class="card-title">Chat</h2>
+        <p class="text-sm opacity-70">Real-time conversation with AI (coming next).</p>
+      </div>
+    </a>
+
+    <a href="/account/assistant" class="card bg-base-100 border hover:shadow">
+      <div class="card-body">
+        <h2 class="card-title">AI Assistant</h2>
+        <p class="text-sm opacity-70">Agent-style tasks & tools (wiring next).</p>
+      </div>
+    </a>
+
+    <a href="/account/caption" class="card bg-base-100 border hover:shadow">
+      <div class="card-body">
+        <h2 class="card-title">Caption</h2>
+        <p class="text-sm opacity-70">Upload an image and get a caption.</p>
+      </div>
+    </a>
+  </div>
 </div>
