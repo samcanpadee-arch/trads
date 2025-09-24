@@ -118,6 +118,9 @@
       <li>
         <a
           href="/account/billing"
+    <li><a href="/account/chat">Chat</a></li>
+    <li><a href="/account/assistant">AI Assistant</a></li>
+    <li><a href="/account/caption">Caption</a></li>
           class={adminSection === "billing" ? "active" : ""}
           onclick={closeDrawer}
         >
