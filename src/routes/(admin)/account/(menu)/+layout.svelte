@@ -110,6 +110,7 @@
           Billing
         </a>
       </li>      <li>
+        <!-- AI pages -->        <a
         <!-- AI pages -->
         <li>
           <a href="/account/chat" class="gap-2">
@@ -138,7 +139,6 @@
             Caption
           </a>
         </li>
-        <a
           href="/account/settings"
           class={adminSection === "settings" ? "active" : ""}
           onclick={closeDrawer}
