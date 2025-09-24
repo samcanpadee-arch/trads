@@ -1,35 +1,25 @@
 <script lang="ts">
-  import { useChat } from '@ai-sdk/svelte';
-
-  // Uncontrolled input version: no bind:, no handleInput
-  const { messages, handleSubmit, isLoading } = useChat({
-    api: '/api/chat'
-  });
+  let input = '';
+  let messages: {role: 'user' | 'assistant', content: string}[] = [];
 </script>
 
-<div class="max-w-3xl mx-auto p-4 space-y-4">
-  <div class="border rounded p-3 h-[60vh] overflow-y-auto bg-base-200">
-    {#each messages as m}
+<div class="space-y-4">
+  <h1 class="text-2xl font-semibold">Chat</h1>
+
+  <div class="border rounded p-4 h-[60vh] overflow-auto bg-base-100">
+    {#if messages.length === 0}
+      <p class="text-sm opacity-70">Start a conversation… (backend wiring comes next)</p>
+    {/if}
+    {#each messages as m (m.content + m.role)}
       <div class="mb-3">
-        <div class="text-xs opacity-60 mb-1">{m.role === 'user' ? 'You' : 'Assistant'}</div>
-        <div class="whitespace-pre-line">{m.content}</div>
+        <div class="text-xs uppercase opacity-60 mb-1">{m.role}</div>
+        <div class="prose prose-sm bg-base-200 p-3 rounded">{m.content}</div>
       </div>
     {/each}
-    {#if isLoading}
-      <div class="opacity-60 text-sm">…thinking</div>
-    {/if}
   </div>
 
-  <form on:submit|preventDefault={handleSubmit} class="join w-full">
-    <!-- IMPORTANT: name="input" so useChat can read it -->
-    <input
-      class="input input-bordered join-item w-full"
-      placeholder="Type your message…"
-      name="input"
-      autocomplete="off"
-    />
-    <button class="btn btn-primary join-item" disabled={isLoading}>
-      Send
-    </button>
+  <form class="flex gap-2" on:submit|preventDefault={() => { if (!input.trim()) return; messages = [...messages, {role:'user', content: input.trim()}]; input=''; }}>
+    <input class="input input-bordered flex-1" bind:value={input} placeholder="Type a message…" />
+    <button class="btn btn-primary" type="submit" disabled>Send (coming soon)</button>
   </form>
 </div>
