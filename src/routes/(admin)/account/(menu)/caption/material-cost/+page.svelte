@@ -69,12 +69,12 @@
     <h1 class="text-2xl font-bold">Material & Cost Calculator</h1>
     <div class="flex items-center gap-3">
       <div class="form-control">
-        <label class="label"><span class="label-text">Markup % (profit)</span></label>
-        <input type="number" class="input input-bordered input-sm w-28" min="0" step="0.1" bind:value={markupPct} />
+        <label class="label" for="markupPct"><span class="label-text">Markup % (profit)</span></label>
+        <input id="markupPct" type="number" class="input input-bordered input-sm w-28" min="0" step="0.1" bind:value={markupPct} />
       </div>
       <div class="form-control">
-        <label class="label"><span class="label-text">Currency</span></label>
-        <select class="select select-bordered select-sm w-28" bind:value={currency}>
+        <label class="label" for="currencySel"><span class="label-text">Currency</span></label>
+        <select id="currencySel" class="select select-bordered select-sm w-28" bind:value={currency}>
           <option value="AUD">AUD</option>
         </select>
       </div>
@@ -105,17 +105,17 @@
                          bind:value={r.name} />
                 </td>
                 <td class="min-w-[8rem] text-right">
-                  <input type="number" min="0" step="0.01"
+                  <input id="markupPct" type="number" min="0" step="0.01"
                          class="input input-bordered input-sm text-right w-28"
                          bind:value={r.unitCost} />
                 </td>
                 <td class="min-w-[6rem] text-right">
-                  <input type="number" min="0" step="0.01"
+                  <input id="markupPct" type="number" min="0" step="0.01"
                          class="input input-bordered input-sm text-right w-20"
                          bind:value={r.quantity} />
                 </td>
                 <td class="min-w-[6rem] text-right">
-                  <input type="number" min="0" max="100" step="0.1"
+                  <input id="markupPct" type="number" min="0" max="100" step="0.1"
                          class="input input-bordered input-sm text-right w-24"
                          bind:value={r.discountPct} />
                 </td>
