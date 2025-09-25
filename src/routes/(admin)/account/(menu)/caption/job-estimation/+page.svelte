@@ -371,7 +371,7 @@ Keep quantities conservative if inferring.`;
       <h1 class="text-2xl font-semibold">Job Estimation Wizard</h1>
       <p class="text-sm opacity-70">Type a short brief, optionally add materials, and generate a client-ready quote. Advanced is optional.</p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/caption" class="btn btn-ghost">Tools</a>
   </header>
 
   <!-- Quick mode -->

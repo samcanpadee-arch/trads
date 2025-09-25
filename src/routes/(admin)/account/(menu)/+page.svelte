@@ -23,11 +23,6 @@
       </div>
     </a>
 
-    <a href="/account/caption" class="card bg-base-100 border hover:shadow">
-      <div class="card-body">
-        <h2 class="card-title">Caption</h2>
-        <p class="text-sm opacity-70">Upload an image and get a caption.</p>
-      </div>
-    </a>
+    <a href="/account/caption" class="card bg-base-100 border hover:shadow">Tools</a>
   </div>
 </div>

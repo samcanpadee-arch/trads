@@ -103,7 +103,7 @@ Rules:
 <section class="flex flex-col gap-6">
   <header class="flex items-center justify-between">
     <h1 class="text-2xl font-semibold">Proposal Builder</h1>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/caption" class="btn btn-ghost">Tools</a>
   </header>
 
   <!-- Clear disclaimer for users -->
