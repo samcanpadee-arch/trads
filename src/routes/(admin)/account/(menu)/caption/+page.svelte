@@ -98,9 +98,6 @@
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
-
-</div>
-  <!-- Social Media Post Generator card -->
   <a href="/account/caption/social-post" aria-label="Open Social Media Post Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
     <div class="card-body gap-2">
       <div class="flex items-center gap-3">
@@ -110,9 +107,12 @@
         </div>
         <h2 class="card-title text-base">Social Media Post Generator</h2>
       </div>
-      <p class="text-sm opacity-80">Turn a quick brief into a platform-savvy caption with optional variants, hashtags and media ideas.</p>
+      <p class="text-sm opacity-80">Turn a quick brief into a platform-savvy caption with optional variants, hashtags, and media ideas.</p>
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
 
-</section>
+
+</div>
+  <!-- Social Media Post Generator card -->
+  </section>
