@@ -100,4 +100,19 @@
   </a>
 
 </div>
+  <!-- Social Media Post Generator card -->
+  <a href="/account/caption/social-post" aria-label="Open Social Media Post Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+    <div class="card-body gap-2">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <!-- megaphone icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6"><path fill="currentColor" d="M3 11a6 6 0 0 0 6 6h1v3a1 1 0 0 0 1.64.77L14 19h2a5 5 0 0 0 5-5V6a1 1 0 0 0-1.45-.9L14 7H9a6 6 0 0 0-6 6"/></svg>
+        </div>
+        <h2 class="card-title text-base">Social Media Post Generator</h2>
+      </div>
+      <p class="text-sm opacity-80">Turn a quick brief into a platform-savvy caption with optional variants, hashtags and media ideas.</p>
+      <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
+    </div>
+  </a>
+
 </section>
