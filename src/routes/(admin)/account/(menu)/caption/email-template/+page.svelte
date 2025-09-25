@@ -124,10 +124,10 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
 
-  <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={generate}>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <form class="card bg-base-100 border border-base-300 p-6 space-y-6" on:submit={generate}>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Left: key content -->
-      <div class="lg:col-span-2 space-y-3">
+      <div class="lg:col-span-2 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label class="form-control">
             <span class="label-text">Client name</span>
@@ -158,13 +158,13 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
       </div>
 
       <!-- Right: brand + tone -->
-      <div class="space-y-3">
+      <div class="space-y-4">
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
           <input class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightSpark Electrical" />
         </label>
         <label class="form-control">
-          <span class="label-text">Contact (optional)</span>
+          <span class="label-text">Email signature / contact details (optional)</span>
           <input class="input input-bordered" bind:value={contact} placeholder="e.g. 0400 123 456 | hello@bright.au | bright.au/book" />
         </label>
 
