@@ -128,13 +128,7 @@
       </li>
       <li>
         <a href="/account/caption" class="gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="5" width="16" height="12" rx="2" ry="2"></rect>
-            <circle cx="10" cy="11" r="2"></circle>
-            <path d="M8 15l3-3 3 3"></path>
-          </svg>
-          Caption
-        </a>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">Tools</a>
       </li>
 <li>        <a href="/account/settings"
           class={adminSection === "settings" ? "active" : ""}

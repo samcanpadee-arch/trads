@@ -1,13 +1,13 @@
 <!-- /account/caption -->
 <svelte:head>
-  <title>Caption · AI Tools</title>
+  <title>Tools</title>
 </svelte:head>
 
 <section class="flex flex-col gap-6">
   <header class="flex items-start justify-between">
     <div class="flex flex-col gap-1">
-      <h1 class="text-2xl font-semibold">Caption</h1>
-      <p class="text-sm opacity-70">AI tools to speed up quoting, proposals, and client comms.</p>
+      <h1 class="text-2xl font-semibold">Tools</h1>
+      <p class="text-sm opacity-70">Smart, trade-ready assistants to draft proposals, build estimates, and turn job details into polished client docs — fast, accurate, and tailored for Aussie tradies.</p>
     </div>
   </header>
 
