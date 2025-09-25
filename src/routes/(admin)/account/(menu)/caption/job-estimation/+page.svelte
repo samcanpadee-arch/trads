@@ -495,7 +495,7 @@ Copper pipe | 20 | m | 12.5 | 15"></textarea>
     <details class="card bg-base-100 border border-base-300">
       <summary class="card-body cursor-pointer">
         <h2 class="card-title text-base">Advanced (optional) <span class="opacity-60 text-xs">(click to expand)</span></h2>
-        <p class="text-xs opacity-70">Overhead, margin and contingency as whole-number percentages.</p>
+        <p class="text-xs opacity-70">Smart, trade-ready assistants to draft proposals, build estimates, and create client-ready docs.</p>
       </summary>
       <div class="px-4 pb-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

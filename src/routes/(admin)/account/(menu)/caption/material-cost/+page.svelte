@@ -157,10 +157,7 @@
           {generating ? 'Generating…' : 'Generate'}
         </button>
       </div>
-      <p class="text-sm opacity-70">
-        We calculate totals deterministically. If an OpenAI key is configured, we’ll create a clean, client-ready
-        summary including itemised costs, discounts, profit and final price.
-      </p>
+      <p class="text-sm opacity-70">Smart, trade-ready assistants to draft proposals, build estimates, and create client-ready docs.</p>
       {#if summary}
         <div class="prose max-w-none mt-3 whitespace-pre-wrap">{summary}</div>
       {/if}
