@@ -28,7 +28,6 @@
 <div class="max-w-6xl mx-auto p-4 space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">AI Tools</h1>
-    <span class="badge badge-outline">Powered by OpenAI</span>
   </div>
 
   <div class="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
