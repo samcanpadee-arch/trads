@@ -1,4 +1,4 @@
-<header class="flex items-start justify-between mb-4"><a href="/account/caption" class="btn btn-ghost">← Back</a></header>
+<header class="flex justify-end mb-4"><a href="/account/caption" class="btn btn-ghost">← Back</a></header>
 <script lang="ts">
   type Item = { name: string; unitCost: number; quantity: number; discountPct: number };
 
