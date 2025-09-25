@@ -84,5 +84,20 @@
         </div>
       </div>
     </a>
-  </div>
+    <!-- Review Responder card -->
+  <a href="/account/caption/review-responder" aria-label="Open Review Responder" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+    <div class="card-body gap-2">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <!-- chat-bubble-heart icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6"><path fill="currentColor" d="M2 12a8 8 0 0 1 8-8h4a8 8 0 0 1 0 16H9l-3.5 2.5a1 1 0 0 1-1.5-.86V16A8 8 0 0 1 2 12m9-5c-2.2 0-4 1.6-4 3.6c0 2.9 3.7 5.2 4.6 5.7a.9.9 0 0 0 .8 0c.9-.5 4.6-2.8 4.6-5.7C18 8.6 16.2 7 14 7c-1 0-1.9.4-2.5 1.1C12 7.4 11.1 7 10 7Z"/></svg>
+        </div>
+        <h2 class="card-title text-base">Review Responder</h2>
+      </div>
+      <p class="text-sm opacity-80">Paste a review and generate a friendly, on-brand reply in seconds — with tone control and optional emojis.</p>
+      <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
+    </div>
+  </a>
+
+</div>
 </section>
