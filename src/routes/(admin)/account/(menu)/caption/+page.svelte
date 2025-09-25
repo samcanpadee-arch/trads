@@ -11,7 +11,7 @@
     </div>
   </header>
 
-  <!-- Single tools grid with ONLY two tiles -->
+  <!-- Single tools grid -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <!-- Material & Cost Calculator -->
     <a
@@ -55,6 +55,30 @@
           <h2 class="card-title text-base">Proposal Builder</h2>
         </div>
         <p class="text-sm opacity-80">Generate client-ready proposals with scope, timeline, cost breakdowns, and warranties.</p>
+        <div class="mt-2">
+          <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Job Estimation Wizard -->
+    <a
+      class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
+      href="/account/caption/job-estimation"
+      aria-label="Open Job Estimation Wizard"
+      role="group"
+    >
+      <div class="card-body gap-2">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <!-- estimate/list icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6">
+              <path fill="currentColor" d="M3 4h18v2H3zm0 4h12v2H3zm0 4h18v2H3zm0 4h12v2H3z" />
+            </svg>
+          </div>
+          <h2 class="card-title text-base">Job Estimation Wizard</h2>
+        </div>
+        <p class="text-sm opacity-80">Quote-style estimate with materials import, labour breakdown, overhead, margin &amp; GST.</p>
         <div class="mt-2">
           <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
         </div>
