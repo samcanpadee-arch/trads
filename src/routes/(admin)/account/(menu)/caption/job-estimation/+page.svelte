@@ -115,7 +115,7 @@
     md += `**Contact:** ${contact || ""}${contactEmail ? " | " + contactEmail : ""}${contactPhone ? " | " + contactPhone : ""}\n\n`;
     md += `**To:** ${clientName || "_Client_"}  \n`;
     md += `**Site:** ${siteAddress || "_Site Address_"}  \n`;
-    md += `**Project:** ${projectTitle || \`\${trade} Works\`}  \n`;
+    md += `**Project:** ${projectTitle || (trade + " Works")}  \n`;
     md += `**Estimate Valid For:** ${validityDays} days\n\n`;
     md += `> **Disclaimer:** Some values may be *estimated*. Please review and confirm quantities, rates, and assumptions before sending to your client.\n\n`;
 
@@ -159,7 +159,7 @@
       md += `## Overview\n\n${aiSection.trim()}\n\n`;
     }
 
-    // Scope table from labour roles (labels only)
+    // Scope table
     md += `## Scope / Services\n\n`;
     md += `| # | Task Description |\n|---|------------------|\n`;
     const baseTasks: Record<Trade, string[]> = {
@@ -312,7 +312,7 @@
   <header class="flex items-start justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Job Estimation Wizard</h1>
-      <p class="text-sm opacity-70">Quote-style estimate with materials import, labour breakdown, overheads, margin & GST.</p>
+      <p class="text-sm opacity-70">Quote-style estimate with materials import, labour breakdown, overhead, margin & GST.</p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>

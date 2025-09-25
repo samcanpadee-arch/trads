@@ -18,7 +18,7 @@
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
       href="/account/caption/material-cost"
       aria-label="Open Material & Cost Calculator"
-      role="group"
+     
     >
       <div class="card-body gap-2">
         <div class="flex items-center gap-3">
@@ -42,7 +42,7 @@
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
       href="/account/caption/proposal"
       aria-label="Open Proposal Builder"
-      role="group"
+     
     >
       <div class="card-body gap-2">
         <div class="flex items-center gap-3">
@@ -66,7 +66,7 @@
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
       href="/account/caption/job-estimation"
       aria-label="Open Job Estimation Wizard"
-      role="group"
+     
     >
       <div class="card-body gap-2">
         <div class="flex items-center gap-3">
