@@ -60,6 +60,20 @@
         </div>
       </div>
     </a>
+  <a href="/account/caption/email-template" aria-label="Open Email Template Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+    <div class="card-body gap-2">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <!-- envelope icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4l-8 5L4 8V6l8 5l8-5z"/></svg>
+        </div>
+        <h2 class="card-title text-base">Email Template Generator</h2>
+      </div>
+      <p class="text-sm opacity-80">Write client-ready emails fast — progress updates, payment reminders, quote follow-ups, and job summaries.</p>
+      <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
+    </div>
+  </a>
+
 
     <!-- Job Estimation Wizard -->
     <a
