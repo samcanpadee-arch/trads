@@ -125,13 +125,12 @@
       loading = true;
       try {
         const SYSTEM_PROMPT = `You are an AI consultant for Australian tradies. Write a concise, client-friendly overview and scope paragraph in Australian English for a ${trade} job. Avoid prices; focus on what will be done and quality/safety/compliance. Keep it under 120 words.`;
-        const user = [
-          \`Client: \${clientName || "TBA"}\`,
-          \`Site: \${siteAddress || "TBA"}\`,
-          \`Project title: \${projectTitle || \`\${trade} Works\`}\`,
-          \`Trade: \${trade}\`,
-          \`Notes: \${specialInstructions || ""}\`
-        ].join("\\n");
+        const user =
+          "Client: " + (clientName || "TBA") + "\n" +
+          "Site: " + (siteAddress || "TBA") + "\n" +
+          "Project title: " + (projectTitle || (trade + " Works")) + "\n" +
+          "Trade: " + trade + "\n" +
+          "Notes: " + (specialInstructions || "");
 
         const res = await fetch("/api/chat", {
           method: "POST",
@@ -288,7 +287,7 @@
       "Engineered stone benchtop | 1 | ea | 3000 | 10",
       "Ceramic subway tile | 50 | m2 | 60 | 15",
       "LED downlights | 6 | ea | 80 | 20"
-    ].join("\\n");
+    ].join("\n");
     parseMaterials();
 
     labour = [
