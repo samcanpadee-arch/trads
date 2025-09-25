@@ -82,8 +82,8 @@
     <h1 class="text-2xl font-bold">Chat</h1>
 
     <div class="ml-auto flex items-center gap-2">
-      <label class="text-sm opacity-80" for="modelSelect">Model</label>
-      <select id="modelSelect" class="select select-bordered select-sm" bind:value={model} disabled={streaming}>
+      <label class="text-sm opacity-80">Model</label>
+      <select class="select select-bordered select-sm" bind:value={model} disabled={streaming}>
         {#each models as m}
           <option value={m.id}>{m.label}</option>
         {/each}
@@ -122,7 +122,7 @@
       placeholder="Ask me anything… (Ctrl/Cmd+Enter to send)"
       bind:value={input}
       on:keydown={onKeydown}
-    ></textarea>
+    />
     <button class="btn btn-primary" disabled={streaming || !input.trim()}>
       {#if streaming}
         <span class="loading loading-spinner"></span>
