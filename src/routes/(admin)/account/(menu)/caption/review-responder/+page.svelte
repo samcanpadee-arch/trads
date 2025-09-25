@@ -1,20 +1,15 @@
-<!-- /account/caption/review-responder -->
+<!-- /account/caption/review-responder (v1.1) -->
 <script lang="ts">
+  // Minimal inputs
   let businessName = "";
   let customerName = "";
   let platform = "Google";
   let reviewText = "";
 
-  // Optional context to personalise
-  let trade = "General";
-  let jobType = "";
-  let suburb = "";
-  let teamMember = "";
-
   // Tone & options
-  type Tone = "Casual" | "Warm" | "Professional-lite" | "Apologetic" | "Upbeat" | "Aussie mateship";
+  type Tone = "Casual" | "Warm" | "Professional-lite" | "Apologetic" | "Upbeat" | "Aussie friendly";
   let tone: Tone = "Casual";
-  let keepItShort = true;   // keep under ~700 characters if true
+  let keepItShort = true;   // keep under ~700 chars if true
   let includeEmojis = false;
 
   let output = "";
@@ -24,10 +19,6 @@
     businessName = "BrightBuild Renovations";
     customerName = "Jordan";
     platform = "Google";
-    trade = "Electrical";
-    jobType = "Switchboard upgrade + safety check";
-    suburb = "Brunswick VIC";
-    teamMember = "Ava";
     reviewText = `Had the BrightBuild team upgrade our old switchboard and add a few new power points. They were on time and cleaned up after themselves. Price was fair and they explained everything. Would recommend.`;
     tone = "Warm";
     keepItShort = true;
@@ -40,26 +31,22 @@
     loading = true;
 
     const SYSTEM =
-`You are a Customer Review Response Generator for Australian tradies. Write in Australian English with a natural, personable vibe. 
+`You are a Customer Review Response Generator for Australian tradies. Write in Australian English with a personable, natural vibe.
 Always:
 - Start with genuine thanks (use the customer's name if provided).
 - Address specifics from the pasted review (paraphrase, don't quote).
-- Match the requested tone: Casual | Warm | Professional-lite | Apologetic | Upbeat | Aussie mateship.
+- Match the requested tone: Casual | Warm | Professional-lite | Apologetic | Upbeat | Aussie friendly.
 - Reinforce quality, reliability and customer care without sounding stiff.
 - Invite them to reach out again, casually.
-- If review mentions issues, acknowledge and explain what was/will be done.
-- Keep it respectful, never defensive. 
+- If issues are mentioned, acknowledge and say what was/will be done.
 - If keepItShort=true, keep it under ~700 characters.
+Infer context (e.g., trade, location, team actions) from the review itself. Don't invent names not provided.
 Return ONLY the response text (no preface, no quotes).`;
 
     const details = [
       businessName ? `Business: ${businessName}` : "",
       customerName ? `Customer: ${customerName}` : "",
       platform ? `Platform: ${platform}` : "",
-      trade ? `Trade: ${trade}` : "",
-      jobType ? `Job type: ${jobType}` : "",
-      suburb ? `Suburb: ${suburb}` : "",
-      teamMember ? `Team member: ${teamMember}` : "",
       `Tone: ${tone}`,
       `KeepItShort: ${keepItShort ? "Yes" : "No"}`,
       `IncludeEmojis: ${includeEmojis ? "Yes" : "No"}`
@@ -75,7 +62,7 @@ ${reviewText.trim()}
 Context:
 ${details}
 
-If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). Sign off with the business name if provided.`;
+If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business is provided, you may sign off with it.`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -101,7 +88,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). Sign off wit
       } else {
         output = "Could not generate a response. Please try again.";
       }
-    } catch (err) {
+    } catch {
       output = "Network error while generating. Please try again.";
     } finally {
       loading = false;
@@ -121,13 +108,17 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). Sign off wit
 <svelte:head><title>Review Responder</title></svelte:head>
 
 <section class="flex flex-col gap-6">
-  <header class="flex justify-end">
+  <header class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Review Responder</h1>
+      <p class="text-sm opacity-70">Paste a customer review and generate a friendly, on-brand reply with tone control — perfect for Google, Facebook, Instagram, ProductReview, Hipages and more.</p>
+    </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
 
   <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={generate}>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <!-- Left column: review -->
+      <!-- Left: review -->
       <div class="lg:col-span-2 space-y-3">
         <label class="form-control">
           <span class="label-text">Paste the customer review</span>
@@ -135,31 +126,24 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). Sign off wit
         </label>
       </div>
 
-      <!-- Right column: controls -->
+      <!-- Right: minimal controls -->
       <div class="space-y-3">
         <label class="form-control">
           <span class="label-text">Business name</span>
           <input class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightBuild Renovations" />
         </label>
         <div class="grid grid-cols-2 gap-3">
-          <label class="form-control"><span class="label-text">Customer</span><input class="input input-bordered" bind:value={customerName} placeholder="Optional" /></label>
+          <label class="form-control"><span class="label-text">Customer (optional)</span><input class="input input-bordered" bind:value={customerName} placeholder="e.g. Jordan" /></label>
           <label class="form-control"><span class="label-text">Platform</span>
             <select class="select select-bordered" bind:value={platform} aria-label="Platform">
-              <option>Google</option><option>Facebook</option><option>Instagram</option><option>ProductReview</option><option>Other</option>
+              <option>Google</option>
+              <option>Facebook</option>
+              <option>Instagram</option>
+              <option>ProductReview</option>
+              <option>Hipages</option>
+              <option>Other</option>
             </select>
           </label>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="form-control"><span class="label-text">Trade</span>
-            <select class="select select-bordered" bind:value={trade} aria-label="Trade">
-              <option>General</option><option>HVAC</option><option>Electrical</option><option>Plumbing</option><option>Carpentry</option><option>Tiling</option><option>Construction</option><option>Landscaping</option><option>Painting</option><option>Other</option>
-            </select>
-          </label>
-          <label class="form-control"><span class="label-text">Suburb</span><input class="input input-bordered" bind:value={suburb} placeholder="Optional" /></label>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="form-control"><span class="label-text">Job type</span><input class="input input-bordered" bind:value={jobType} placeholder="Optional" /></label>
-          <label class="form-control"><span class="label-text">Team member</span><input class="input input-bordered" bind:value={teamMember} placeholder="Optional" /></label>
         </div>
 
         <label class="form-control">
@@ -170,7 +154,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). Sign off wit
             <option>Professional-lite</option>
             <option>Apologetic</option>
             <option>Upbeat</option>
-            <option>Aussie mateship</option>
+            <option>Aussie friendly</option>
           </select>
         </label>
 
