@@ -103,7 +103,7 @@ Rules:
 <section class="flex flex-col gap-6">
   <header class="flex items-center justify-between">
     <h1 class="text-2xl font-semibold">Proposal Builder</h1>
-    <a href="/account/caption" class="btn btn-ghost">Tools</a>
+    <a href="/account/caption" aria-label="Tools" class="card bg-base-100 border hover:shadow"><div class="card-body"><h2 class="card-title">Tools</h2><p class="text-sm opacity-70">Smart, trade-ready assistants to draft proposals, build estimates, and create client-ready docs.</p></div></a>
   </header>
 
   <!-- Clear disclaimer for users -->
