@@ -127,7 +127,11 @@
         </a>
       </li>
       <li>
-        <a href="/account/caption" aria-label="Tools" class="card bg-base-100 border hover:shadow"><div class="card-body"><h2 class="card-title">Tools</h2><p class="text-sm opacity-70">Smart, trade-ready assistants to draft proposals, build estimates, and create client-ready docs.</p></div></a>
+        <a href="/account/caption" aria-label="Tools" class="flex items-center gap-2">
+  <!-- toolbox icon -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5"><path fill="currentColor" d="M7 3h10a2 2 0 0 1 2 2v2h1a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1h1V5a2 2 0 0 1 2-2zm10 4V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v2h10z"/></svg>
+  <span>Tools</span>
+</a>
       </li>
 <li>        <a href="/account/settings"
           class={adminSection === "settings" ? "active" : ""}
