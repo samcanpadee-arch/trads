@@ -1,0 +1,208 @@
+/* Prototype RAG: on-the-fly files (no persistence). */
+import type { RequestHandler } from "@sveltejs/kit";
+import { env as privateEnv } from "$env/dynamic/private";
+
+// Minimal chunking helpers
+const CHUNK_SIZE = 1200; // chars
+const CHUNK_OVERLAP = 150;
+
+function chunkTextWithPages(text: string, pageFrom: number, pageTo: number) {
+  const chunks: Array<{ text: string; page_from: number; page_to: number }> = [];
+  let i = 0;
+  while (i < text.length) {
+    const end = Math.min(text.length, i + CHUNK_SIZE);
+    const part = text.slice(i, end);
+    chunks.push({ text: part, page_from: pageFrom, page_to: pageTo });
+    i += CHUNK_SIZE - CHUNK_OVERLAP;
+  }
+  if (chunks.length === 0 && text.trim()) {
+    chunks.push({ text, page_from: pageFrom, page_to: pageTo });
+  }
+  return chunks;
+}
+
+function cosineSim(a: number[], b: number[]): number {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-8);
+}
+
+async function embedTexts(texts: string[], apiKey: string) {
+  const resp = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "text-embedding-3-small",
+      input: texts
+    })
+  });
+  if (!resp.ok) {
+    const msg = await resp.text();
+    throw new Error(`Embeddings failed: ${msg}`);
+  }
+  const json = await resp.json();
+  return json.data.map((d: any) => d.embedding as number[]);
+}
+
+async function fileToText(file: File): Promise<{ name: string; parts: Array<{ text: string; page_from: number; page_to: number }> }> {
+  const name = file.name || "upload";
+  const type = file.type || "";
+  const buf = new Uint8Array(await file.arrayBuffer());
+
+  if (type === "application/pdf" || name.toLowerCase().endsWith(".pdf")) {
+    // @ts-expect-error types not shipped with pdf-parse
+    const pdfParse = (await import("pdf-parse")).default;
+    const data = await pdfParse(Buffer.from(buf), { pagerender: undefined });
+    // pdf-parse returns a single text, but also has .numpages; for citations per page, we do a quick split by \f/page separators when possible
+    // Fallback: treat entire doc as page 1..N unknown; we’ll approximate with page 1.
+    // Better: re-run pagerender to capture per-page text. For prototype, split on form-feed if present:
+    const raw = data.text || "";
+    const byPage = raw.split(/\f+/g); // sometimes page delimiters appear as \f
+    let parts: Array<{ text: string; page_from: number; page_to: number }> = [];
+    if (byPage.length > 1) {
+      byPage.forEach((p, idx) => {
+        const pageNum = idx + 1;
+        parts = parts.concat(chunkTextWithPages(p, pageNum, pageNum));
+      });
+    } else {
+      parts = parts.concat(chunkTextWithPages(raw, 1, 1));
+    }
+    return { name, parts };
+  }
+
+  if (type.startsWith("text/") || name.toLowerCase().endsWith(".txt") || name.toLowerCase().endsWith(".md")) {
+    const text = new TextDecoder().decode(buf);
+    return { name, parts: chunkTextWithPages(text, 1, 1) };
+  }
+
+  // Unsupported -> treat as empty
+  return { name, parts: [] };
+}
+
+export const POST: RequestHandler = async ({ request }) => {
+  if (!privateEnv.OPENAI_API_KEY) {
+    return new Response("Missing OPENAI_API_KEY", { status: 500 });
+  }
+
+  const ctype = request.headers.get("content-type") || "";
+  if (!ctype.includes("multipart/form-data")) {
+    return new Response("Send multipart/form-data with fields: message, (optional) trade, brand, model, and files[]", { status: 400 });
+  }
+
+  const form = await request.formData();
+  const message = (form.get("message") as string || "").trim();
+  const trade = (form.get("trade") as string || "").trim();
+  const brand = (form.get("brand") as string || "").trim();
+  const model = (form.get("model") as string || "").trim();
+
+  if (!message) {
+    return new Response("Please include a question in 'message'.", { status: 400 });
+  }
+
+  // Gather files
+  const files = form.getAll("files").filter((f) => f instanceof File) as File[];
+  if (files.length === 0) {
+    // Still allow answering without files (no citations), but encourage uploading
+  }
+
+  // Parse files -> parts
+  const allParts: Array<{ doc: string; text: string; page_from: number; page_to: number }> = [];
+  for (const f of files) {
+    const { name, parts } = await fileToText(f);
+    for (const p of parts) {
+      if (p.text && p.text.trim()) {
+        allParts.push({ doc: name, text: p.text, page_from: p.page_from, page_to: p.page_to });
+      }
+    }
+  }
+
+  // Limit parts for prototype (to control cost)
+  const MAX_PARTS = 120;
+  const partsLimited = allParts.slice(0, MAX_PARTS);
+
+  // Embed parts + query
+  let partEmbeddings: number[][] = [];
+  let queryEmbedding: number[] = [];
+  try {
+    if (partsLimited.length > 0) {
+      partEmbeddings = await embedTexts(partsLimited.map((p) => p.text), privateEnv.OPENAI_API_KEY);
+    }
+    queryEmbedding = (await embedTexts([message + (trade ? `\nTrade: ${trade}` : "") + (brand ? `\nBrand: ${brand}` : "") + (model ? `\nModel: ${model}` : "")], privateEnv.OPENAI_API_KEY))[0];
+  } catch (e: any) {
+    return new Response(`Embedding error: ${e?.message || e}`, { status: 500 });
+  }
+
+  // Rank
+  const scored = partsLimited.map((p, i) => ({
+    idx: i,
+    score: partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : -1,
+    ...p
+  }));
+  scored.sort((a, b) => b.score - a.score);
+
+  const TOP_K = 8;
+  const top = scored.slice(0, TOP_K).filter((s) => s.score > 0);
+
+  // Build grounded context with citations
+  const contextBlocks = top.map((s, i) => {
+    const id = i + 1;
+    const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
+    const head = `[${id}] ${s.doc} ${page}`;
+    return `${head}\n${s.text}`;
+  });
+
+  const SYSTEM = `You are an Australian trade assistant.
+Use ONLY the provided context for technical facts. If a key fact is not present, say you are unsure and suggest how to verify safely.
+Always include safety/compliance notes if relevant. Prefer step-by-step, practical guidance.
+Cite sources inline like [1], [2] that match the numbered context blocks.`;
+
+  const USER = [
+    trade ? `Trade: ${trade}` : null,
+    brand ? `Brand: ${brand}` : null,
+    model ? `Model: ${model}` : null,
+    `Question: ${message}`
+  ].filter(Boolean).join("\n");
+
+  const FINAL_PROMPT = [
+    top.length > 0 ? "Context blocks (numbered for citation):" : "No context uploaded for this question.",
+    contextBlocks.join("\n\n"),
+    "Task: Answer the question strictly based on the context. If context is insufficient, say so. Add a short checklist. Include citations like [1]."
+  ].filter(Boolean).join("\n\n");
+
+  // Call Responses API (non-stream for prototype)
+  try {
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${privateEnv.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: USER },
+          { role: "user", content: FINAL_PROMPT }
+        ]
+      })
+    });
+
+    if (!resp.ok) {
+      const msg = await resp.text();
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
+    }
+
+    const data = await resp.json();
+    const text = data?.output_text || data?.content?.[0]?.text || "No answer.";
+    return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  } catch (e: any) {
+    return new Response(`Responses API error: ${e?.message || e}`, { status: 500 });
+  }
+};
