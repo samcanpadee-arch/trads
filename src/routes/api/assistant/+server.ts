@@ -1,5 +1,5 @@
 /* Prototype RAG: on-the-fly files (no persistence).
-   Force Node runtime for pdf-parse. Harden Responses API request/response handling.
+   Node runtime (pdf-parse), robust Responses handling, text.format=plain
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
@@ -8,8 +8,7 @@ export const config = {
   runtime: 'nodejs20.x'
 };
 
-// Minimal chunking helpers
-const CHUNK_SIZE = 1200; // chars
+const CHUNK_SIZE = 1200;
 const CHUNK_OVERLAP = 150;
 
 function chunkTextWithPages(text: string, pageFrom: number, pageTo: number) {
@@ -60,12 +59,10 @@ async function embedTexts(texts: string[], apiKey: string) {
 }
 
 async function parsePdf(buffer: Uint8Array) {
-  // Lazy import in Node runtime
   // @ts-expect-error types not bundled
   const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(Buffer.from(buffer), { pagerender: undefined });
   const raw = data.text || "";
-  // Split by common page separators; fallback to single page
   const byPage = raw.split(/\f+|\n\s*Page\s+\d+\s*(?:of\s+\d+)?\s*\n/gi).filter(Boolean);
   return byPage.length ? byPage : [raw];
 }
@@ -97,14 +94,11 @@ async function fileToText(file: File): Promise<{ name: string; parts: Array<{ te
   return { name, parts: [] };
 }
 
-// Extract text from various Responses API shapes
 function extractTextFromResponses(resJson: any): string {
   if (!resJson) return "";
-  // Helper sometimes present
   if (typeof resJson.output_text === "string" && resJson.output_text.trim()) {
     return resJson.output_text;
   }
-  // Newer "output" array with content parts
   if (Array.isArray(resJson.output)) {
     const texts: string[] = [];
     for (const item of resJson.output) {
@@ -116,7 +110,6 @@ function extractTextFromResponses(resJson: any): string {
     }
     if (texts.length) return texts.join("\n");
   }
-  // Legacy-like "content"
   if (Array.isArray(resJson.content)) {
     const first = resJson.content.find((c: any) => typeof c?.text === "string");
     if (first?.text) return first.text;
@@ -144,7 +137,6 @@ export const POST: RequestHandler = async ({ request }) => {
       return new Response("Please include a question in 'message'.", { status: 400 });
     }
 
-    // Parse uploads
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     const allParts: Array<{ doc: string; text: string; page_from: number; page_to: number }> = [];
     for (const f of files) {
@@ -156,11 +148,9 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
-    // Limit for prototype
     const MAX_PARTS = 120;
     const partsLimited = allParts.slice(0, MAX_PARTS);
 
-    // Embed
     let partEmbeddings: number[][] = [];
     let queryEmbedding: number[] = [];
     try {
@@ -175,18 +165,15 @@ export const POST: RequestHandler = async ({ request }) => {
       return new Response(`Embedding error: ${e?.message || e}`, { status: 500 });
     }
 
-    // Rank (keep even low scores to avoid empty context)
     const scored = partsLimited.map((p, i) => ({
       idx: i,
       score: partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : -1,
       ...p
-    }));
-    scored.sort((a, b) => b.score - a.score);
+    })).sort((a, b) => b.score - a.score);
 
     const TOP_K = 8;
     const top = scored.slice(0, TOP_K);
 
-    // Build grounded prompt
     const contextBlocks = top.map((s, i) => {
       const id = i + 1;
       const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
@@ -214,7 +201,6 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
       "Task: Answer strictly based on the context above. If context is insufficient, say so. Provide a brief checklist. Include citations like [1]."
     ].filter(Boolean).join("\n\n");
 
-    // ✅ Send a single combined string in "input", which the Responses API reliably understands
     const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${FINAL_PROMPT}`;
 
     let text = "";
@@ -229,7 +215,8 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
           model: "gpt-4.1-mini",
           input: combined,
           temperature: 0.2,
-          response_format: { type: "text" }
+          // Responses API: use text.format (not response_format)
+          text: { format: "plain" }
         })
       });
 
@@ -242,7 +229,6 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
       const data = await resp.json();
       text = extractTextFromResponses(data);
       if (!text || !text.trim()) {
-        // Fallback: stringify minimal info to help debug
         text = "Sorry — I couldn't produce an answer from the uploaded context. Try adding a manual or specifying brand/model.";
       }
     } catch (e: any) {
