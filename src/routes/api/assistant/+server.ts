@@ -1,10 +1,9 @@
 /* Prototype RAG: on-the-fly files (no persistence).
-   Force Node runtime for pdf-parse. Add clearer errors.
+   Force Node runtime for pdf-parse. Harden Responses API request/response handling.
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 
-// ✅ Force Node runtime on Vercel (Edge can't use pdf-parse/Buffer etc.)
 export const config = {
   runtime: 'nodejs20.x'
 };
@@ -36,7 +35,8 @@ function cosineSim(a: number[], b: number[]): number {
     na += a[i] * a[i];
     nb += b[i] * b[i];
   }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-8);
+  const denom = Math.sqrt(na) * Math.sqrt(nb);
+  return denom ? dot / denom : 0;
 }
 
 async function embedTexts(texts: string[], apiKey: string) {
@@ -65,11 +65,9 @@ async function parsePdf(buffer: Uint8Array) {
   const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(Buffer.from(buffer), { pagerender: undefined });
   const raw = data.text || "";
-  // Try split by form-feed page separators
-  const byPage = raw.split(/\f+/g);
-  if (byPage.length > 1) return byPage;
-  // Fallback: no clear page breaks; treat as one "page"
-  return [raw];
+  // Split by common page separators; fallback to single page
+  const byPage = raw.split(/\f+|\n\s*Page\s+\d+\s*(?:of\s+\d+)?\s*\n/gi).filter(Boolean);
+  return byPage.length ? byPage : [raw];
 }
 
 async function fileToText(file: File): Promise<{ name: string; parts: Array<{ text: string; page_from: number; page_to: number }> }> {
@@ -94,10 +92,36 @@ async function fileToText(file: File): Promise<{ name: string; parts: Array<{ te
     }
   } catch (e: any) {
     console.error("fileToText error for", name, e);
-    // Fall through to unsupported
   }
 
   return { name, parts: [] };
+}
+
+// Extract text from various Responses API shapes
+function extractTextFromResponses(resJson: any): string {
+  if (!resJson) return "";
+  // Helper sometimes present
+  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) {
+    return resJson.output_text;
+  }
+  // Newer "output" array with content parts
+  if (Array.isArray(resJson.output)) {
+    const texts: string[] = [];
+    for (const item of resJson.output) {
+      const parts = item?.content || item?.contents || [];
+      for (const p of parts) {
+        if (p?.type === "output_text" && typeof p?.text === "string") texts.push(p.text);
+        if (p?.type === "text" && typeof p?.text === "string") texts.push(p.text);
+      }
+    }
+    if (texts.length) return texts.join("\n");
+  }
+  // Legacy-like "content"
+  if (Array.isArray(resJson.content)) {
+    const first = resJson.content.find((c: any) => typeof c?.text === "string");
+    if (first?.text) return first.text;
+  }
+  return "";
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -116,15 +140,12 @@ export const POST: RequestHandler = async ({ request }) => {
     const trade = (form.get("trade") as string || "").trim();
     const brand = (form.get("brand") as string || "").trim();
     const model = (form.get("model") as string || "").trim();
-
     if (!message) {
       return new Response("Please include a question in 'message'.", { status: 400 });
     }
 
-    // Gather files
+    // Parse uploads
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
-
-    // Parse files -> parts
     const allParts: Array<{ doc: string; text: string; page_from: number; page_to: number }> = [];
     for (const f of files) {
       const { name, parts } = await fileToText(f);
@@ -135,11 +156,11 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
-    // Limit parts for prototype (to control cost)
+    // Limit for prototype
     const MAX_PARTS = 120;
     const partsLimited = allParts.slice(0, MAX_PARTS);
 
-    // Embed parts + query
+    // Embed
     let partEmbeddings: number[][] = [];
     let queryEmbedding: number[] = [];
     try {
@@ -154,7 +175,7 @@ export const POST: RequestHandler = async ({ request }) => {
       return new Response(`Embedding error: ${e?.message || e}`, { status: 500 });
     }
 
-    // Rank
+    // Rank (keep even low scores to avoid empty context)
     const scored = partsLimited.map((p, i) => ({
       idx: i,
       score: partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : -1,
@@ -163,9 +184,9 @@ export const POST: RequestHandler = async ({ request }) => {
     scored.sort((a, b) => b.score - a.score);
 
     const TOP_K = 8;
-    const top = scored.slice(0, TOP_K).filter((s) => s.score > 0);
+    const top = scored.slice(0, TOP_K);
 
-    // Build grounded context with citations
+    // Build grounded prompt
     const contextBlocks = top.map((s, i) => {
       const id = i + 1;
       const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
@@ -175,7 +196,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const SYSTEM = `You are an Australian trade assistant.
 Use ONLY the provided context for technical facts. If a key fact is not present, say you are unsure and suggest how to verify safely.
-Always include safety/compliance notes if relevant. Prefer step-by-step, practical guidance.
+Always include safety/compliance if relevant. Prefer step-by-step, practical guidance.
 Cite sources inline like [1], [2] that match the numbered context blocks.`;
 
     const USER = [
@@ -186,12 +207,17 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
     ].filter(Boolean).join("\n");
 
     const FINAL_PROMPT = [
-      top.length > 0 ? "Context blocks (numbered for citation):" : "No context uploaded for this question.",
+      top.length > 0
+        ? "Context blocks (numbered for citation):"
+        : "No context uploaded for this question. If you cannot verify, say you're unsure and suggest next steps.",
       contextBlocks.join("\n\n"),
-      "Task: Answer the question strictly based on the context. If context is insufficient, say so. Add a short checklist. Include citations like [1]."
+      "Task: Answer strictly based on the context above. If context is insufficient, say so. Provide a brief checklist. Include citations like [1]."
     ].filter(Boolean).join("\n\n");
 
-    // Call Responses API (non-stream for prototype)
+    // ✅ Send a single combined string in "input", which the Responses API reliably understands
+    const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${FINAL_PROMPT}`;
+
+    let text = "";
     try {
       const resp = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
@@ -201,11 +227,9 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
         },
         body: JSON.stringify({
           model: "gpt-4.1-mini",
-          input: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: USER },
-            { role: "user", content: FINAL_PROMPT }
-          ]
+          input: combined,
+          temperature: 0.2,
+          response_format: { type: "text" }
         })
       });
 
@@ -216,12 +240,17 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
       }
 
       const data = await resp.json();
-      const text = data?.output_text || data?.content?.[0]?.text || "No answer.";
-      return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      text = extractTextFromResponses(data);
+      if (!text || !text.trim()) {
+        // Fallback: stringify minimal info to help debug
+        text = "Sorry — I couldn't produce an answer from the uploaded context. Try adding a manual or specifying brand/model.";
+      }
     } catch (e: any) {
       console.error("Responses API error", e);
       return new Response(`Responses API error: ${e?.message || e}`, { status: 500 });
     }
+
+    return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
     return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
