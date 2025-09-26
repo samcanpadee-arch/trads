@@ -1,5 +1,5 @@
 /* Prototype RAG: on-the-fly files (no persistence).
-   Node runtime (pdf-parse) + robust Responses handling. Plain text output (no text.format).
+   Node runtime (pdf-parse), robust Responses handling, text.format=plain
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
@@ -214,8 +214,9 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
         body: JSON.stringify({
           model: "gpt-4.1-mini",
           input: combined,
-          temperature: 0.2
-          // No text.format: defaults to plain text output
+          temperature: 0.2,
+          // Responses API: use text.format (not response_format)
+          text: { format: { type: "plain" } }
         })
       });
 
