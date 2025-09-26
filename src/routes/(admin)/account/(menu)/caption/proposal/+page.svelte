@@ -1,177 +1,107 @@
-<!-- /account/caption/proposal -->
 <script lang="ts">
-  // Minimal inputs, AI fills the rest
-  let model = "gpt-4o-mini";
+  import { onMount } from "svelte";
+  import { createSignal } from "@sveltejs/kit/signals";
+  import { streamChat } from "$lib/client";
+
+  let trade = "General Construction";
+  let projectBrief = "";
   let clientName = "";
-  let siteAddress = "";
-  let projectType: "Kitchen" | "Bathroom" | "Air-con" | "Other" = "Kitchen";
-  let sizeEstimate = "";      // e.g. “20 m2” or “$15,000”
-  let briefOverride = "";     // optional notes
-  let startDate = "";
-
-  let loading = false;
+  let businessName = "";
   let output = "";
+  let isLoading = false;
 
-  // IMPORTANT: System prompt tells AI to include a visible disclaimer and to clearly mark any estimates as needing review.
-  const SYSTEM_PROMPT = `You are an AI consultant for Aussie trades. From the inputs given, generate a polished, client-ready proposal in Markdown.
-
-Include sections:
-- Short Cover Letter
-- Project Overview
-- Scope of Work (use standard items for the project type; adapt to notes)
-- Materials & Inclusions (typical for the project type)
-- Exclusions & Disclaimers (standard)
-- Timeline & Milestones
-- Pricing & Cost Breakdown (subtotal, GST, total) — if amounts are inferred, clearly label them as *estimated* and **flag that the client must review**.
-- Warranty & Guarantees
-- Payment Terms
-- Acceptance & Next Steps
-
-Rules:
-- Write in Australian English.
-- Fill gaps with professional assumptions suited to Australian tradies.
-- If any price/quantity/timing is inferred, clearly mark it as "estimated — review/confirm before sending".
-- Include a bold top-of-document disclaimer: "This proposal contains AI-generated estimates. Review and confirm all details before sending to the client."
-- Use tables where helpful for costs. If GST applies, show Subtotal / GST / Total (AUD).
-- Output only the final proposal in Markdown.`;
-
-  function buildUserPrompt() {
-    return [
-      `Client: ${clientName || "_TBA_"}`,
-      `Site address: ${siteAddress || "_TBA_"}`,
-      `Project type: ${projectType}`,
-      `Estimate (size or budget): ${sizeEstimate || "_TBA_"}`,
-      `Notes: ${briefOverride || ""}`,
-      `Desired start date: ${startDate || "_TBA_"}`
-    ].join("\n");
-  }
-
-  async function onSubmit(e: Event) {
-    e.preventDefault();
+  async function generateProposal() {
+    isLoading = true;
     output = "";
-    loading = true;
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserPrompt() }
-          ]
-        })
-      });
-      if (!res.ok || !res.body) {
-        output = `Failed to generate. HTTP ${res.status}`;
-        loading = false;
-        return;
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        output += decoder.decode(chunk.value);
-      }
-    } catch (err) {
-      output = "Error generating proposal. " + (err as Error).message;
-    } finally {
-      loading = false;
+
+    const SYSTEM_PROMPT = `You are a Proposal Generator AI for Australian tradies. 
+You produce long-form persuasive proposals for clients. 
+Your structure must include:
+1. Executive Summary (2–3 paragraphs, plain English, persuasive).
+2. Detailed Scope Narrative (3–5 paragraphs, explain tasks as a journey).
+3. Why Choose Us (2–3 paragraphs, experience, guarantees, professionalism).
+4. Timeline & Milestones (1–2 paragraphs, narrate job phases).
+5. Pricing Summary (short paragraph: details in estimate doc).
+6. Closing & Call to Action (1 paragraph, warm + professional).
+7. Signature Block (Business name, contact, ABN if provided).
+Tone: approachable, professional, Aussie-friendly. No bullets — use full sentences and paragraphs.`;
+
+    const user = `Trade: ${trade}
+Business: ${businessName || "TBA"}
+Client: ${clientName || "TBA"}
+Project Brief: ${projectBrief}`;
+
+    const stream = streamChat([
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: user }
+    ]);
+
+    for await (const delta of stream) {
+      output += delta;
     }
-  }
-
-  async function copyOut() {
-    try { await navigator.clipboard.writeText(output || ""); } catch {}
-  }
-
-  function downloadOut() {
-    const blob = new Blob([output || ""], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "proposal.md";
-    a.click();
-    URL.revokeObjectURL(url);
+    isLoading = false;
   }
 </script>
 
-<svelte:head>
-  <title>Proposal Builder</title>
-</svelte:head>
+<div class="space-y-6">
+  <a href="/account/caption" class="btn btn-ghost">← Back</a>
 
-<section class="flex flex-col gap-6">
-  <header class="flex items-center justify-between">
-    <h1 class="text-2xl font-semibold">Proposal Builder</h1>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
-  </header>
+  <h1 class="text-2xl font-bold">Proposal Generator</h1>
+  <p class="text-sm opacity-70">
+    Create persuasive, long-form client proposals with minimal input. AI expands your brief into a polished document ready for editing or sending.
+  </p>
 
-  <!-- Clear disclaimer for users -->
-  <div class="alert alert-warning">
-    <span><strong>Heads up:</strong> This tool may infer pricing and timelines. All inferred items are marked as <em>estimated</em> — please review and confirm before sending to your client.</span>
+  <div class="card bg-base-100 border">
+    <div class="card-body space-y-4">
+      <div>
+        <label class="block text-sm font-medium">Trade</label>
+        <select bind:value={trade} class="select select-bordered w-full">
+          <option>General Construction</option>
+          <option>Electrical</option>
+          <option>Plumbing</option>
+          <option>HVAC</option>
+          <option>Carpentry</option>
+          <option>Tiling</option>
+          <option>Painting</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Project Brief</label>
+        <textarea
+          bind:value={projectBrief}
+          rows="3"
+          class="textarea textarea-bordered w-full"
+          placeholder="e.g. Upgrade switchboard for compliance and safety"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Client Name (optional)</label>
+          <input type="text" bind:value={clientName} class="input input-bordered w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Business Name (optional)</label>
+          <input type="text" bind:value={businessName} class="input input-bordered w-full" />
+        </div>
+      </div>
+
+      <button
+        class="btn btn-primary w-full"
+        on:click={generateProposal}
+        disabled={isLoading}
+      >
+        {isLoading ? "Generating..." : "Generate Proposal"}
+      </button>
+    </div>
   </div>
 
-  <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={onSubmit}>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <label class="form-control">
-        <span class="label-text">Client Name</span>
-        <input class="input input-bordered" bind:value={clientName} placeholder="e.g. Jordan Moore" />
-      </label>
-
-      <label class="form-control">
-        <span class="label-text">Site Address</span>
-        <input class="input input-bordered" bind:value={siteAddress} placeholder="e.g. 12 Rivergum Rd, VIC" />
-      </label>
-
-      <label class="form-control">
-        <span class="label-text">Project Type</span>
-        <select class="select select-bordered" bind:value={projectType} aria-label="Project Type">
-          <option>Kitchen</option>
-          <option>Bathroom</option>
-          <option>Air-con</option>
-          <option>Other</option>
-        </select>
-      </label>
-
-      <label class="form-control">
-        <span class="label-text">Estimate (size or budget)</span>
-        <input class="input input-bordered" bind:value={sizeEstimate} placeholder="e.g. 20 m2 or $15,000" />
-      </label>
-
-      <label class="form-control md:col-span-2">
-        <span class="label-text">Extra Notes (optional)</span>
-        <textarea class="textarea textarea-bordered h-20" bind:value={briefOverride} placeholder="Any special requirements or constraints"></textarea>
-      </label>
-
-      <label class="form-control">
-        <span class="label-text">Desired Start Date</span>
-        <input type="date" class="input input-bordered" bind:value={startDate} />
-      </label>
-    </div>
-
-    <div class="flex items-center gap-4">
-      <button class="btn btn-primary" type="submit" disabled={loading}>
-        {#if loading}<span class="loading loading-dots"></span>{/if}
-        <span>Generate</span>
-      </button>
-      <button class="btn btn-outline" type="button" on:click={() => { clientName=""; siteAddress=""; sizeEstimate=""; briefOverride=""; startDate=""; }}>
-        Clear
-      </button>
-    </div>
-  </form>
-
   {#if output}
-    <div class="card bg-base-100 border border-base-300">
-      <div class="card-body">
-        <div class="flex items-center justify-between">
-          <h2 class="card-title text-base">Output</h2>
-          <div class="flex gap-2">
-            <button class="btn btn-sm" type="button" on:click={copyOut} disabled={!output}>Copy</button>
-            <button class="btn btn-sm btn-outline" type="button" on:click={downloadOut} disabled={!output}>Download .md</button>
-          </div>
-        </div>
-        <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+    <div class="card bg-base-100 border">
+      <div class="card-body prose max-w-none">
+        {@html output}
       </div>
     </div>
   {/if}
-</section>
+</div>

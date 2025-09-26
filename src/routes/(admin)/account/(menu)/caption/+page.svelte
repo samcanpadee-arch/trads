@@ -41,7 +41,7 @@
     <a
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
       href="/account/caption/proposal"
-      aria-label="Open Proposal Builder"
+      aria-label="Open Sales Proposal Generator"
      
     >
       <div class="card-body gap-2">
@@ -52,9 +52,9 @@
               <path fill="currentColor" d="M6 2h7l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m7 1.5V8h4.5zM7 11h10v2H7zm0 4h10v2H7z" />
             </svg>
           </div>
-          <h2 class="card-title text-base">Proposal Builder</h2>
+          <h2 class="card-title text-base">Sales Proposal Generator</h2>
         </div>
-        <p class="text-sm opacity-80">Generate client-ready proposals with scope, timeline, cost breakdowns, and warranties.</p>
+        <p class="text-sm opacity-80">Create persuasive, long-form proposals that sell your value — pair with Job Estimation for pricing.</p>
         <div class="mt-2">
           <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
         </div>
