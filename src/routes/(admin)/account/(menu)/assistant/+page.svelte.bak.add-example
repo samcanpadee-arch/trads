@@ -31,19 +31,6 @@
     { value: "specs", label: "Parts & specifications" }
   ];
 
-  function fillExample() {
-    trade = "HVAC";
-    brandModel = "Panasonic CS-Z50VKR";
-    focus = "diagnosis";
-    message =
-`Indoor unit shows blinking POWER/TIMER LEDs intermittently during heating.
-Explain what each indicator means on VKR series and when blinking is normal (e.g., defrost, preheat).
-Include how to retrieve error codes from the remote and any safety notes.`;
-    files = []; // leave file uploads empty; user can still attach a manual if they want
-    answer = "";
-    errorMsg = "";
-  }
-
   async function onAsk(e: Event) {
     e.preventDefault();
     answer = "";
@@ -184,15 +171,6 @@ Include how to retrieve error codes from the remote and any safety notes.`;
     </div>
 
     <div class="flex items-center justify-end gap-2">
-      <button
-        type="button"
-        class="btn btn-outline btn-sm"
-        on:click={fillExample}
-        disabled={loading}
-        aria-label="Fill with an example question"
-      >
-        Example
-      </button>
       <button type="submit" class="btn btn-primary" disabled={loading || !message.trim()}>
         {#if loading}
           <span class="loading loading-spinner loading-sm"></span>
