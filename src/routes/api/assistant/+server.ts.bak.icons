@@ -1,17 +1,17 @@
-/* Assistant Hybrid RAG with keyword-prefilter + forced citations
+/* Assistant Hybrid RAG:
    - Answers from general knowledge.
-   - Prefilters pages by keywords, then ranks by keywords+embeddings.
-   - If any context used, cite and append Sources (doc + page).
-   - Adds a small DEBUG header so you can see if PDF was used.
+   - If uploaded docs are relevant, enrich answer and cite them [1], [2].
+   - Node runtime (pdf-parse) + robust Responses handling.
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 
-export const config = { runtime: 'nodejs20.x' };
+export const config = {
+  runtime: 'nodejs20.x'
+};
 
-// Smaller chunks, larger overlap to capture UI labels
-const CHUNK_SIZE = 450;
-const CHUNK_OVERLAP = 120;
+const CHUNK_SIZE = 500;
+const CHUNK_OVERLAP = 80;
 
 function chunkTextWithPages(text: string, pageFrom: number, pageTo: number) {
   const chunks: Array<{ text: string; page_from: number; page_to: number }> = [];
@@ -47,27 +47,33 @@ async function embedTexts(texts: string[], apiKey: string) {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ model: "text-embedding-3-small", input: texts })
+    body: JSON.stringify({
+      model: "text-embedding-3-small",
+      input: texts
+    })
   });
-  if (!resp.ok) throw new Error(`Embeddings failed: ${await resp.text()}`);
+  if (!resp.ok) {
+    const msg = await resp.text();
+    throw new Error(`Embeddings failed: ${msg}`);
+  }
   const json = await resp.json();
   return json.data.map((d: any) => d.embedding as number[]);
 }
 
 async function parsePdf(buffer: Uint8Array) {
-  // @ts-expect-error no types
+  // @ts-expect-error types not bundled
   const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(Buffer.from(buffer), { pagerender: undefined });
   const raw = data.text || "";
-  // split by formfeed or "Page N" markers
   const byPage = raw.split(/\f+|\n\s*Page\s+\d+\s*(?:of\s+\d+)?\s*\n/gi).filter(Boolean);
   return byPage.length ? byPage : [raw];
 }
 
-async function fileToText(file: File): Promise<{ name: string; pages: string[], parts: Array<{ text: string; page_from: number; page_to: number }> }> {
+async function fileToText(file: File): Promise<{ name: string; parts: Array<{ text: string; page_from: number; page_to: number }> }> {
   const name = file.name || "upload";
   const type = file.type || "";
   const buf = new Uint8Array(await file.arrayBuffer());
+
   try {
     if (type === "application/pdf" || name.toLowerCase().endsWith(".pdf")) {
       const pages = await parsePdf(buf);
@@ -76,30 +82,25 @@ async function fileToText(file: File): Promise<{ name: string; pages: string[], 
         const pageNum = idx + 1;
         parts = parts.concat(chunkTextWithPages(p, pageNum, pageNum));
       });
-      return { name, pages, parts };
+      return { name, parts };
     }
+
     if (type.startsWith("text/") || name.toLowerCase().endsWith(".txt") || name.toLowerCase().endsWith(".md")) {
       const text = new TextDecoder().decode(buf);
-      return { name, pages: [text], parts: chunkTextWithPages(text, 1, 1) };
+      return { name, parts: chunkTextWithPages(text, 1, 1) };
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error("fileToText error for", name, e);
   }
-  return { name, pages: [], parts: [] };
-}
 
-function keywordHits(s: string, terms: string[]) {
-  const lc = s.toLowerCase();
-  let hits = 0;
-  for (const t of terms) {
-    if (t && lc.includes(t)) hits += 1;
-  }
-  return hits;
+  return { name, parts: [] };
 }
 
 function extractTextFromResponses(resJson: any): string {
   if (!resJson) return "";
-  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
+  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) {
+    return resJson.output_text;
+  }
   if (Array.isArray(resJson.output)) {
     const texts: string[] = [];
     for (const item of resJson.output) {
@@ -134,14 +135,14 @@ export const POST: RequestHandler = async ({ request }) => {
     const trade = (form.get("trade") as string || "").trim();
     const brand = (form.get("brand") as string || "").trim();
     const model = (form.get("model") as string || "").trim();
-    if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
+    if (!message) {
+      return new Response("Please include a question in 'message'.", { status: 400 });
+    }
 
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     const allParts: Array<{ doc: string; text: string; page_from: number; page_to: number }> = [];
-    const pageMeta: Array<{ doc: string; page: number; text: string }> = [];
     for (const f of files) {
-      const { name, pages, parts } = await fileToText(f);
-      pages.forEach((p, idx) => pageMeta.push({ doc: name, page: idx + 1, text: p }));
+      const { name, parts } = await fileToText(f);
       for (const p of parts) {
         if (p.text && p.text.trim()) {
           allParts.push({ doc: name, text: p.text, page_from: p.page_from, page_to: p.page_to });
@@ -149,40 +150,15 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
-    // Keyword expansion to catch icon/indicator terminology in manuals
-    const termsBase = (message + " " + trade + " " + brand + " " + model).toLowerCase();
-    const expand = [
-      "icon","icons","indicator","indicators","lamp","operation lamp","display","symbol","symbols",
-      "timer","nanoe","air purify","filter","clean filter","defrost","mode","heat","cool","dry"
-    ];
-    const queryTerms = Array.from(new Set(
-      termsBase.split(/[^a-z0-9]+/).filter(Boolean).concat(expand)
-    ));
+    const MAX_PARTS = 120;
+    const partsLimited = allParts.slice(0, MAX_PARTS);
 
-    // Page-level prefilter: count keyword hits per page
-    const pageScores = pageMeta.map(p => ({
-      doc: p.doc,
-      page: p.page,
-      hits: keywordHits(p.text, queryTerms)
-    })).sort((a,b) => b.hits - a.hits);
-
-    // Keep pages with any hits, or top 6 pages otherwise
-    const preselectedPages = pageScores.filter(p => p.hits > 0).slice(0, 12);
-    const fallbackPages = pageScores.slice(0, 6);
-    const selectedPageSet = new Set((preselectedPages.length ? preselectedPages : fallbackPages).map(p => `${p.doc}#${p.page}`));
-
-    // Filter parts to only those from selected pages (to bias towards relevant parts)
-    const filteredParts = allParts.filter(p => selectedPageSet.has(`${p.doc}#${p.page_from}`));
-
-    // If filtering removed everything, fall back to all parts
-    const candidateParts = filteredParts.length ? filteredParts : allParts;
-
-    // Embeddings ranking
+    // Embeddings (keep even low-score matches to allow enrichment)
     let partEmbeddings: number[][] = [];
     let queryEmbedding: number[] = [];
     try {
-      if (candidateParts.length > 0) {
-        partEmbeddings = await embedTexts(candidateParts.map((p) => p.text), privateEnv.OPENAI_API_KEY);
+      if (partsLimited.length > 0) {
+        partEmbeddings = await embedTexts(partsLimited.map((p) => p.text), privateEnv.OPENAI_API_KEY);
       }
       const q = [message, trade && `Trade: ${trade}`, brand && `Brand: ${brand}`, model && `Model: ${model}`]
         .filter(Boolean).join("\n");
@@ -192,21 +168,16 @@ export const POST: RequestHandler = async ({ request }) => {
       return new Response(`Embedding error: ${e?.message || e}`, { status: 500 });
     }
 
-    // Blend similarity and keyword hits (normalized 0..1)
-    const maxHits = Math.max(1, ...candidateParts.map(p =>
-      keywordHits(p.text, queryTerms)
-    ));
-    const blended = candidateParts.map((p, i) => {
-      const sim = partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : 0;
-      const hits = keywordHits(p.text, queryTerms);
-      const kh = hits / maxHits; // 0..1
-      const score = 0.7 * sim + 0.3 * kh;
-      return { ...p, sim, hits, score };
-    }).sort((a,b) => b.score - a.score);
+    const scored = partsLimited.map((p, i) => ({
+      idx: i,
+      score: partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : -1,
+      ...p
+    })).sort((a, b) => b.score - a.score);
 
-    const TOP_K = 16;
-    const top = blended.slice(0, TOP_K);
+    const TOP_K = 15;
+    const top = scored.slice(0, TOP_K);
 
+    // Build optional context (only if we have uploads)
     const contextBlocks = top.map((s, i) => {
       const id = i + 1;
       const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
@@ -214,10 +185,8 @@ export const POST: RequestHandler = async ({ request }) => {
       return `${head}\n${s.text}`;
     });
 
-    const SYSTEM = `You are a technical assistant for experienced Australian tradies.
-Provide precise, technical answers. Use general knowledge freely.
-If uploaded manuals are relevant, incorporate their specifics and cite with inline page refs like [p12].
-If no relevant manual context was retrieved, state that plainly before answering.`;
+    // 🔁 HYBRID: Use general knowledge, enrich with context when helpful, cite when used
+    const SYSTEM = `You are a technical assistant for experienced Australian tradies. Provide detailed, technical answers. Use uploaded manuals FIRST whenever context is relevant, and always cite page numbers (e.g., [p12]) from the provided context. If no relevant context is found, clearly state: "No relevant manual context retrieved — using general knowledge." Do not oversimplify; answers should assume professional trade knowledge.`;
 
     const USER = [
       trade ? `Trade: ${trade}` : null,
@@ -227,24 +196,13 @@ If no relevant manual context was retrieved, state that plainly before answering
     ].filter(Boolean).join("\n");
 
     const FINAL_PROMPT = [
-      contextBlocks.length
-        ? "Context blocks (numbered with page refs):\n" + contextBlocks.join("\n\n")
-        : null,
-      `Task:
-- Answer in technical detail (assume trade knowledge).
-- If context blocks exist and are relevant, you MUST cite at least one block with page refs inline like [p12], [p7–8].
-- End with a short checklist.
-- After the answer, if you used any context, append a "Sources" list mapping each citation [n] to "Document — page(s)".`
-    ].filter(Boolean).join("\n\n");
+    contextBlocks.length > 0
+      ? "Context blocks (numbered, with page refs):\n" + contextBlocks.join("\n\n")
+      : null,
+    "Task: Answer in technical detail, in AU English. If context blocks exist, you MUST use them, cite pages inline (e.g., [p12]), and finish with a short checklist. If none exist, explicitly say so before answering with general knowledge."
+  ].filter(Boolean).join("\n\n");
 
-    const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${
-      contextBlocks.length ? "Using your uploaded docs where relevant.\n\n" : "No relevant manual context retrieved — using general knowledge.\n\n"
-    }${FINAL_PROMPT}`;
-
-    // Small DEBUG header so you can see if RAG engaged
-    const debugHeader =
-      `DEBUG — files:${files.length}, pages:${pageMeta.length}, preselected:${preselectedPages.length}, ` +
-      `candidates:${candidateParts.length}, chosen:${top.length}`;
+    const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${FINAL_PROMPT}`;
 
     let text = "";
     try {
@@ -256,8 +214,9 @@ If no relevant manual context was retrieved, state that plainly before answering
         },
         body: JSON.stringify({
           model: "gpt-4.1-mini",
-          input: `${debugHeader}\n\n${combined}`,
+          input: combined,
           temperature: 0.2
+          // No text.format -> plain text
         })
       });
 
