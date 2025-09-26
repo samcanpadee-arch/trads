@@ -1,8 +1,7 @@
-<!-- /account/caption/proposal — Long-form Sales Proposal Generator (minimal, a11y-correct) -->
+<!-- /account/caption/proposal — Long-form Sales Proposal Generator (no client name input) -->
 <script lang="ts">
   let trade = "Electrical";
   let projectBrief = "";
-  let clientName = "";
   let businessName = "";
 
   let output = "";
@@ -10,7 +9,6 @@
 
   function useExample() {
     trade = "Electrical";
-    clientName = "Jordan";
     businessName = "BrightSpark Electrical";
     projectBrief = "Switchboard upgrade to modern RCBOs with clear labelling and compliance documentation.";
   }
@@ -35,7 +33,6 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
     const userPayload = {
       trade,
       projectBrief,
-      clientName: clientName || null,
       businessName: businessName || null
     };
 
@@ -116,13 +113,8 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
         </label>
       </div>
 
-      <!-- Right: optional meta -->
+      <!-- Right: business meta -->
       <div class="space-y-4">
-        <label class="form-control" for="client">
-          <span class="label-text">Client name (optional)</span>
-          <input id="client" class="input input-bordered" bind:value={clientName} placeholder="e.g. Jordan" />
-        </label>
-
         <label class="form-control" for="biz">
           <span class="label-text">Business name (optional)</span>
           <input id="biz" class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightSpark Electrical" />
