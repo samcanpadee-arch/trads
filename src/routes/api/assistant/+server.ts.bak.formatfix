@@ -216,7 +216,7 @@ Cite sources inline like [1], [2] that match the numbered context blocks.`;
           input: combined,
           temperature: 0.2,
           // Responses API: use text.format (not response_format)
-          text: { format: { type: "plain" } }
+          text: { format: "plain" }
         })
       });
 
