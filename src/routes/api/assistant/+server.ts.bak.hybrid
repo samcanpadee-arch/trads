@@ -1,7 +1,5 @@
-/* Assistant Hybrid RAG:
-   - Answers from general knowledge.
-   - If uploaded docs are relevant, enrich answer and cite them [1], [2].
-   - Node runtime (pdf-parse) + robust Responses handling.
+/* Prototype RAG: on-the-fly files (no persistence).
+   Node runtime (pdf-parse) + robust Responses handling. Plain text output (no text.format).
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
@@ -153,7 +151,6 @@ export const POST: RequestHandler = async ({ request }) => {
     const MAX_PARTS = 120;
     const partsLimited = allParts.slice(0, MAX_PARTS);
 
-    // Embeddings (keep even low-score matches to allow enrichment)
     let partEmbeddings: number[][] = [];
     let queryEmbedding: number[] = [];
     try {
@@ -177,7 +174,6 @@ export const POST: RequestHandler = async ({ request }) => {
     const TOP_K = 8;
     const top = scored.slice(0, TOP_K);
 
-    // Build optional context (only if we have uploads)
     const contextBlocks = top.map((s, i) => {
       const id = i + 1;
       const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
@@ -185,10 +181,10 @@ export const POST: RequestHandler = async ({ request }) => {
       return `${head}\n${s.text}`;
     });
 
-    // 🔁 HYBRID: Use general knowledge, enrich with context when helpful, cite when used
-    const SYSTEM = `You are a technical assistant for Australian tradies.
-Answer helpfully using your general knowledge. If the user has uploaded manuals or notes, enrich your answer with specific, verifiable details from those documents and cite them inline like [1], [2] matching the numbered "Context blocks" if provided.
-If a detail is uncertain, say so briefly and suggest how to verify safely. Always prioritise practical, step-by-step guidance and safety/compliance notes where relevant.`;
+    const SYSTEM = `You are an Australian trade assistant.
+Use ONLY the provided context for technical facts. If a key fact is not present, say you are unsure and suggest how to verify safely.
+Always include safety/compliance if relevant. Prefer step-by-step, practical guidance.
+Cite sources inline like [1], [2] that match the numbered context blocks.`;
 
     const USER = [
       trade ? `Trade: ${trade}` : null,
@@ -198,10 +194,11 @@ If a detail is uncertain, say so briefly and suggest how to verify safely. Alway
     ].filter(Boolean).join("\n");
 
     const FINAL_PROMPT = [
-      contextBlocks.length > 0
-        ? "Context blocks (numbered for citation):\n" + contextBlocks.join("\n\n")
-        : null,
-      "Task: Provide a thorough, practical answer. Use general knowledge freely. If the context blocks contain relevant specifics, incorporate them and cite like [1], [2]. Include a short checklist at the end."
+      top.length > 0
+        ? "Context blocks (numbered for citation):"
+        : "No context uploaded for this question. If you cannot verify, say you're unsure and suggest next steps.",
+      contextBlocks.join("\n\n"),
+      "Task: Answer strictly based on the context above. If context is insufficient, say so. Provide a brief checklist. Include citations like [1]."
     ].filter(Boolean).join("\n\n");
 
     const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${FINAL_PROMPT}`;
@@ -218,7 +215,7 @@ If a detail is uncertain, say so briefly and suggest how to verify safely. Alway
           model: "gpt-4.1-mini",
           input: combined,
           temperature: 0.2
-          // No text.format -> plain text
+          // No text.format: defaults to plain text output
         })
       });
 
@@ -231,7 +228,7 @@ If a detail is uncertain, say so briefly and suggest how to verify safely. Alway
       const data = await resp.json();
       text = extractTextFromResponses(data);
       if (!text || !text.trim()) {
-        text = "Sorry — I couldn't produce an answer. Try rephrasing the question, or attach a relevant manual/section for more specific guidance.";
+        text = "Sorry — I couldn't produce an answer from the uploaded context. Try adding a manual or specifying brand/model.";
       }
     } catch (e: any) {
       console.error("Responses API error", e);
