@@ -1,8 +1,7 @@
-/* Assistant: Hybrid + Responses File Search via input_file
+/* Assistant: Hybrid + OpenAI File Search (OCR-capable)
    - Uploads incoming files to OpenAI (purpose=assistants)
-   - Uses Responses API with tools:[{ type:"file_search" }]
-   - Passes files as content items of type "input_file"
-   - Hybrid: general knowledge + enrich with docs; cite when used
+   - Uses Responses API with tools:[{type:"file_search"}] + attachments
+   - Hybrid: answers generally AND enriches with docs; cites when used
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
@@ -29,7 +28,9 @@ async function uploadToOpenAI(file: File, apiKey: string): Promise<{ id: string;
 
 function extractTextFromResponses(resJson: any): string {
   if (!resJson) return "";
+  // Preferred: output_text
   if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
+  // Fallbacks for other shapes
   if (Array.isArray(resJson.output)) {
     const texts: string[] = [];
     for (const item of resJson.output) {
@@ -56,7 +57,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, and files[]", { status: 400 });
+      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, files[]", { status: 400 });
     }
 
     const form = await request.formData();
@@ -66,7 +67,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const model = (form.get("model") as string || "").trim();
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    // Upload files to OpenAI (OCR handled by OpenAI’s indexer)
+    // Upload files to OpenAI (OCR handled by OpenAI’s file search)
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     const uploaded: Array<{ id: string; filename: string }> = [];
     for (const f of files) {
@@ -79,28 +80,32 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
+    // System prompt: hybrid usage + citations when docs used
     const SYSTEM = `You are a technical assistant for experienced Australian tradies.
 Provide precise, technical answers. Use your general knowledge freely.
-If attached manuals are relevant, incorporate their specifics and include concise inline citations like [Panasonic VKR Manual, p.12].
+If uploaded manuals are relevant, incorporate their specifics and include concise inline citations like [Panasonic VKR Manual, p.12].
 If no relevant manual context exists, do not refuse—answer with your knowledge. Always include safety/compliance notes when relevant.`;
 
-    // Build message content with the question as input_text and each file as input_file
-    const userContent: any[] = [
-      { type: "input_text", text: [
-        trade ? `Trade: ${trade}` : null,
-        brand ? `Brand: ${brand}` : null,
-        model ? `Model: ${model}` : null,
-        `Question: ${message}`
-      ].filter(Boolean).join("\n") },
-      { type: "input_text", text:
-        "Task:\n- Answer in technical detail (assume trade knowledge).\n- If any attached file content is used, include at least one inline citation like [<short doc name>, p.X].\n- End with a short checklist." }
-    ];
+    const USER = [
+      trade ? `Trade: ${trade}` : null,
+      brand ? `Brand: ${brand}` : null,
+      model ? `Model: ${model}` : null,
+      `Question: ${message}`
+    ].filter(Boolean).join("\n");
 
-    for (const u of uploaded) {
-      userContent.push({ type: "input_file", file_id: u.id });
-    }
+    // Build attachments for file_search
+    const attachments = uploaded.map((u) => ({
+      file_id: u.id,
+      tools: [{ type: "file_search" as const }]
+    }));
 
-    // Call Responses API with file_search enabled
+    // Strong task instruction to cite when files are used
+    const TASK = `Task:
+- Answer in technical detail (assume trade knowledge).
+- If any attached file content is used, include at least one inline citation like [<short doc name>, p.X].
+- End with a short checklist.`;
+
+    // Call Responses API using file_search tool
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -110,10 +115,12 @@ If no relevant manual context exists, do not refuse—answer with your knowledge
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         input: [
-          { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
-          { role: "user", content: userContent }
+          { role: "system", content: SYSTEM },
+          { role: "user", content: USER },
+          { role: "user", content: TASK }
         ],
         tools: [{ type: "file_search" }],
+        attachments: attachments.length ? attachments : undefined,
         temperature: 0.2
       })
     });
