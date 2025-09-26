@@ -1,7 +1,7 @@
-/* Assistant: Hybrid + Responses File Search with Vector Store
+/* Assistant: Hybrid + Responses File Search via input_file
    - Uploads incoming files to OpenAI (purpose=assistants)
-   - Creates a vector store, attaches files, waits until indexed
-   - Calls Responses API with file_search + tool_config.vector_store_ids
+   - Uses Responses API with tools:[{ type:"file_search" }]
+   - Passes files as content items of type "input_file"
    - Hybrid: general knowledge + enrich with docs; cite when used
 */
 import type { RequestHandler } from "@sveltejs/kit";
@@ -25,53 +25,6 @@ async function uploadToOpenAI(file: File, apiKey: string): Promise<{ id: string;
   }
   const json = await resp.json();
   return { id: json.id as string, filename: (json.filename as string) || file.name || "upload" };
-}
-
-async function createVectorStore(apiKey: string, name: string): Promise<string> {
-  const resp = await fetch("https://api.openai.com/v1/vector_stores", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ name })
-  });
-  if (!resp.ok) throw new Error(`Create vector store failed: ${await resp.text()}`);
-  const json = await resp.json();
-  return json.id as string;
-}
-
-async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<void> {
-  const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ file_id: fileId })
-  });
-  if (!resp.ok) throw new Error(`Attach file to vector store failed: ${await resp.text()}`);
-}
-
-async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs = 20000): Promise<void> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
-      headers: { Authorization: `Bearer ${apiKey}` }
-    });
-    if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
-    const json = await resp.json();
-    const files = (json.data || []) as Array<any>;
-    if (files.length === 0) {
-      // no files added yet
-    } else {
-      // all files must be "completed"
-      const pending = files.find((f) => f.status !== "completed");
-      if (!pending) return;
-    }
-    await new Promise((r) => setTimeout(r, 800));
-  }
-  // Timed out, proceed anyway — model can still try
 }
 
 function extractTextFromResponses(resJson: any): string {
@@ -103,7 +56,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, files[]", { status: 400 });
+      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, and files[]", { status: 400 });
     }
 
     const form = await request.formData();
@@ -113,7 +66,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const model = (form.get("model") as string || "").trim();
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    // Upload files
+    // Upload files to OpenAI (OCR handled by OpenAI’s indexer)
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     const uploaded: Array<{ id: string; filename: string }> = [];
     for (const f of files) {
@@ -126,58 +79,43 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
-    // Create vector store + attach files (indexing with OCR handled by OpenAI)
-    let vectorStoreId: string | null = null;
-    if (uploaded.length) {
-      vectorStoreId = await createVectorStore(privateEnv.OPENAI_API_KEY, `tradie-assistant-${Date.now()}`);
-      for (const u of uploaded) {
-        await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, vectorStoreId, u.id);
-      }
-      await waitForIndexing(privateEnv.OPENAI_API_KEY, vectorStoreId);
-    }
-
     const SYSTEM = `You are a technical assistant for experienced Australian tradies.
 Provide precise, technical answers. Use your general knowledge freely.
-If the attached manuals are relevant, incorporate their specifics and include concise inline citations like [Panasonic VKR Manual, p.12].
+If attached manuals are relevant, incorporate their specifics and include concise inline citations like [Panasonic VKR Manual, p.12].
 If no relevant manual context exists, do not refuse—answer with your knowledge. Always include safety/compliance notes when relevant.`;
 
-    const userText = [
-      trade ? `Trade: ${trade}` : null,
-      brand ? `Brand: ${brand}` : null,
-      model ? `Model: ${model}` : null,
-      `Question: ${message}`,
-      "Task:",
-      "- Answer in technical detail (assume trade knowledge).",
-      "- If any attached manual content is used, include at least one inline citation like [<short doc name>, p.X].",
-      "- End with a short checklist."
-    ].filter(Boolean).join("\n");
+    // Build message content with the question as input_text and each file as input_file
+    const userContent: any[] = [
+      { type: "input_text", text: [
+        trade ? `Trade: ${trade}` : null,
+        brand ? `Brand: ${brand}` : null,
+        model ? `Model: ${model}` : null,
+        `Question: ${message}`
+      ].filter(Boolean).join("\n") },
+      { type: "input_text", text:
+        "Task:\n- Answer in technical detail (assume trade knowledge).\n- If any attached file content is used, include at least one inline citation like [<short doc name>, p.X].\n- End with a short checklist." }
+    ];
 
-    // Build request
-    const reqBody: any = {
-      model: "gpt-4.1-mini",
-      input: [
-        { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
-        { role: "user", content: [{ type: "input_text", text: userText }] }
-      ],
-      tools: [{ type: "file_search" }],
-      temperature: 0.2
-    };
-
-    if (vectorStoreId) {
-      reqBody.tool_config = {
-        file_search: {
-          vector_store_ids: [vectorStoreId]
-        }
-      };
+    for (const u of uploaded) {
+      userContent.push({ type: "input_file", file_id: u.id });
     }
 
+    // Call Responses API with file_search enabled
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${privateEnv.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(reqBody)
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
+          { role: "user", content: userContent }
+        ],
+        tools: [{ type: "file_search" }],
+        temperature: 0.2
+      })
     });
 
     if (!resp.ok) {
