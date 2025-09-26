@@ -1,105 +1,36 @@
-/* Assistant Hybrid RAG with keyword-prefilter + forced citations
-   - Answers from general knowledge.
-   - Prefilters pages by keywords, then ranks by keywords+embeddings.
-   - If any context used, cite and append Sources (doc + page).
-   - Adds a small DEBUG header so you can see if PDF was used.
+/* Assistant: Hybrid + OpenAI File Search (OCR-capable)
+   - Uploads incoming files to OpenAI (purpose=assistants)
+   - Uses Responses API with tools:[{type:"file_search"}] + attachments
+   - Hybrid: answers generally AND enriches with docs; cites when used
 */
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 
 export const config = { runtime: 'nodejs20.x' };
 
-// Smaller chunks, larger overlap to capture UI labels
-const CHUNK_SIZE = 450;
-const CHUNK_OVERLAP = 120;
+async function uploadToOpenAI(file: File, apiKey: string): Promise<{ id: string; filename: string }> {
+  const form = new FormData();
+  form.append("purpose", "assistants");
+  form.append("file", file, file.name || "upload.pdf");
 
-function chunkTextWithPages(text: string, pageFrom: number, pageTo: number) {
-  const chunks: Array<{ text: string; page_from: number; page_to: number }> = [];
-  let i = 0;
-  while (i < text.length) {
-    const end = Math.min(text.length, i + CHUNK_SIZE);
-    const part = text.slice(i, end);
-    chunks.push({ text: part, page_from: pageFrom, page_to: pageTo });
-    i += Math.max(1, CHUNK_SIZE - CHUNK_OVERLAP);
-  }
-  if (chunks.length === 0 && text.trim()) {
-    chunks.push({ text, page_from: pageFrom, page_to: pageTo });
-  }
-  return chunks;
-}
-
-function cosineSim(a: number[], b: number[]): number {
-  let dot = 0, na = 0, nb = 0;
-  const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  const denom = Math.sqrt(na) * Math.sqrt(nb);
-  return denom ? dot / denom : 0;
-}
-
-async function embedTexts(texts: string[], apiKey: string) {
-  const resp = await fetch("https://api.openai.com/v1/embeddings", {
+  const resp = await fetch("https://api.openai.com/v1/files", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ model: "text-embedding-3-small", input: texts })
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form
   });
-  if (!resp.ok) throw new Error(`Embeddings failed: ${await resp.text()}`);
+  if (!resp.ok) {
+    const msg = await resp.text();
+    throw new Error(`OpenAI file upload failed: ${msg}`);
+  }
   const json = await resp.json();
-  return json.data.map((d: any) => d.embedding as number[]);
-}
-
-async function parsePdf(buffer: Uint8Array) {
-  // @ts-expect-error no types
-  const pdfParse = (await import("pdf-parse")).default;
-  const data = await pdfParse(Buffer.from(buffer), { pagerender: undefined });
-  const raw = data.text || "";
-  // split by formfeed or "Page N" markers
-  const byPage = raw.split(/\f+|\n\s*Page\s+\d+\s*(?:of\s+\d+)?\s*\n/gi).filter(Boolean);
-  return byPage.length ? byPage : [raw];
-}
-
-async function fileToText(file: File): Promise<{ name: string; pages: string[], parts: Array<{ text: string; page_from: number; page_to: number }> }> {
-  const name = file.name || "upload";
-  const type = file.type || "";
-  const buf = new Uint8Array(await file.arrayBuffer());
-  try {
-    if (type === "application/pdf" || name.toLowerCase().endsWith(".pdf")) {
-      const pages = await parsePdf(buf);
-      let parts: Array<{ text: string; page_from: number; page_to: number }> = [];
-      pages.forEach((p, idx) => {
-        const pageNum = idx + 1;
-        parts = parts.concat(chunkTextWithPages(p, pageNum, pageNum));
-      });
-      return { name, pages, parts };
-    }
-    if (type.startsWith("text/") || name.toLowerCase().endsWith(".txt") || name.toLowerCase().endsWith(".md")) {
-      const text = new TextDecoder().decode(buf);
-      return { name, pages: [text], parts: chunkTextWithPages(text, 1, 1) };
-    }
-  } catch (e) {
-    console.error("fileToText error for", name, e);
-  }
-  return { name, pages: [], parts: [] };
-}
-
-function keywordHits(s: string, terms: string[]) {
-  const lc = s.toLowerCase();
-  let hits = 0;
-  for (const t of terms) {
-    if (t && lc.includes(t)) hits += 1;
-  }
-  return hits;
+  return { id: json.id as string, filename: (json.filename as string) || file.name || "upload" };
 }
 
 function extractTextFromResponses(resJson: any): string {
   if (!resJson) return "";
+  // Preferred: output_text
   if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
+  // Fallbacks for other shapes
   if (Array.isArray(resJson.output)) {
     const texts: string[] = [];
     for (const item of resJson.output) {
@@ -126,7 +57,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return new Response("Send multipart/form-data with fields: message, (optional) trade, brand, model, and files[]", { status: 400 });
+      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, files[]", { status: 400 });
     }
 
     const form = await request.formData();
@@ -136,88 +67,24 @@ export const POST: RequestHandler = async ({ request }) => {
     const model = (form.get("model") as string || "").trim();
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
+    // Upload files to OpenAI (OCR handled by OpenAI’s file search)
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
-    const allParts: Array<{ doc: string; text: string; page_from: number; page_to: number }> = [];
-    const pageMeta: Array<{ doc: string; page: number; text: string }> = [];
+    const uploaded: Array<{ id: string; filename: string }> = [];
     for (const f of files) {
-      const { name, pages, parts } = await fileToText(f);
-      pages.forEach((p, idx) => pageMeta.push({ doc: name, page: idx + 1, text: p }));
-      for (const p of parts) {
-        if (p.text && p.text.trim()) {
-          allParts.push({ doc: name, text: p.text, page_from: p.page_from, page_to: p.page_to });
-        }
+      try {
+        const res = await uploadToOpenAI(f, privateEnv.OPENAI_API_KEY);
+        uploaded.push(res);
+      } catch (e: any) {
+        console.error("Upload failed", e);
+        return new Response(`File upload error: ${e?.message || e}`, { status: 500 });
       }
     }
 
-    // Keyword expansion to catch icon/indicator terminology in manuals
-    const termsBase = (message + " " + trade + " " + brand + " " + model).toLowerCase();
-    const expand = [
-      "icon","icons","indicator","indicators","lamp","operation lamp","display","symbol","symbols",
-      "timer","nanoe","air purify","filter","clean filter","defrost","mode","heat","cool","dry"
-    ];
-    const queryTerms = Array.from(new Set(
-      termsBase.split(/[^a-z0-9]+/).filter(Boolean).concat(expand)
-    ));
-
-    // Page-level prefilter: count keyword hits per page
-    const pageScores = pageMeta.map(p => ({
-      doc: p.doc,
-      page: p.page,
-      hits: keywordHits(p.text, queryTerms)
-    })).sort((a,b) => b.hits - a.hits);
-
-    // Keep pages with any hits, or top 6 pages otherwise
-    const preselectedPages = pageScores.filter(p => p.hits > 0).slice(0, 12);
-    const fallbackPages = pageScores.slice(0, 6);
-    const selectedPageSet = new Set((preselectedPages.length ? preselectedPages : fallbackPages).map(p => `${p.doc}#${p.page}`));
-
-    // Filter parts to only those from selected pages (to bias towards relevant parts)
-    const filteredParts = allParts.filter(p => selectedPageSet.has(`${p.doc}#${p.page_from}`));
-
-    // If filtering removed everything, fall back to all parts
-    const candidateParts = filteredParts.length ? filteredParts : allParts;
-
-    // Embeddings ranking
-    let partEmbeddings: number[][] = [];
-    let queryEmbedding: number[] = [];
-    try {
-      if (candidateParts.length > 0) {
-        partEmbeddings = await embedTexts(candidateParts.map((p) => p.text), privateEnv.OPENAI_API_KEY);
-      }
-      const q = [message, trade && `Trade: ${trade}`, brand && `Brand: ${brand}`, model && `Model: ${model}`]
-        .filter(Boolean).join("\n");
-      queryEmbedding = (await embedTexts([q], privateEnv.OPENAI_API_KEY))[0];
-    } catch (e: any) {
-      console.error("Embedding error", e);
-      return new Response(`Embedding error: ${e?.message || e}`, { status: 500 });
-    }
-
-    // Blend similarity and keyword hits (normalized 0..1)
-    const maxHits = Math.max(1, ...candidateParts.map(p =>
-      keywordHits(p.text, queryTerms)
-    ));
-    const blended = candidateParts.map((p, i) => {
-      const sim = partEmbeddings[i] ? cosineSim(queryEmbedding, partEmbeddings[i]) : 0;
-      const hits = keywordHits(p.text, queryTerms);
-      const kh = hits / maxHits; // 0..1
-      const score = 0.7 * sim + 0.3 * kh;
-      return { ...p, sim, hits, score };
-    }).sort((a,b) => b.score - a.score);
-
-    const TOP_K = 16;
-    const top = blended.slice(0, TOP_K);
-
-    const contextBlocks = top.map((s, i) => {
-      const id = i + 1;
-      const page = s.page_from === s.page_to ? `p.${s.page_from}` : `p.${s.page_from}-${s.page_to}`;
-      const head = `[${id}] ${s.doc} ${page}`;
-      return `${head}\n${s.text}`;
-    });
-
+    // System prompt: hybrid usage + citations when docs used
     const SYSTEM = `You are a technical assistant for experienced Australian tradies.
-Provide precise, technical answers. Use general knowledge freely.
-If uploaded manuals are relevant, incorporate their specifics and cite with inline page refs like [p12].
-If no relevant manual context was retrieved, state that plainly before answering.`;
+Provide precise, technical answers. Use your general knowledge freely.
+If uploaded manuals are relevant, incorporate their specifics and include concise inline citations like [Panasonic VKR Manual, p.12].
+If no relevant manual context exists, do not refuse—answer with your knowledge. Always include safety/compliance notes when relevant.`;
 
     const USER = [
       trade ? `Trade: ${trade}` : null,
@@ -226,57 +93,46 @@ If no relevant manual context was retrieved, state that plainly before answering
       `Question: ${message}`
     ].filter(Boolean).join("\n");
 
-    const FINAL_PROMPT = [
-      contextBlocks.length
-        ? "Context blocks (numbered with page refs):\n" + contextBlocks.join("\n\n")
-        : null,
-      `Task:
+    // Build attachments for file_search
+    const attachments = uploaded.map((u) => ({
+      file_id: u.id,
+      tools: [{ type: "file_search" as const }]
+    }));
+
+    // Strong task instruction to cite when files are used
+    const TASK = `Task:
 - Answer in technical detail (assume trade knowledge).
-- If context blocks exist and are relevant, you MUST cite at least one block with page refs inline like [p12], [p7–8].
-- End with a short checklist.
-- After the answer, if you used any context, append a "Sources" list mapping each citation [n] to "Document — page(s)".`
-    ].filter(Boolean).join("\n\n");
+- If any attached file content is used, include at least one inline citation like [<short doc name>, p.X].
+- End with a short checklist.`;
 
-    const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${
-      contextBlocks.length ? "Using your uploaded docs where relevant.\n\n" : "No relevant manual context retrieved — using general knowledge.\n\n"
-    }${FINAL_PROMPT}`;
+    // Call Responses API using file_search tool
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${privateEnv.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: USER },
+          { role: "user", content: TASK }
+        ],
+        tools: [{ type: "file_search" }],
+        attachments: attachments.length ? attachments : undefined,
+        temperature: 0.2
+      })
+    });
 
-    // Small DEBUG header so you can see if RAG engaged
-    const debugHeader =
-      `DEBUG — files:${files.length}, pages:${pageMeta.length}, preselected:${preselectedPages.length}, ` +
-      `candidates:${candidateParts.length}, chosen:${top.length}`;
-
-    let text = "";
-    try {
-      const resp = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${privateEnv.OPENAI_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          input: `${debugHeader}\n\n${combined}`,
-          temperature: 0.2
-        })
-      });
-
-      if (!resp.ok) {
-        const msg = await resp.text();
-        console.error("OpenAI Responses error", msg);
-        return new Response(`OpenAI error: ${msg}`, { status: 500 });
-      }
-
-      const data = await resp.json();
-      text = extractTextFromResponses(data);
-      if (!text || !text.trim()) {
-        text = "Sorry — I couldn't produce an answer. Try rephrasing the question, or attach a relevant manual/section for more specific guidance.";
-      }
-    } catch (e: any) {
-      console.error("Responses API error", e);
-      return new Response(`Responses API error: ${e?.message || e}`, { status: 500 });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      console.error("OpenAI Responses error", msg);
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
     }
 
+    const data = await resp.json();
+    const text = extractTextFromResponses(data) || "Sorry — I couldn’t produce an answer.";
     return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
