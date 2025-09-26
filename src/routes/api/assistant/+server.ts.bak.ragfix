@@ -10,8 +10,8 @@ export const config = {
   runtime: 'nodejs20.x'
 };
 
-const CHUNK_SIZE = 500;
-const CHUNK_OVERLAP = 80;
+const CHUNK_SIZE = 1200;
+const CHUNK_OVERLAP = 150;
 
 function chunkTextWithPages(text: string, pageFrom: number, pageTo: number) {
   const chunks: Array<{ text: string; page_from: number; page_to: number }> = [];
@@ -174,7 +174,7 @@ export const POST: RequestHandler = async ({ request }) => {
       ...p
     })).sort((a, b) => b.score - a.score);
 
-    const TOP_K = 15;
+    const TOP_K = 8;
     const top = scored.slice(0, TOP_K);
 
     // Build optional context (only if we have uploads)
@@ -186,7 +186,9 @@ export const POST: RequestHandler = async ({ request }) => {
     });
 
     // 🔁 HYBRID: Use general knowledge, enrich with context when helpful, cite when used
-    const SYSTEM = `You are a technical assistant for experienced Australian tradies. Provide detailed, technical answers. Use uploaded manuals FIRST whenever context is relevant, and always cite page numbers (e.g., [p12]) from the provided context. If no relevant context is found, clearly state: "No relevant manual context retrieved — using general knowledge." Do not oversimplify; answers should assume professional trade knowledge.`;
+    const SYSTEM = `You are a technical assistant for Australian tradies.
+Answer helpfully using your general knowledge. If the user has uploaded manuals or notes, enrich your answer with specific, verifiable details from those documents and cite them inline like [1], [2] matching the numbered "Context blocks" if provided.
+If a detail is uncertain, say so briefly and suggest how to verify safely. Always prioritise practical, step-by-step guidance and safety/compliance notes where relevant.`;
 
     const USER = [
       trade ? `Trade: ${trade}` : null,
@@ -196,11 +198,11 @@ export const POST: RequestHandler = async ({ request }) => {
     ].filter(Boolean).join("\n");
 
     const FINAL_PROMPT = [
-    contextBlocks.length > 0
-      ? "Context blocks (numbered, with page refs):\n" + contextBlocks.join("\n\n")
-      : null,
-    "Task: Answer in technical detail, in AU English. If context blocks exist, you MUST use them, cite pages inline (e.g., [p12]), and finish with a short checklist. If none exist, explicitly say so before answering with general knowledge."
-  ].filter(Boolean).join("\n\n");
+      contextBlocks.length > 0
+        ? "Context blocks (numbered for citation):\n" + contextBlocks.join("\n\n")
+        : null,
+      "Task: Provide a thorough, practical answer. Use general knowledge freely. If the context blocks contain relevant specifics, incorporate them and cite like [1], [2]. Include a short checklist at the end."
+    ].filter(Boolean).join("\n\n");
 
     const combined = `${SYSTEM}\n\n---\n\n${USER}\n\n---\n\n${FINAL_PROMPT}`;
 
