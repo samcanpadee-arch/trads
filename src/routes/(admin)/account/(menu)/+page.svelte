@@ -2,31 +2,25 @@
   import { onMount } from "svelte";
 
   let displayName = "";
-  let tipIndex = 0;
-  const tips = [
-    "Copy rough notes into Chat and ask it to tidy the wording in Aussie English.",
-    "Paste a customer review and get a friendly reply in seconds.",
-    "Turn a messy material list into a neat estimate — we’ll flag anything we guessed so you can review it.",
-    "Ask Chat to draft a safety note or method-of-work summary for your team.",
-    "Need a quick post? Tell Chat what happened on site and it’ll spin up a social caption."
-  ];
+  let hasVisited = false;
 
   onMount(() => {
-    // Lightweight name detection until profile wiring is added here
     try {
+      // Name fallback (until wired directly to profile load)
       displayName =
         (localStorage.getItem("profile.name") ||
          localStorage.getItem("profile_full_name") ||
          localStorage.getItem("name") ||
          "").trim();
+
+      // First vs return visit
+      hasVisited = localStorage.getItem("hasVisited") === "1";
+      localStorage.setItem("hasVisited", "1");
     } catch {}
-    const id = setInterval(() => {
-      tipIndex = (tipIndex + 1) % tips.length;
-    }, 7000);
-    return () => clearInterval(id);
   });
 
-  const greeting = displayName ? `Welcome back, ${displayName} 👋` : "Welcome back 👋";
+  $: salutation = hasVisited ? "Welcome back" : "Welcome";
+  $: greeting = displayName ? `${salutation}, ${displayName} 👋` : `${salutation} 👋`;
 </script>
 
 <svelte:head><title>Account</title></svelte:head>
@@ -38,17 +32,10 @@
       <div class="lg:col-span-2 space-y-2">
         <h1 class="text-2xl font-semibold">{greeting}</h1>
         <p class="text-sm opacity-80">
-          Your AI on the tools — from site to spreadsheets. Ask for anything:
-          job wording, pricing ideas, client comms, or “how do I fix this?” and
-          you’ll get a clear, tradie-friendly answer. Keep it simple, get it done.
+          Your AI on the tools — from site to spreadsheets. Ask for anything: job wording, pricing ideas,
+          client comms, or “how do I fix this?” You’ll get clear, tradie-friendly help in minutes.
         </p>
-        <div class="alert alert-info mt-3">
-          <span class="font-medium">Tip of the day:</span>
-          <span class="ml-2">{tips[tipIndex]}</span>
-        </div>
-        <div class="mt-2">
-          <a href="/account/chat" class="btn btn-primary">Jump into Chat →</a>
-        </div>
+        <!-- Chat CTA removed (reserved for Pro in future) -->
       </div>
 
       <!-- Simple inline SVG illustration (toolbox) -->
@@ -100,8 +87,25 @@
     </a>
   </div>
 
+  <!-- Support / contact -->
+  <div class="card bg-base-100 border">
+    <div class="card-body flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="space-y-1">
+        <h3 class="text-base font-semibold">Need a hand?</h3>
+        <p class="text-sm opacity-80">Got a question or something not working right? We’re here to help.</p>
+      </div>
+      <a
+        href="/contact_us"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-outline"
+        aria-label="Open contact page in a new tab"
+      >Contact support ↗</a>
+    </div>
+  </div>
+
   <!-- Footer note -->
   <p class="text-xs opacity-60">
-    Psst — none of this replaces your judgement. Where we’ve guessed something, we’ll flag it so you can double-check.
+    AI can draft and speed things up, but it doesn’t replace your judgement — please review and tweak before sending.
   </p>
 </section>
