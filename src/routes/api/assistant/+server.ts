@@ -1,244 +1,114 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
-import crypto from "node:crypto";
-// @ts-ignore
+// @ts-ignore: registry file may be missing in fresh setups
 import registry from "$lib/vectorstores.json";
 
-export const config = { runtime: 'nodejs20.x' };
-
-// ---------- utils ----------
-async function sha256OfFile(file: File): Promise<string> {
-  const hash = crypto.createHash('sha256');
-  // @ts-ignore Node 20 File.stream
-  const reader = file.stream().getReader();
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    if (value) hash.update(value);
-  }
-  return hash.digest('hex');
-}
-
-async function listAllFiles(apiKey: string): Promise<any[]> {
-  const out: any[] = [];
-  let after: string | null = null;
-  for (let i = 0; i < 20; i++) {
-    const url = new URL("https://api.openai.com/v1/files");
-    if (after) url.searchParams.set("after", after);
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
-    if (!r.ok) throw new Error(`Files list failed: ${await r.text()}`);
-    const j = await r.json();
-    const arr = Array.isArray(j.data) ? j.data : [];
-    out.push(...arr);
-    if (!j.has_more || !arr.length) break;
-    after = arr[arr.length - 1]?.id;
-  }
-  return out;
-}
-
-async function findFileByStableName(apiKey: string, stableName: string): Promise<string | null> {
-  const all = await listAllFiles(apiKey);
-  const match = all.find((f: any) => (f.filename || f.name) === stableName);
-  return match?.id ?? null;
-}
-
-async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string): Promise<{ id: string; filename: string }> {
+// --- Helpers (trimmed & stable) ---
+async function uploadFileToOpenAI(file: File, apiKey: string): Promise<{ id: string; filename: string }> {
   const form = new FormData();
   form.append("purpose", "assistants");
-  form.append("file", file, stableName);
-  const resp = await fetch("https://api.openai.com/v1/files", {
+  form.append("file", file, file.name);
+  const r = await fetch("https://api.openai.com/v1/files", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}` },
     body: form
   });
-  if (!resp.ok) throw new Error(`OpenAI file upload failed: ${await resp.text()}`);
-  const json = await resp.json();
-  return { id: json.id as string, filename: (json.filename as string) || stableName };
+  if (!r.ok) throw new Error(`OpenAI file upload failed: ${await r.text()}`);
+  const j = await r.json();
+  return { id: j.id, filename: j.filename ?? file.name };
 }
 
 async function createVectorStore(apiKey: string, name: string): Promise<string> {
-  const resp = await fetch("https://api.openai.com/v1/vector_stores", {
+  const r = await fetch("https://api.openai.com/v1/vector_stores", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ name })
   });
-  if (!resp.ok) throw new Error(`Create vector store failed: ${await resp.text()}`);
-  const json = await resp.json();
-  return json.id as string;
+  if (!r.ok) throw new Error(`Create vector store failed: ${await r.text()}`);
+  const j = await r.json();
+  return j.id as string;
 }
 
-async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<void> {
-  const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
+async function attachFile(apiKey: string, vectorStoreId: string, fileId: string) {
+  const r = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ file_id: fileId })
   });
-  if (!resp.ok) throw new Error(`Attach file to vector store failed: ${await resp.text()}`);
+  if (!r.ok) throw new Error(`Attach file failed: ${await r.text()}`);
 }
 
-async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs = 20000): Promise<void> {
+async function waitIndexed(apiKey: string, vectorStoreId: string, timeoutMs = 20000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
+    const r = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
       headers: { Authorization: `Bearer ${apiKey}` }
     });
-    if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
-    const json = await resp.json();
-    const files = (json.data || []) as Array<any>;
-    if (files.length) {
-      const pending = files.find((f) => f.status !== "completed");
-      if (!pending) return;
-    }
-    await new Promise((r) => setTimeout(r, 700));
+    if (!r.ok) throw new Error(`Poll vector store failed: ${await r.text()}`);
+    const j = await r.json();
+    const files = (j.data ?? []) as Array<any>;
+    if (files.length && !files.find((f) => f.status !== "completed")) return;
+    await new Promise((res) => setTimeout(res, 600));
   }
 }
 
-async function fetchFilename(apiKey: string, fileId: string): Promise<string | null> {
-  const resp = await fetch(`https://api.openai.com/v1/files/${fileId}`, {
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
-  if (!resp.ok) return null;
-  const j = await resp.json();
-  return (j.filename as string) || (j.name as string) || null;
-}
-
-// Extract plain text if JSON schema fails (fallback)
-function extractTextFromResponses(resJson: any): string {
-  if (!resJson) return "";
-  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
-  if (Array.isArray(resJson.output)) {
-    const texts: string[] = [];
-    for (const item of resJson.output) {
-      const parts = item?.content || item?.contents || [];
-      for (const p of parts) {
-        if (p?.type === "output_text" && typeof p?.text === "string") texts.push(p.text);
-        if (p?.type === "text" && typeof p?.text === "string") texts.push(p.text);
-      }
-    }
-    if (texts.length) return texts.join("\n");
-  }
-  return "";
-}
-
-// Numbers with units -> treat as exact specs
-const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
-
-// ---------- handler ----------
+// --- Handler ---
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    if (!privateEnv.OPENAI_API_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
+    if (!privateEnv.OPENAI_API_KEY) {
+      return new Response("Missing OPENAI_API_KEY", { status: 500 });
+    }
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return new Response("Send multipart/form-data with fields: message and optional trade, brand, files[], share", { status: 400 });
+      return new Response("Send multipart/form-data with fields: message, optional trade, optional brand, optional files[]", { status: 400 });
     }
 
     const form = await request.formData();
-    const message = (form.get("message") as string || "").trim();
-    const trade = (form.get("trade") as string || "").trim();
-    const brand = (form.get("brand") as string || "").trim(); // combined brand/model
-    const share = ((form.get("share") as string) || "off") === "on";
+    const message = (form.get("message") as string | null)?.trim() || "";
+    const trade = (form.get("trade") as string | null)?.trim() || "";
+    const brand = (form.get("brand") as string | null)?.trim() || "";
+    const files = form.getAll("files").filter((f) => f instanceof File) as File[];
+
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    // Upload any files with a stable hashed name to dedupe
-    const files = form.getAll("files").filter((f) => f instanceof File) as File[];
-    const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
-    for (const f of files) {
-      const hash = await sha256OfFile(f);
-      const stableName = `${hash}-${f.name}`;
-      let fileId = await findFileByStableName(privateEnv.OPENAI_API_KEY, stableName);
-      if (!fileId) {
-        const up = await uploadToOpenAIWithStableName(f, privateEnv.OPENAI_API_KEY, stableName);
-        fileId = up.id;
+    // Temp vector store from uploads (if any)
+    let tempVs: string | null = null;
+    if (files.length) {
+      tempVs = await createVectorStore(privateEnv.OPENAI_API_KEY, `session-${Date.now()}`);
+      for (const f of files) {
+        const up = await uploadFileToOpenAI(f, privateEnv.OPENAI_API_KEY);
+        await attachFile(privateEnv.OPENAI_API_KEY, tempVs, up.id);
       }
-      uploaded.push({ id: fileId, filename: stableName, hash });
+      await waitIndexed(privateEnv.OPENAI_API_KEY, tempVs);
     }
 
-    // Temp vector store for uploaded files
-    let tempVectorStoreId: string | null = null;
-    if (uploaded.length) {
-      tempVectorStoreId = await createVectorStore(privateEnv.OPENAI_API_KEY, `session-${Date.now()}`);
-      for (const u of uploaded) await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, tempVectorStoreId, u.id);
-      await waitForIndexing(privateEnv.OPENAI_API_KEY, tempVectorStoreId);
-    }
+    // Library stores from registry (optional)
+    const libIds: string[] = Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
 
-    // Library stores from registry
-    const libraryIds: string[] = Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
+    const vector_store_ids = [...libIds];
+    if (tempVs) vector_store_ids.push(tempVs);
 
-    // Optional: share uploaded files into library
-    if (share && uploaded.length && libraryIds.length) {
-      for (const libId of libraryIds) {
-        for (const u of uploaded) {
-          try { await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, libId, u.id); } catch {}
-        }
-      }
-    }
-
-    // Build vector_store_ids
-    const vsIds = [...libraryIds];
-    if (tempVectorStoreId) vsIds.push(tempVectorStoreId);
-    const uniqueVsIds = Array.from(new Set(vsIds));
-
-    // System with strict rules
     const SYSTEM = `
 You are a technical assistant for experienced Australian tradies.
-
-RULES:
-1) If you used retrieved manual/standard content, set source="MANUAL" and include exact page/section citations in citations[].
-2) If no relevant content retrieved, set source="GENERAL". Do NOT provide exact numeric specifications in GENERAL mode.
-3) Never fabricate citations. Provide only what is grounded in retrieved text.
-
-STYLE:
-- Technical, concise, include safety/compliance where relevant.
-- End with a short checklist.
+- Use retrieved manuals/standards when available.
+- When you rely on a document, cite inline like: [1] Document Name, p. 12 (or section).
+- If you cannot find an exact value in provided/retrieved docs, say so plainly. Do NOT invent numbers.
+- Otherwise, you may answer from general knowledge (but still avoid specific numbers if not grounded).
+- Keep answers practical and technical. End with a brief checklist.
 `.trim();
 
     const userText = [
-      trade ? `Trade: \${trade}` : null,
-      brand ? `Brand/Model or Standard: \${brand}` : null,
-      `Question: \${message}`,
-      "Instructions:",
-      "- If exact values (numbers + units) are asked, only provide them when grounded in retrieved text, with page/section in citations[].",
-      "- If not grounded, answer generally without numbers and explain what doc is required."
+      trade ? `Trade: ${trade}` : null,
+      brand ? `Brand/Model or Standard: ${brand}` : null,
+      `Question: ${message}`
     ].filter(Boolean).join("\n");
 
-    // JSON Schema via text.format (Responses API)
-    const text = {
-      format: {
-        type: "json_schema",
-        name: "GroundedAnswer",
-        strict: true,
-        schema: {
-          type: "object",
-          required: ["source", "answer"],
-          properties: {
-            source: { type: "string", enum: ["MANUAL", "GENERAL"] },
-            answer: { type: "string" },
-            citations: {
-              type: "array",
-              items: {
-                type: "object",
-                required: ["file_id"],
-                properties: {
-                  file_id: { type: "string" },
-                  filename: { type: "string" },
-                  page: { type: "string" }, // e.g., "p.13" or "§4.4.2"
-                  snippet: { type: "string" }
-                }
-              },
-              default: []
-            }
-          }
-        }
-      }
-    };
+    // Build tools (simple file_search only if we have any vector stores)
+    const tools: any[] = vector_store_ids.length ? [{ type: "file_search", vector_store_ids }] : [];
 
-    // Tools config
-    const tools: any[] = [];
-    if (uniqueVsIds.length) tools.push({ type: "file_search", vector_store_ids: uniqueVsIds });
-
-    // Call Responses API
-    const resp = await fetch("https://api.openai.com/v1/responses", {
+    // Call Responses API (simple, no text.format)
+    const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${privateEnv.OPENAI_API_KEY}`,
@@ -251,85 +121,34 @@ STYLE:
           { role: "user", content: [{ type: "input_text", text: userText }] }
         ],
         tools,
-        tool_choice: (uniqueVsIds.length ? "required" : "auto"),
-        temperature: 0.1,
-        text
+        tool_choice: "auto",
+        temperature: 0.2
       })
     });
 
-    if (!resp.ok) {
-      const msg = await resp.text();
-      console.error("OpenAI Responses error", msg);
-      return new Response(`OpenAI error: \${msg}`, { status: 500 });
+    if (!r.ok) {
+      const msg = await r.text();
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
     }
 
-    const data = await resp.json();
+    const data = await r.json();
+    const out =
+      (typeof data.output_text === "string" && data.output_text.trim()) ||
+      // fallback: try to stitch text parts
+      (Array.isArray(data.output)
+        ? data.output
+            .flatMap((o: any) => (o?.content || []))
+            .filter((c: any) => typeof c?.text === "string")
+            .map((c: any) => c.text)
+            .join("\n")
+        : "");
 
-    // Try to parse JSON from output_text / content
-    let payload: { source?: string; answer?: string; citations?: Array<{file_id: string; filename?: string; page?: string; snippet?: string}> } | null = null;
-    try {
-      if (typeof data.output_text === "string" && data.output_text.trim().startsWith("{")) {
-        payload = JSON.parse(data.output_text);
-      } else if (Array.isArray(data.output)) {
-        const firstText = data.output.flatMap((o: any) => (o?.content || [])).find((c: any) => typeof c?.text === "string")?.text;
-        if (firstText && firstText.trim().startsWith("{")) payload = JSON.parse(firstText);
-      }
-    } catch {
-      // ignore, fallback below
-    }
-
-    if (!payload) {
-      // Fallback to plain text
-      let textOut = extractTextFromResponses(data).trim();
-      if (!textOut) textOut = "No answer.";
-      return new Response(textOut, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-    }
-
-    const source = (payload.source || "GENERAL").toUpperCase();
-    let answer = (payload.answer || "").trim();
-    const citations = Array.isArray(payload.citations) ? payload.citations : [];
-
-    // HARD GUARD: if GENERAL and numeric specs present, refuse
-    if (source !== "MANUAL" && SPEC_UNIT_RE.test(answer)) {
-      const refusal = [
-        "⚠️ No relevant manual context retrieved — answering from general knowledge.",
-        "I can’t provide exact specifications (numbers/units) without citing a manual or standard.",
-        "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
-      ].join("\n");
-      return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-    }
-
-    // Fill missing filenames
-    for (const c of citations) {
-      if (!c.filename && c.file_id) {
-        try {
-          const name = await fetchFilename(privateEnv.OPENAI_API_KEY, c.file_id);
-          if (name) c.filename = name;
-        } catch {}
-      }
-    }
-
-    // Build references list
-    let refs = "";
-    if (source === "MANUAL") {
-      const uniqueRefs: Array<{label: string; page?: string}> = [];
-      for (const c of citations) {
-        const label = c.filename || c.file_id || "document";
-        const page = c.page;
-        uniqueRefs.push({ label, page });
-      }
-      if (uniqueRefs.length) {
-        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? `, \${r.page}` : ""}`);
-        refs = "\n\nReferences:\n" + lines.join("\n");
-      } else {
-        refs = "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
-      }
-    }
-
-    const finalText = (answer + refs).trim() || "No answer.";
-    return new Response(finalText, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-  } catch (outer: any) {
-    console.error("Unhandled /api/assistant error", outer);
-    return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
+    return new Response(out || "No answer.", {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    });
+  } catch (e: any) {
+    console.error("Assistant simple handler error", e);
+    return new Response(`Internal Error`, { status: 500 });
   }
 };
