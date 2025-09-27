@@ -209,7 +209,7 @@ Always include safety/compliance notes when relevant, and end with a short check
           { role: "user", content: [{ type: "input_text", text: userText }] }
         ],
         tools,
-        tool_choice: (vsIds.length ? "required" : "auto"),
+        tool_choice: (vsIds.length ? "file_search" : "auto"),
         temperature: 0.2
       })
     });
