@@ -194,39 +194,41 @@ STYLE:
 `.trim();
 
     const userText = [
-      trade ? `Trade: \${trade}` : null,
-      brand ? `Brand/Model or Standard: \${brand}` : null,
-      `Question: \${message}`,
+      trade ? `Trade: ${trade}` : null,
+      brand ? `Brand/Model or Standard: ${brand}` : null,
+      `Question: ${message}`,
       "Instructions:",
       "- If exact values (numbers + units) are asked, only provide them when grounded in retrieved text, with page/section in citations[].",
       "- If not grounded, answer generally without numbers and explain what doc is required."
     ].filter(Boolean).join("\n");
 
-    // JSON Schema via text.format (Responses API)
+    // JSON Schema via text.format (Responses API change)
     const text = {
       format: {
         type: "json_schema",
-        name: "GroundedAnswer",
-        strict: true,
-        schema: {
-          type: "object",
-          required: ["source", "answer"],
-          properties: {
-            source: { type: "string", enum: ["MANUAL", "GENERAL"] },
-            answer: { type: "string" },
-            citations: {
-              type: "array",
-              items: {
-                type: "object",
-                required: ["file_id"],
-                properties: {
-                  file_id: { type: "string" },
-                  filename: { type: "string" },
-                  page: { type: "string" }, // e.g., "p.13" or "§4.4.2"
-                  snippet: { type: "string" }
-                }
-              },
-              default: []
+        json_schema: {
+          name: "GroundedAnswer",
+          strict: true,
+          schema: {
+            type: "object",
+            required: ["source", "answer"],
+            properties: {
+              source: { type: "string", enum: ["MANUAL", "GENERAL"] },
+              answer: { type: "string" },
+              citations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["file_id"],
+                  properties: {
+                    file_id: { type: "string" },
+                    filename: { type: "string" },
+                    page: { type: "string" }, // e.g., "p.13" or "§4.4.2"
+                    snippet: { type: "string" }
+                  }
+                },
+                default: []
+              }
             }
           }
         }
@@ -260,7 +262,7 @@ STYLE:
     if (!resp.ok) {
       const msg = await resp.text();
       console.error("OpenAI Responses error", msg);
-      return new Response(`OpenAI error: \${msg}`, { status: 500 });
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
     }
 
     const data = await resp.json();
@@ -319,7 +321,7 @@ STYLE:
         uniqueRefs.push({ label, page });
       }
       if (uniqueRefs.length) {
-        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? `, \${r.page}` : ""}`);
+        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? `, ${r.page}` : ""}`);
         refs = "\n\nReferences:\n" + lines.join("\n");
       } else {
         refs = "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";

@@ -194,9 +194,9 @@ STYLE:
 `.trim();
 
     const userText = [
-      trade ? `Trade: \${trade}` : null,
-      brand ? `Brand/Model or Standard: \${brand}` : null,
-      `Question: \${message}`,
+      trade ? \`Trade: \${trade}\` : null,
+      brand ? \`Brand/Model or Standard: \${brand}\` : null,
+      \`Question: \${message}\`,
       "Instructions:",
       "- If exact values (numbers + units) are asked, only provide them when grounded in retrieved text, with page/section in citations[].",
       "- If not grounded, answer generally without numbers and explain what doc is required."
@@ -260,7 +260,7 @@ STYLE:
     if (!resp.ok) {
       const msg = await resp.text();
       console.error("OpenAI Responses error", msg);
-      return new Response(`OpenAI error: \${msg}`, { status: 500 });
+      return new Response(\`OpenAI error: \${msg}\`, { status: 500 });
     }
 
     const data = await resp.json();
@@ -319,7 +319,7 @@ STYLE:
         uniqueRefs.push({ label, page });
       }
       if (uniqueRefs.length) {
-        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? `, \${r.page}` : ""}`);
+        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? \`, \${r.page}\` : ""}`);
         refs = "\n\nReferences:\n" + lines.join("\n");
       } else {
         refs = "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";

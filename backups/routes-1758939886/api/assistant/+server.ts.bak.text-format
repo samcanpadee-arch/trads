@@ -194,18 +194,18 @@ STYLE:
 `.trim();
 
     const userText = [
-      trade ? `Trade: \${trade}` : null,
-      brand ? `Brand/Model or Standard: \${brand}` : null,
-      `Question: \${message}`,
+      trade ? `Trade: ${trade}` : null,
+      brand ? `Brand/Model or Standard: ${brand}` : null,
+      `Question: ${message}`,
       "Instructions:",
       "- If exact values (numbers + units) are asked, only provide them when grounded in retrieved text, with page/section in citations[].",
       "- If not grounded, answer generally without numbers and explain what doc is required."
     ].filter(Boolean).join("\n");
 
-    // JSON Schema via text.format (Responses API)
-    const text = {
-      format: {
-        type: "json_schema",
+    // JSON Schema for grounded answers
+    const response_format = {
+      type: "json_schema",
+      json_schema: {
         name: "GroundedAnswer",
         strict: true,
         schema: {
@@ -253,24 +253,25 @@ STYLE:
         tools,
         tool_choice: (uniqueVsIds.length ? "required" : "auto"),
         temperature: 0.1,
-        text
+        response_format
       })
     });
 
     if (!resp.ok) {
       const msg = await resp.text();
       console.error("OpenAI Responses error", msg);
-      return new Response(`OpenAI error: \${msg}`, { status: 500 });
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
     }
 
     const data = await resp.json();
 
-    // Try to parse JSON from output_text / content
+    // Try to parse JSON schema output
     let payload: { source?: string; answer?: string; citations?: Array<{file_id: string; filename?: string; page?: string; snippet?: string}> } | null = null;
     try {
       if (typeof data.output_text === "string" && data.output_text.trim().startsWith("{")) {
         payload = JSON.parse(data.output_text);
       } else if (Array.isArray(data.output)) {
+        // Some SDK variants return JSON in content text
         const firstText = data.output.flatMap((o: any) => (o?.content || [])).find((c: any) => typeof c?.text === "string")?.text;
         if (firstText && firstText.trim().startsWith("{")) payload = JSON.parse(firstText);
       }
@@ -280,9 +281,9 @@ STYLE:
 
     if (!payload) {
       // Fallback to plain text
-      let textOut = extractTextFromResponses(data).trim();
-      if (!textOut) textOut = "No answer.";
-      return new Response(textOut, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      let text = extractTextFromResponses(data).trim();
+      if (!text) text = "No answer.";
+      return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
     const source = (payload.source || "GENERAL").toUpperCase();
@@ -299,7 +300,7 @@ STYLE:
       return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
-    // Fill missing filenames
+    // Fill missing filenames by querying Files API
     for (const c of citations) {
       if (!c.filename && c.file_id) {
         try {
@@ -309,7 +310,7 @@ STYLE:
       }
     }
 
-    // Build references list
+    // Build refs list
     let refs = "";
     if (source === "MANUAL") {
       const uniqueRefs: Array<{label: string; page?: string}> = [];
@@ -319,15 +320,15 @@ STYLE:
         uniqueRefs.push({ label, page });
       }
       if (uniqueRefs.length) {
-        const lines = uniqueRefs.map((r, i) => `[${i + 1}] ${r.label}${r.page ? `, \${r.page}` : ""}`);
+        const lines = uniqueRefs.map((r, i) => `[\${${i+1}}] ${r.label}${r.page ? `, ${r.page}` : ""}`);
         refs = "\n\nReferences:\n" + lines.join("\n");
       } else {
         refs = "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
       }
     }
 
-    const finalText = (answer + refs).trim() || "No answer.";
-    return new Response(finalText, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    const finalText = answer + refs;
+    return new Response(finalText.trim() || "No answer.", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
     return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
