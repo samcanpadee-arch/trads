@@ -1,11 +1,9 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
-// Optional registry with your library vector store IDs
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-ignore: registry file may be missing in fresh setups
 import registry from "$lib/vectorstores.json";
 
-/** ---------- Helpers ---------- */
+// --- Helpers (trimmed & stable) ---
 async function uploadFileToOpenAI(file: File, apiKey: string): Promise<{ id: string; filename: string }> {
   const form = new FormData();
   form.append("purpose", "assistants");
@@ -40,7 +38,7 @@ async function attachFile(apiKey: string, vectorStoreId: string, fileId: string)
   if (!r.ok) throw new Error(`Attach file failed: ${await r.text()}`);
 }
 
-async function waitIndexed(apiKey: string, vectorStoreId: string, timeoutMs = 25000) {
+async function waitIndexed(apiKey: string, vectorStoreId: string, timeoutMs = 20000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const r = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
@@ -49,16 +47,17 @@ async function waitIndexed(apiKey: string, vectorStoreId: string, timeoutMs = 25
     if (!r.ok) throw new Error(`Poll vector store failed: ${await r.text()}`);
     const j = await r.json();
     const files = (j.data ?? []) as Array<any>;
-    if (files.length && !files.find((f) => f.status && f.status !== "completed")) return;
+    if (files.length && !files.find((f) => f.status !== "completed")) return;
     await new Promise((res) => setTimeout(res, 600));
   }
 }
 
-/** ---------- Handler ---------- */
+// --- Handler ---
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const API_KEY = privateEnv.OPENAI_API_KEY;
-    if (!API_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
+    if (!privateEnv.OPENAI_API_KEY) {
+      return new Response("Missing OPENAI_API_KEY", { status: 500 });
+    }
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
@@ -70,41 +69,33 @@ export const POST: RequestHandler = async ({ request }) => {
     const trade = (form.get("trade") as string | null)?.trim() || "";
     const brand = (form.get("brand") as string | null)?.trim() || "";
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
+
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    // Build a temporary vector store from any uploads (optional)
+    // Temp vector store from uploads (if any)
     let tempVs: string | null = null;
     if (files.length) {
-      tempVs = await createVectorStore(API_KEY, `session-${Date.now()}`);
+      tempVs = await createVectorStore(privateEnv.OPENAI_API_KEY, `session-${Date.now()}`);
       for (const f of files) {
-        const up = await uploadFileToOpenAI(f, API_KEY);
-        await attachFile(API_KEY, tempVs, up.id);
+        const up = await uploadFileToOpenAI(f, privateEnv.OPENAI_API_KEY);
+        await attachFile(privateEnv.OPENAI_API_KEY, tempVs, up.id);
       }
-      await waitIndexed(API_KEY, tempVs);
+      await waitIndexed(privateEnv.OPENAI_API_KEY, tempVs);
     }
 
-    // Include your library stores from registry (if present)
+    // Library stores from registry (optional)
     const libIds: string[] = Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
+
     const vector_store_ids = [...libIds];
     if (tempVs) vector_store_ids.push(tempVs);
 
-    // Strict, citation-first behaviour
     const SYSTEM = `
 You are a technical assistant for experienced Australian tradies.
-
-CITATION RULES (STRICT):
-- If you provide any SPECIFIC numeric values (e.g., torque, clearance, capacities, IP ratings), you MUST cite the exact doc and page/section inline, like: [1] Manual Name, p. EN-9.
-- If the uploaded/library docs do NOT contain the exact requested value, SAY SO explicitly (e.g., "Not found in the provided manuals"). Do NOT invent numbers.
-- You may add general guidance WITHOUT numbers, or describe how to find the value in the official document.
-- For compliance questions (AU): State the general principle (de-energise unless unavoidable), and cite Safe Work Australia Model Code and/or AS/NZS 3000 sections when used. If a clause number is NOT retrieved, do not guess one.
-
-SOURCING:
-- Prefer uploaded files and library vector stores; otherwise you may use general knowledge BUT avoid numeric specifics without a cited source.
-- When you used documents, add a short "Sources" section at the end listing [n] Doc name and page(s).
-
-STYLE:
-- Be practical and technical.
-- Finish with a short checklist.
+- Use retrieved manuals/standards when available.
+- When you rely on a document, cite inline like: [1] Document Name, p. 12 (or section).
+- If you cannot find an exact value in provided/retrieved docs, say so plainly. Do NOT invent numbers.
+- Otherwise, you may answer from general knowledge (but still avoid specific numbers if not grounded).
+- Keep answers practical and technical. End with a brief checklist.
 `.trim();
 
     const userText = [
@@ -113,11 +104,16 @@ STYLE:
       `Question: ${message}`
     ].filter(Boolean).join("\n");
 
+    // Build tools (simple file_search only if we have any vector stores)
     const tools: any[] = vector_store_ids.length ? [{ type: "file_search", vector_store_ids }] : [];
 
+    // Call Responses API (simple, no text.format)
     const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
-      headers: { Authorization: `Bearer ${API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${privateEnv.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         input: [
@@ -126,7 +122,7 @@ STYLE:
         ],
         tools,
         tool_choice: "auto",
-        temperature: 0.1
+        temperature: 0.2
       })
     });
 
@@ -138,6 +134,7 @@ STYLE:
     const data = await r.json();
     const out =
       (typeof data.output_text === "string" && data.output_text.trim()) ||
+      // fallback: try to stitch text parts
       (Array.isArray(data.output)
         ? data.output
             .flatMap((o: any) => (o?.content || []))
@@ -151,7 +148,7 @@ STYLE:
       headers: { "Content-Type": "text/plain; charset=utf-8" }
     });
   } catch (e: any) {
-    console.error("Assistant strict-citation handler error", e);
-    return new Response("Internal Error", { status: 500 });
+    console.error("Assistant simple handler error", e);
+    return new Response(`Internal Error`, { status: 500 });
   }
 };
