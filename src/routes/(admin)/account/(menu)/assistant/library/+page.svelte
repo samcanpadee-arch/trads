@@ -1,47 +1,117 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
   let files: File[] = [];
+  let uploading = false;
+  let results: Array<{ name: string; file_id: string; action: string; attached_to: string[] }> = [];
+  let errorMsg = "";
+
+  function onPick(e: Event) {
+    const input = e.target as HTMLInputElement;
+    files = Array.from(input.files ?? []);
+  }
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer?.files?.length) {
+      files = Array.from(e.dataTransfer.files);
+    }
+  }
+
+  function onDragOver(e: DragEvent) {
+    e.preventDefault();
+  }
+
+  async function uploadAll(e: Event) {
+    e.preventDefault();
+    errorMsg = "";
+    results = [];
+    if (!files.length) return;
+    uploading = true;
+    try {
+      const fd = new FormData();
+      for (const f of files) fd.append("files", f);
+      const r = await fetch("/api/library/upload", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error || "Upload failed");
+      results = j.results || [];
+    } catch (err: any) {
+      errorMsg = err?.message || String(err);
+    } finally {
+      uploading = false;
+    }
+  }
 </script>
 
-<section class="max-w-3xl mx-auto space-y-4">
-  <header class="flex items-center justify-between">
-    <h1 class="text-2xl font-semibold">Assistant Library (Admin)</h1>
+<section class="flex flex-col gap-6">
+  <header class="flex flex-col gap-1">
+    <h1 class="text-2xl font-semibold">Library Uploader</h1>
+    <p class="text-sm opacity-70">
+      Add manuals, standards, and guides to your master library (deduplicated by content hash).
+      Supported: PDF, TXT, MD.
+    </p>
   </header>
 
-  <p class="text-sm opacity-80">
-    Upload manuals, standards, or guides to the central library. Accepted: PDF, TXT.
-  </p>
-
-  <form
-    method="post"
-    action="/api/assistant/library/ingest"
-    enctype="multipart/form-data"
-    class="card bg-base-100 border"
-    use:enhance
-  >
+  <form class="card bg-base-100 border" on:submit|preventDefault={uploadAll}>
     <div class="card-body space-y-4">
-      <div>
-        <label class="label" for="files">
-          <span class="label-text">Select files</span>
-        </label>
+      <div class="form-control">
+        <label class="label" for="lib-files"><span class="label-text font-medium">Select files</span></label>
         <input
-          id="files"
-          name="files"
+          id="lib-files"
+          class="file-input file-input-bordered w-full"
           type="file"
           multiple
-          class="file-input file-input-bordered w-full"
-          on:change={(e) => (files = Array.from((e.target as HTMLInputElement).files ?? []))}
-        />
-        <label class="label">
-          <span class="label-text-alt opacity-70">
-            Tip: add clear filenames (brand_model_doc-type.pdf) to help search quality.
-          </span>
-        </label>
+          accept=".pdf,.txt,.md"
+          on:change={onPick}
+        >
       </div>
 
-      <div class="flex items-center justify-end gap-2">
-        <button type="submit" class="btn btn-primary">Upload to Library</button>
+      <div
+        class="rounded-lg border border-dashed p-6 text-center"
+        on:drop={onDrop}
+        on:dragover={onDragOver}
+        aria-label="Drag and drop files here"
+      >
+        <p class="text-sm">Drag &amp; drop files here, or use the picker above.</p>
+        {#if files.length}
+          <p class="text-xs mt-2 opacity-70">{files.length} file{files.length > 1 ? 's' : ''} ready</p>
+        {/if}
       </div>
+
+      <div class="flex items-center gap-2">
+        <button class="btn btn-primary" disabled={uploading || !files.length}>
+          {#if uploading}Uploading…{/if}
+          {#if !uploading}Upload to Library{/if}
+        </button>
+        <a href="/account/assistant" class="btn btn-ghost ml-auto">← Back</a>
+      </div>
+
+      {#if errorMsg}
+        <div class="alert alert-error text-sm"><span>{errorMsg}</span></div>
+      {/if}
+
+      {#if results.length}
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>File ID</th>
+                <th>Action</th>
+                <th>Attached to Stores</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each results as r}
+                <tr>
+                  <td class="break-all">{r.name}</td>
+                  <td class="break-all">{r.file_id}</td>
+                  <td>{r.action}</td>
+                  <td class="break-all">{r.attached_to?.join(", ")}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
     </div>
   </form>
 </section>
