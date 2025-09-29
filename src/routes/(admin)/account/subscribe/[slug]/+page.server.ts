@@ -45,6 +45,7 @@ export const load: PageServerLoad = async ({
   let checkoutUrl
   try {
     const stripeSession = await stripe.checkout.sessions.create({
+  ...((params.slug === 'price_1OtoRqKLg7O2VGgDn5t5kB4n' || params.slug === 'price_1OtoSZKLg7O2VGgDU66pqdqm') ? { subscription_data: { trial_period_days: 14 } } : {}),
       line_items: [
         {
           price: params.slug,
