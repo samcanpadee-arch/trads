@@ -93,3 +93,14 @@ export const pricingPlans: PricingPlan[] = [
 export const planById = Object.fromEntries(pricingPlans.map(p => [p.id, p]));
 
 export const defaultPlanId: PlanId = 'standard';
+
+
+/**
+ * Legacy export: a slim array for places like /account/billing that still expect
+ * { id, name, stripe_price_id } style objects.
+ */
+export const legacyPlans = pricingPlans.map(p => ({
+  id: p.id,
+  name: p.name,
+  stripe_price_id: p.stripe_price_id
+}));
