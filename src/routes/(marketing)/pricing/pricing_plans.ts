@@ -91,3 +91,5 @@ export const pricingPlans: PricingPlan[] = [
 ];
 
 export const planById = Object.fromEntries(pricingPlans.map(p => [p.id, p]));
+
+export const defaultPlanId: PlanId = 'standard';
