@@ -1,40 +1,45 @@
 /**
- * Pricing plans config used by the Pricing page UI.
- * Keep structure minimal to avoid breaking template code.
- * NOTE: Update the stripe_price_id fields to your real Price IDs.
+ * Final pricing config: two plans, monthly + yearly IDs.
+ * IMPORTANT:
+ * - Keep `stripe_price_id` as MONTHLY (string) so legacy code still works.
+ * - `stripe_price_id_year` is used by the new toggle-aware UI.
  */
-
 export type PlanId = 'standard' | 'pro';
-export type BillingInterval = 'month' | 'year';
 
 export interface PricingPlan {
   id: PlanId;
   name: string;
-  tagline: string;
-  // The UI reads this short description list
+  subtitle: string;
   bullets: string[];
-  // Shown on the card price line; amounts are for display only
   display: {
     monthAud: number;
     yearAud: number;
-    // text shown near the yearly toggle (e.g., "2 months free")
     yearlySavingsLabel?: string;
-    trialLabel?: string; // "14-day free trial"
+    trialLabel?: string; // e.g., "14-day free trial"
   };
-  // Stripe Price IDs for Checkout (use null to disable a button)
-  stripe_price_id: {
-    month: string | null;
-    year: string | null;
-  };
-  // Feature list shown in the comparison table / FAQ snippets
-  features: string[];
+  // Legacy monthly price id (string) — kept for backward compatibility
+  stripe_price_id: string;
+  // NEW: yearly price id (string or null if not set)
+  stripe_price_id_year: string | null;
+  // Features for comparison table
+  features: {
+    label: string;
+    standard: boolean | string;
+    pro: boolean | string;
+  }[];
 }
+
+// 👉 UPDATE THESE with your real Stripe Price IDs (monthly & yearly)
+const STD_MONTHLY = 'price_1OtoRqKLg7O2VGgDn5t5kB4n';
+const STD_YEARLY  = null; // e.g., 'price_xxx'; leave null until you create it
+const PRO_MONTHLY = 'price_1OtoSZKLg7O2VGgDU66pqdqm';
+const PRO_YEARLY  = null; // e.g., 'price_yyy'
 
 export const pricingPlans: PricingPlan[] = [
   {
     id: 'standard',
     name: 'Standard',
-    tagline: 'Tools + Chat for busy tradies',
+    subtitle: 'Tools + AI Chat for busy tradies',
     bullets: [
       'Unlimited Tools (quotes, proposals, socials)',
       'AI Chat for job notes & emails',
@@ -46,25 +51,25 @@ export const pricingPlans: PricingPlan[] = [
       yearlySavingsLabel: '2 months free',
       trialLabel: '14-day free trial'
     },
-    stripe_price_id: {
-      // ⬇️ replace with your real Standard price IDs
-      month: 'price_1OtoRqKLg7O2VGgDn5t5kB4n',
-      year: null // add your yearly price id when ready
-    },
+    stripe_price_id: STD_MONTHLY,
+    stripe_price_id_year: STD_YEARLY,
     features: [
-      'All Tools (proposal, post, quote generators)',
-      'General AI Chat',
-      'Email support'
+      { label: 'Proposal / Quote generators', standard: true, pro: true },
+      { label: 'Social post generator', standard: true, pro: true },
+      { label: 'General AI Chat', standard: true, pro: true },
+      { label: 'AI Assistant (library-powered)', standard: false, pro: true },
+      { label: 'Upload & search your own docs', standard: false, pro: true },
+      { label: 'Email support', standard: true, pro: true }
     ]
   },
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Adds the AI Assistant (library-powered)',
+    subtitle: 'Everything in Standard + the AI Assistant',
     bullets: [
-      'Everything in Standard',
       'AI Assistant answers from your manuals, quotes & emails',
-      'Upload & search your own docs'
+      'Upload & search your own docs',
+      'Best for tradies who live in their paperwork'
     ],
     display: {
       monthAud: 79,
@@ -72,19 +77,17 @@ export const pricingPlans: PricingPlan[] = [
       yearlySavingsLabel: '2 months free',
       trialLabel: '14-day free trial'
     },
-    stripe_price_id: {
-      // ⬇️ replace with your real Pro price IDs
-      month: 'price_1OtoSZKLg7O2VGgDU66pqdqm',
-      year: null // add your yearly price id when ready
-    },
+    stripe_price_id: PRO_MONTHLY,
+    stripe_price_id_year: PRO_YEARLY,
     features: [
-      'All Tools + AI Chat',
-      'AI Assistant (library-powered)',
-      'Email support'
+      { label: 'Proposal / Quote generators', standard: true, pro: true },
+      { label: 'Social post generator', standard: true, pro: true },
+      { label: 'General AI Chat', standard: true, pro: true },
+      { label: 'AI Assistant (library-powered)', standard: false, pro: 'Included' },
+      { label: 'Upload & search your own docs', standard: false, pro: 'Included' },
+      { label: 'Email support', standard: true, pro: 'Priority' }
     ]
   }
 ];
 
-// Optional helpers some templates use
 export const planById = Object.fromEntries(pricingPlans.map(p => [p.id, p]));
-export const defaultPlanId: PlanId = 'standard';
