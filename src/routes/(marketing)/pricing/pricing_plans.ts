@@ -1,43 +1,90 @@
-export const defaultPlanId = "free"
+/**
+ * Pricing plans config used by the Pricing page UI.
+ * Keep structure minimal to avoid breaking template code.
+ * NOTE: Update the stripe_price_id fields to your real Price IDs.
+ */
 
-export const pricingPlans = [
+export type PlanId = 'standard' | 'pro';
+export type BillingInterval = 'month' | 'year';
+
+export interface PricingPlan {
+  id: PlanId;
+  name: string;
+  tagline: string;
+  // The UI reads this short description list
+  bullets: string[];
+  // Shown on the card price line; amounts are for display only
+  display: {
+    monthAud: number;
+    yearAud: number;
+    // text shown near the yearly toggle (e.g., "2 months free")
+    yearlySavingsLabel?: string;
+    trialLabel?: string; // "14-day free trial"
+  };
+  // Stripe Price IDs for Checkout (use null to disable a button)
+  stripe_price_id: {
+    month: string | null;
+    year: string | null;
+  };
+  // Feature list shown in the comparison table / FAQ snippets
+  features: string[];
+}
+
+export const pricingPlans: PricingPlan[] = [
   {
-    id: "free",
-    name: "Free",
-    description: "A free plan to get you started!",
-    price: "$0",
-    priceIntervalName: "per month",
-    stripe_price_id: null,
-    features: ["MIT Licence", "Fast Performance", "Stripe Integration"],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description:
-      "A plan to test the purchase experience. Try buying this with the test credit card 4242424242424242.",
-    price: "$29",
-    priceIntervalName: "per month",
-    stripe_price_id: "price_1OtoRqKLg7O2VGgDn5t5kB4n",
-    stripe_product_id: "prod_PjGzjqrk4e9jqn",
-    features: [
-      "Everything in Free",
-      "Support us with fake money",
-      "Test the purchase experience",
+    id: 'standard',
+    name: 'Standard',
+    tagline: 'Tools + Chat for busy tradies',
+    bullets: [
+      'Unlimited Tools (quotes, proposals, socials)',
+      'AI Chat for job notes & emails',
+      'Single user, cancel anytime'
     ],
+    display: {
+      monthAud: 29,
+      yearAud: 290,
+      yearlySavingsLabel: '2 months free',
+      trialLabel: '14-day free trial'
+    },
+    stripe_price_id: {
+      // ⬇️ replace with your real Standard price IDs
+      month: 'price_1OtoRqKLg7O2VGgDn5t5kB4n',
+      year: null // add your yearly price id when ready
+    },
+    features: [
+      'All Tools (proposal, post, quote generators)',
+      'General AI Chat',
+      'Email support'
+    ]
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
-    description:
-      "A plan to test the upgrade experience. Try buying this with the test credit card 4242424242424242.",
-    price: "$49",
-    priceIntervalName: "per month",
-    stripe_price_id: "price_1OtoSZKLg7O2VGgDU66pqdqm",
-    stripe_product_id: "prod_PjH0rFWuElVBjW",
-    features: [
-      "Everything in Pro",
-      "Try the 'upgrade plan' UX",
-      "Still actually free!",
+    id: 'pro',
+    name: 'Pro',
+    tagline: 'Adds the AI Assistant (library-powered)',
+    bullets: [
+      'Everything in Standard',
+      'AI Assistant answers from your manuals, quotes & emails',
+      'Upload & search your own docs'
     ],
-  },
-]
+    display: {
+      monthAud: 79,
+      yearAud: 790,
+      yearlySavingsLabel: '2 months free',
+      trialLabel: '14-day free trial'
+    },
+    stripe_price_id: {
+      // ⬇️ replace with your real Pro price IDs
+      month: 'price_1OtoSZKLg7O2VGgDU66pqdqm',
+      year: null // add your yearly price id when ready
+    },
+    features: [
+      'All Tools + AI Chat',
+      'AI Assistant (library-powered)',
+      'Email support'
+    ]
+  }
+];
+
+// Optional helpers some templates use
+export const planById = Object.fromEntries(pricingPlans.map(p => [p.id, p]));
+export const defaultPlanId: PlanId = 'standard';
