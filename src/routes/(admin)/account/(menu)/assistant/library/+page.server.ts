@@ -1,28 +1,23 @@
 import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { ADMIN_EMAILS } from '$lib/config/admin';
 
-export const load: PageServerLoad = async ({ cookies, url }) => {
-  const required = env.ADMIN_LIBRARY_KEY || '';
-  if (!required) throw error(500, 'Missing ADMIN_LIBRARY_KEY');
+export const load: PageServerLoad = async (event) => {
+  const localsAny = event.locals as any;
 
-  const cookieKey = cookies.get('admin_library_key') || '';
-  if (cookieKey === required) {
-    return {};
+  // Supabase helpers typically put the user on locals.session.user
+  const email: string | undefined =
+    localsAny?.session?.user?.email ??
+    localsAny?.user?.email ??
+    undefined;
+
+  if (!email) {
+    throw redirect(302, '/login?next=/account/assistant/library');
   }
 
-  // One-time bootstrap: allow ?key=... to set the cookie
-  const q = url.searchParams.get('key');
-  if (q && q === required) {
-    cookies.set('admin_library_key', q, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: true,
-      maxAge: 60 * 60 * 24 * 30 // 30 days
-    });
-    throw redirect(303, url.pathname);
+  if (!ADMIN_EMAILS.has(email)) {
+    throw error(403, 'Forbidden: admin only');
   }
 
-  throw error(403, 'Not authorised');
+  return {};
 };
