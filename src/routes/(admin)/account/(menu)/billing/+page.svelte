@@ -6,7 +6,7 @@
   import {
     pricingPlans,
     defaultPlanId,
-  } from "../../../../(marketing)/pricing/pricing_plans"
+  } from "../../../../(marketing)/pricing/pricing_plans.compat"
 
   let adminSection: Writable<string> = getContext("adminSection")
   adminSection.set("billing")
