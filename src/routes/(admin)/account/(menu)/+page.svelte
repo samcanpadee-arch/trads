@@ -111,12 +111,7 @@
 </section>
 
 <!-- Checkout success banner (client-only, safe) -->
-<script>
-  import { page } from '$app/stores';
-  $: sessionId = $page.url.searchParams.get('session_id');
-</script>
-
-{#if sessionId}
+{#if typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('session_id')}
   <div class="alert alert-success mt-4">
     <span>🎉 You’re all set! Your subscription is active. You can manage it anytime in <a class="link" href="/account/billing">Billing</a>.</span>
   </div>
