@@ -9,7 +9,6 @@
       trialEnds: string | null;
       nextBill: string | null;
     } | null;
-    debug?: any;
   };
 
   function fmt(iso: string | null) {
@@ -54,11 +53,4 @@
       </p>
     {/if}
   </div>
-
-  {#if data.debug}
-    <details class="mt-6">
-      <summary class="cursor-pointer text-sm opacity-70">Debug details</summary>
-      <pre class="mt-3 text-xs bg-base-200 p-3 rounded overflow-x-auto">{JSON.stringify(data.debug, null, 2)}</pre>
-    </details>
-  {/if}
 </section>
