@@ -1,215 +1,176 @@
 <script lang="ts">
-  import PricingModule from "./pricing_module.svelte"
-  import { WebsiteName } from "./../../../config"
+  // Svelte 5 runes state for the toggle
+  let billingInterval = $state<'month' | 'year'>('month');
 
-  type PlanFeatureRow = {
-    name: string
-    freeIncluded?: boolean
-    proIncluded?: boolean
-    freeString?: string
-    proString?: string
-    header?: boolean
+  // Stripe Price IDs
+  const STANDARD_MONTHLY = 'price_1OtoRqKLg7O2VGgDn5t5kB4n';
+  const STANDARD_YEARLY  = 'price_1OtoWYKLg7O2VGgDUgm7hmLL';
+  const PRO_MONTHLY      = 'price_1OtoSZKLg7O2VGgDU66pqdqm';
+  const PRO_YEARLY       = 'price_1OtoXXKLg7O2VGgD6EUiD0Aw';
+
+  // Display amounts
+  const PRICE = {
+    standard: { month: 'A$29.00', year: 'A$290.00', monthlyNumber: 29, yearlyNumber: 290 },
+    pro:      { month: 'A$79.00', year: 'A$790.00', monthlyNumber: 79, yearlyNumber: 790 }
+  };
+
+  // Savings copy (2 months free)
+  function savings(plan: 'standard' | 'pro') {
+    const save = PRICE[plan].monthlyNumber * 2;
+    return `2 months free (save A$${save})`;
   }
 
-  const planFeatures: PlanFeatureRow[] = [
-    {
-      name: "Section 1",
-      header: true,
-    },
-    {
-      name: "Feature 1",
-      freeIncluded: true,
-      proIncluded: true,
-    },
-    {
-      name: "Feature 2",
-      freeIncluded: false,
-      proIncluded: true,
-    },
-    {
-      name: "Feature 3",
-      freeString: "3",
-      proString: "Unlimited",
-    },
-    {
-      name: "Section 2",
-      header: true,
-    },
-    {
-      name: "Feature 4",
-      freeIncluded: true,
-      proIncluded: true,
-    },
-    {
-      name: "Feature 5",
-      freeIncluded: false,
-      proIncluded: true,
-    },
-  ]
+  function isYearly() {
+    return billingInterval === 'year';
+  }
+
+  function hrefStandard() {
+    return `/account/subscribe/${isYearly() ? STANDARD_YEARLY : STANDARD_MONTHLY}`;
+  }
+  function hrefPro() {
+    return `/account/subscribe/${isYearly() ? PRO_YEARLY : PRO_MONTHLY}`;
+  }
+
+  function toggleBtn(active: boolean) {
+    return `btn btn-sm ${active ? 'bg-primary text-primary-content' : ''}`;
+  }
 </script>
 
 <svelte:head>
   <title>Pricing</title>
-  <meta name="description" content="Pricing - {WebsiteName}" />
 </svelte:head>
 
-<div class="min-h-[70vh] pb-8 pt-[5vh] px-4">
-  <h1 class="text-3xl font-bold text-center">Pricing</h1>
-  <h2 class="text-xl text-center text-slate-500 mt-1 pb-3">
-    Totally free, scale to millions of users
-  </h2>
+<!-- Hero -->
+<section class="max-w-4xl mx-auto px-4 pt-10">
+  <h1 class="text-3xl font-bold text-center">Straightforward pricing for Aussie tradies</h1>
+  <p class="mt-3 text-gray-600 text-center">
+    Save hours on quotes, proposals, job notes and emails. Upgrade to Pro to unlock the AI Assistant — answers from your manuals, standards and past jobs.
+  </p>
+</section>
 
-  <div class="w-full my-8">
-    <PricingModule callToAction="Get Started" highlightedPlanId="pro" />
-    <h1 class="text-2xl font-bold text-center mt-24">Pricing FAQ</h1>
-    <div class="flex place-content-center">
-      <div class="join join-vertical max-w-xl py-6 mx-auto">
-        <div class="collapse collapse-arrow join-item border border-primary">
-          <input type="radio" name="faq-accordion" />
-          <div class="collapse-title text-lg font-medium">
-            Is this template free to use?
+<!-- Toggle + Note -->
+<section class="max-w-5xl mx-auto px-4 mt-8">
+  <div class="flex items-center justify-center gap-2">
+    <button class={toggleBtn(billingInterval === 'month')} onclick={() => billingInterval = 'month'}>Monthly</button>
+    <button class={toggleBtn(billingInterval === 'year')}  onclick={() => billingInterval = 'year'}>Yearly</button>
+  </div>
+  <p class="mt-3 text-sm text-gray-500 text-center">
+    Prices include GST. Single user per account. Cancel anytime. Billing by Stripe.
+  </p>
+</section>
+
+<!-- Cards -->
+<section class="max-w-6xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+    <!-- Free -->
+    <div class="card card-bordered shadow-lg h-full">
+      <div class="card-body flex flex-col">
+        <h3 class="card-title">Free</h3>
+        <p class="text-gray-600">Good for getting started</p>
+
+        <div class="pt-4">
+          <div class="text-3xl font-bold">
+            A$0.00 <span class="text-base font-normal text-gray-400">/ month</span>
           </div>
-          <div class="collapse-content">
-            <p>Yup! This template is free to use for any project.</p>
-          </div>
+          <div class="text-xs mt-1 text-gray-500">No credit card required</div>
         </div>
-        <div class="collapse collapse-arrow join-item border border-primary">
-          <input type="radio" name="faq-accordion" />
-          <div class="collapse-title text-lg font-medium">
-            Why does a free template have a pricing page?
-          </div>
-          <div class="collapse-content">
-            <p>
-              The pricing page is part of the boilerplate. It shows how the
-              pricing page integrates into the billing portal and the Stripe
-              Checkout flows.
-            </p>
-          </div>
-        </div>
-        <div class="collapse collapse-arrow join-item border border-primary">
-          <input type="radio" name="faq-accordion" />
-          <div class="collapse-title text-lg font-medium">
-            What license is the template under?
-          </div>
-          <div class="collapse-content">
-            <p>The template is under the MIT license.</p>
-          </div>
-        </div>
-        <div class="collapse collapse-arrow join-item border border-primary">
-          <input type="radio" name="faq-accordion" />
-          <div class="collapse-title text-lg font-medium">
-            Can I try out purchase flows without real a credit card?
-          </div>
-          <div class="collapse-content">
-            <p>
-              Our demo page <a href="https://saasstarter.work" class="link"
-                >SaasStarter.work</a
-              > has a functional demo page, using Stripe's test environment.
-            </p>
-            <p class="mt-4">
-              You can use the credit card number 4242 4242 4242 4242 with any
-              future expiry date to test the payment and upgrade flows.
-            </p>
-          </div>
+
+        <ul class="mt-4 text-sm space-y-1">
+          <li>✅ Access basic tools</li>
+          <li>✅ Community support</li>
+        </ul>
+
+        <div class="mt-auto pt-6">
+          <a class="btn btn-outline w-full" href="/account">Get started</a>
         </div>
       </div>
     </div>
 
-    <svg style="display:none" version="2.0">
-      <defs>
-        <symbol
-          id="checkcircle"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          fill="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path
-            d="M16.417 10.283A7.917 7.917 0 1 1 8.5 2.366a7.916 7.916 0 0 1 7.917 7.917zm-4.105-4.498a.791.791 0 0 0-1.082.29l-3.828 6.63-1.733-2.08a.791.791 0 1 0-1.216 1.014l2.459 2.952a.792.792 0 0 0 .608.285.83.83 0 0 0 .068-.003.791.791 0 0 0 .618-.393L12.6 6.866a.791.791 0 0 0-.29-1.081z"
-          />
-        </symbol>
-      </defs>
-    </svg>
+    <!-- Standard -->
+    <div class="card card-bordered shadow-lg h-full border-primary">
+      <div class="card-body flex flex-col">
+        <div class="flex items-center justify-between">
+          <h3 class="card-title">Standard</h3>
+          {#if isYearly()}
+            <span class="badge badge-primary badge-outline whitespace-nowrap">{savings('standard')}</span>
+          {/if}
+        </div>
+        <p class="text-gray-600">Tools + AI Chat for busy tradies</p>
 
-    <svg style="display:none" version="2.0">
-      <defs>
-        <symbol id="nocircle" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm4,11H8a1,1,0,0,1,0-2h8a1,1,0,0,1,0,2Z"
-          />
-        </symbol>
-      </defs>
-    </svg>
+        <div class="pt-4">
+          <div class="text-3xl font-bold">
+            {isYearly() ? PRICE.standard.year : PRICE.standard.month}
+            <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
+          </div>
+          <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
+        </div>
 
-    <h1 class="text-2xl font-bold text-center mt-16">Plan Features</h1>
-    <h2 class="text-xl text-center text-slate-500 mt-1 pb-3">
-      Example feature table
-    </h2>
+        <ul class="mt-4 text-sm space-y-1">
+          <li>✅ Unlimited Tools (quotes, proposals, socials)</li>
+          <li>✅ AI Chat for job notes & emails</li>
+          <li>✅ Single user, cancel anytime</li>
+        </ul>
 
-    <div class="overflow-visible mx-auto max-w-xl mt-4">
-      <table class="table">
-        <thead
-          class="text-lg sticky top-0 bg-base-100 bg-opacity-50 z-10 backdrop-blur-sm"
-        >
-          <tr>
-            <th></th>
-            <th class="text-center">Free</th>
-            <th class="text-center">Pro</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each planFeatures as feature}
-            {#if feature.header}
-              <tr class="bg-base-200 font-bold">
-                <td colspan="3">{feature.name} </td>
-              </tr>
-            {:else}
-              <tr class="relative">
-                <td>{feature.name} </td>
-                <td class="text-center">
-                  {#if feature.freeString}
-                    {feature.freeString}
-                  {:else if feature.freeIncluded}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-8 h-8 ml-2 inline text-success"
-                    >
-                      <use href="#checkcircle" />
-                    </svg>
-                  {:else}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-[26px] h-[26px] inline text-base-200"
-                    >
-                      <use href="#nocircle" />
-                    </svg>
-                  {/if}
-                </td>
-                <td class="text-center">
-                  {#if feature.proString}
-                    {feature.proString}
-                  {:else if feature.proIncluded}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-8 h-8 ml-2 inline text-success"
-                    >
-                      <use href="#checkcircle" />
-                    </svg>
-                  {:else}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-[26px] h-[26px] inline text-base-200"
-                    >
-                      <use href="#nocircle" />
-                    </svg>
-                  {/if}
-                </td>
-              </tr>
-            {/if}
-          {/each}
-        </tbody>
-      </table>
+        <div class="mt-auto pt-6">
+          <a class="btn btn-primary w-full" href={hrefStandard()}>Get started</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro -->
+    <div class="card card-bordered shadow-lg h-full">
+      <div class="card-body flex flex-col">
+        <div class="flex items-center justify-between">
+          <h3 class="card-title">Pro</h3>
+          {#if isYearly()}
+            <span class="badge badge-primary badge-outline whitespace-nowrap">{savings('pro')}</span>
+          {/if}
+        </div>
+        <p class="text-gray-600">Everything in Standard + the AI Assistant</p>
+
+        <div class="pt-4">
+          <div class="text-3xl font-bold">
+            {isYearly() ? PRICE.pro.year : PRICE.pro.month}
+            <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
+          </div>
+          <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
+        </div>
+
+        <ul class="mt-4 text-sm space-y-1">
+          <li>✅ AI Assistant answers from your manuals, quotes & emails</li>
+          <li>✅ Upload & search your own docs</li>
+          <li>✅ Best for tradies who live in their paperwork</li>
+        </ul>
+
+        <div class="mt-auto pt-6">
+          <a class="btn btn-primary w-full" href={hrefPro()}>Get started</a>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+</section>
+
+<!-- What's included (now has Free column too) -->
+<section class="max-w-6xl mx-auto px-4 pb-16">
+  <h2 class="text-2xl font-semibold mb-4 text-center">What’s included</h2>
+  <div class="overflow-x-auto">
+    <table class="table w-full">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Free</th>
+          <th>Standard</th>
+          <th>Pro</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Proposal / Quote generators</td><td>—</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Social post generator</td><td>—</td><td>✅</td><td>✅</td></tr>
+        <tr><td>General AI Chat</td><td>—</td><td>✅</td><td>✅</td></tr>
+        <tr><td>AI Assistant (library-powered)</td><td>—</td><td>—</td><td>✅</td></tr>
+        <tr><td>Upload &amp; search your own docs</td><td>—</td><td>—</td><td>✅</td></tr>
+        <tr><td>Email support</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
