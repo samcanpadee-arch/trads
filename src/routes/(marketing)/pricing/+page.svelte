@@ -67,3 +67,43 @@
     <p class="text-gray-600">Yes — all prices include GST.</p>
   </div>
 </section>
+
+<!-- Interval CTAs (simple, safe, no JS changes) -->
+<section class="max-w-5xl mx-auto px-4 py-8">
+  <div class="rounded-xl border border-gray-200 p-6">
+    <h2 class="text-xl font-semibold mb-4">Choose your billing interval</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Standard -->
+      <div class="p-4 rounded-lg bg-base-200">
+        <div class="font-semibold mb-2">Standard</div>
+        <div class="flex items-center gap-2">
+          <a class="btn btn-primary btn-sm"
+             href="/account/subscribe/price_1OtoRqKLg7O2VGgDn5t5kB4n">
+            Get Standard — Monthly (A$29)
+          </a>
+          <a class="btn btn-outline btn-sm"
+             href="/account/subscribe/price_1OtoWYKLg7O2VGgDUgm7hmLL">
+            Yearly (A$290)
+          </a>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">14-day free trial. Prices include GST.</p>
+      </div>
+
+      <!-- Pro -->
+      <div class="p-4 rounded-lg bg-base-200">
+        <div class="font-semibold mb-2">Pro</div>
+        <div class="flex items-center gap-2">
+          <a class="btn btn-primary btn-sm"
+             href="/account/subscribe/price_1OtoSZKLg7O2VGgDU66pqdqm">
+            Get Pro — Monthly (A$79)
+          </a>
+          <a class="btn btn-outline btn-sm"
+             href="/account/subscribe/price_1OtoXXKLg7O2VGgD6EUiD0Aw">
+            Yearly (A$790)
+          </a>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">14-day free trial. Prices include GST.</p>
+      </div>
+    </div>
+  </div>
+</section>
