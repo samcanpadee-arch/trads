@@ -1,46 +1,29 @@
-import { error, redirect } from "@sveltejs/kit"
-import {
-  fetchSubscription,
-  getOrCreateCustomerId,
-} from "../../subscription_helpers.server"
-import type { PageServerLoad } from "./$types"
+import { PRIVATE_STRIPE_API_KEY } from "$env/static/private";
+import Stripe from "stripe";
+import type { PageServerLoad } from "./$types";
+import { redirect } from "@sveltejs/kit";
+import { getOrCreateCustomerId } from "../../subscription_helpers.server";
 
-export const load: PageServerLoad = async ({
-  locals: { safeGetSession, supabaseServiceRole },
-}) => {
-  const { session, user } = await safeGetSession()
-  if (!session || !user?.id) {
-    redirect(303, "/login")
-  }
+const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
 
-  const { error: idError, customerId } = await getOrCreateCustomerId({
-    supabaseServiceRole,
-    user,
-  })
+export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supabaseServiceRole } }) => {
+  const { session, user } = await safeGetSession();
+  if (!session) redirect(303, "/login");
+
+  const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
   if (idError || !customerId) {
-    console.error("Error creating customer id", idError)
-    error(500, {
-      message: "Unknown error. If issue persists, please contact us.",
-    })
+    // Don’t crash — just render the page with no portalUrl, the button will be disabled.
+    return { portalUrl: null };
   }
 
-  const {
-    primarySubscription,
-    hasEverHadSubscription,
-    error: fetchErr,
-  } = await fetchSubscription({
-    customerId,
-  })
-  if (fetchErr) {
-    console.error("Error fetching subscription", fetchErr)
-    error(500, {
-      message: "Unknown error. If issue persists, please contact us.",
-    })
+  try {
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${url.origin}/account/billing`
+    });
+    return { portalUrl: portalSession.url ?? null };
+  } catch (e) {
+    console.error("Billing portal error:", e);
+    return { portalUrl: null };
   }
-
-  return {
-    isActiveCustomer: !!primarySubscription,
-    hasEverHadSubscription,
-    currentPlanId: primarySubscription?.appSubscription?.id,
-  }
-}
+};
