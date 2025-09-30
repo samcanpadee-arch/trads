@@ -1,0 +1,44 @@
+import type { LayoutServerLoad } from "./$types";
+import { redirect } from "@sveltejs/kit";
+import { fetchSubscription, getOrCreateCustomerId } from "./subscription_helpers.server";
+
+export const load: LayoutServerLoad = async ({ url, locals: { safeGetSession, supabaseServiceRole } }) => {
+  const { session, user } = await safeGetSession();
+  if (!session) throw redirect(303, "/login");
+
+  // 1) Make sure a profile row exists (we quietly upsert, no user friction)
+  try {
+    await supabaseServiceRole
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          full_name: (user.user_metadata?.full_name ?? null) as string | null,
+          company_name: (user.user_metadata?.company_name ?? null) as string | null
+        },
+        { onConflict: "id" }
+      );
+  } catch (e) {
+    console.error("profile upsert failed in account layout", e);
+  }
+
+  // 2) Let these routes through WITHOUT subscription checks to avoid loops
+  const path = url.pathname;
+  const isPlanSelect = path.endsWith("/account/select_plan");
+  const isSubscribeFlow = path.includes("/account/subscribe/");
+  if (isPlanSelect || isSubscribeFlow) return {};
+
+  // 3) For all other /account/* pages, require an active subscription
+  try {
+    const { customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
+    if (!customerId) throw redirect(303, "/account/select_plan");
+
+    const { primarySubscription } = await fetchSubscription({ customerId });
+    if (!primarySubscription) throw redirect(303, "/account/select_plan");
+  } catch (e) {
+    console.error("subscription check failed in account layout", e);
+    throw redirect(303, "/account/select_plan");
+  }
+
+  return {};
+};

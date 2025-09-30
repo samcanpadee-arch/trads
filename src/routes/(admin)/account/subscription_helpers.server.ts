@@ -3,7 +3,7 @@ import type { Database } from "../../../DatabaseDefinitions"
 
 import { PRIVATE_STRIPE_API_KEY } from "$env/static/private"
 import Stripe from "stripe"
-import { pricingPlans } from "../../(marketing)/pricing/pricing_plans"
+import { pricingPlans } from "../../(marketing)/pricing/pricing_plans.compat"
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" })
 
 export const getOrCreateCustomerId = async ({
@@ -110,6 +110,9 @@ export const fetchSubscription = async ({
       return {
         error:
           "Stripe subscription does not have matching app subscription in pricing_plans.ts (via product id match)",
+          // SAFETY: if we cannot map product/price to an app plan, do not 500.
+          // Fall back to a harmless "no plan" shape; let UI show upgrade CTA.
+          return { primarySubscription: null, appPlan: null };
       }
     }
   }

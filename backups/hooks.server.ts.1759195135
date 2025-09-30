@@ -1,0 +1,14 @@
+import type { Handle } from "@sveltejs/kit";
+
+// If you already had a handle, we wrap resolve early for plan-select/subscribe.
+// NOTE: Do NOT import heavy stuff here; keep it tiny to avoid cold-start penalties.
+export const handle: Handle = async ({ event, resolve }) => {
+  const p = event.url.pathname;
+  if (p.startsWith("/account/select_plan") || p.startsWith("/account/subscribe/")) {
+    // Make the "skip" flag also available here for any downstream loaders
+    // @ts-ignore
+    event.locals.__skipSubGate = true;
+    return resolve(event);
+  }
+  return resolve(event);
+};
