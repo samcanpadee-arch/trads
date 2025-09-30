@@ -26,6 +26,9 @@
 <h1 class="text-2xl font-bold mb-2">
   {data.isActiveCustomer ? "Billing" : "Select a Plan"}
 </h1>
+  <div class="mt-4">
+    <a class="btn btn-secondary" href="/account/subscribe/portal">Manage subscription</a>
+  </div>
 <div>
   View our <a href="/pricing" target="_blank" class="link">pricing page</a> for details.
 </div>
