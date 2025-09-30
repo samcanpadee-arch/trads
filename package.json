@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "svelte-kit dev",
-    "build": "svelte-kit build",
+    "build": "node node_modules/@sveltejs/kit/svelte-kit.js build",
     "preview": "svelte-kit preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
