@@ -13,7 +13,6 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
   // 1) Resolve Stripe customer
   const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
 
-  // Prepare debug object up-front
   const debug: any = {
     customerId: customerId ?? null,
     getOrCreateError: idError ? String(idError) : null,
@@ -37,37 +36,51 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     debug.steps.push({ step: "create_portal_session_error", message: String(e?.message || e) });
   }
 
-  // helper: normalize a subscription for UI
-  function normalize(sub: Stripe.Subscription | null) {
+  // helper: normalize a subscription for UI (accepts a product name)
+  function normalize(sub: Stripe.Subscription | null, productName: string | null) {
     if (!sub) return null;
     const item = sub.items.data[0];
     const price = item?.price ?? null;
-    const product = (price?.product ?? null) as Stripe.Product | null;
     const interval = price?.recurring?.interval ?? null;
     const trialEnds = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
     const nextBill = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
     return {
       id: sub.id,
       status: sub.status,
-      planName: product?.name ?? "Subscription",
+      planName: productName ?? "Subscription",
       interval,
       trialEnds,
       nextBill
     };
   }
 
-  // 3) Robust find: list subs (all) then fallback via checkout sessions
+  // small helper to get product name from a subscription’s first item
+  async function getProductNameFromSub(sub: Stripe.Subscription): Promise<string | null> {
+    const item = sub.items.data[0];
+    const price = item?.price;
+    const prodId = typeof price?.product === "string" ? price.product : (price?.product?.id ?? null);
+    if (!prodId) return null;
+    try {
+      const product = await stripe.products.retrieve(prodId);
+      return product?.name ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  // 3) Robust find: list subs (expand price only), then fallback via checkout sessions
   let found: Stripe.Subscription | null = null;
+  let productName: string | null = null;
+
   try {
-    // a) Customer presence
     const customer = await stripe.customers.retrieve(customerId as string).catch(() => null);
     debug.steps.push({ step: "retrieve_customer", ok: !!customer });
 
-    // b) List subscriptions (broad)
+    // IMPORTANT: only expand price (avoid 5-level expand)
     const subs = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
-      expand: ["data.items.data.price.product"],
+      expand: ["data.items.data.price"], // <= 4 levels
       limit: 100
     });
     debug.steps.push({
@@ -78,7 +91,6 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
 
     found = subs.data.find(s => s.status !== "canceled") ?? subs.data[0] ?? null;
 
-    // c) Fallback: recent checkout sessions
     if (!found) {
       const sessions = await stripe.checkout.sessions.list({ customer: customerId, limit: 10 });
       debug.steps.push({
@@ -93,17 +105,22 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
       const withSub = sessions.data.find(s => typeof s.subscription === "string");
       if (withSub && typeof withSub.subscription === "string") {
         const sub = await stripe.subscriptions.retrieve(withSub.subscription, {
-          expand: ["items.data.price.product"]
+          expand: ["items.data.price"] // again, only price
         });
         found = sub;
         debug.steps.push({ step: "retrieve_fallback_subscription", id: sub.id, status: sub.status });
       }
     }
+
+    if (found) {
+      productName = await getProductNameFromSub(found);
+      debug.steps.push({ step: "product_lookup", productName: productName ?? null });
+    }
   } catch (e: any) {
     debug.steps.push({ step: "read_error", message: String(e?.message || e) });
   }
 
-  const sub = normalize(found);
+  const sub = normalize(found, productName);
   if (sub) debug.steps.push({ step: "normalized", sub });
 
   return { portalUrl, sub, debug };
