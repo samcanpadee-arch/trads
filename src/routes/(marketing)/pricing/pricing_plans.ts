@@ -1,43 +1,71 @@
-export const defaultPlanId = "free"
+export type Plan = {
+  id: 'free' | 'standard' | 'pro';
+  name: string;
+  tagline: string;
+  monthlyAmountAUD: number | null;  // show-only
+  yearlyAmountAUD: number | null;   // show-only
+  monthlyPriceId?: string;          // Stripe price for /account/subscribe/*
+  yearlyPriceId?: string;
+  features: string[];
+  trialDays: number;
+  isPopular?: boolean;
+};
 
-export const pricingPlans = [
+const STANDARD_MONTHLY = 'price_1OtoRqKLg7O2VGgDn5t5kB4n'; // known working
+const STANDARD_YEARLY  = 'price_1OtoWYKLg7O2VGgDUgm7hmLL'; // known working
+// TODO: replace these two with your real Pro price IDs when ready
+const PRO_MONTHLY = '';
+const PRO_YEARLY  = '';
+
+export const pricingPlans: Plan[] = [
   {
-    id: "free",
-    name: "Free",
-    description: "A free plan to get you started!",
-    price: "$0",
-    priceIntervalName: "per month",
-    stripe_price_id: null,
-    features: ["MIT Licence", "Fast Performance", "Stripe Integration"],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description:
-      "A plan to test the purchase experience. Try buying this with the test credit card 4242424242424242.",
-    price: "$29",
-    priceIntervalName: "per month",
-    stripe_price_id: "price_1OtoRqKLg7O2VGgDn5t5kB4n",
-    stripe_product_id: "prod_PjGzjqrk4e9jqn",
+    id: 'free',
+    name: 'Free',
+    tagline: 'Kick the tyres — basic tools, 0 cost',
+    monthlyAmountAUD: 0,
+    yearlyAmountAUD: 0,
+    // no Stripe price IDs for free — just sends user to sign up
     features: [
-      "Everything in Free",
-      "Support us with fake money",
-      "Test the purchase experience",
+      'Proposal / Quote generators',
+      'Social post generator',
+      'General AI Chat',
+      'Email support'
     ],
+    trialDays: 0
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
-    description:
-      "A plan to test the upgrade experience. Try buying this with the test credit card 4242424242424242.",
-    price: "$49",
-    priceIntervalName: "per month",
-    stripe_price_id: "price_1OtoSZKLg7O2VGgDU66pqdqm",
-    stripe_product_id: "prod_PjH0rFWuElVBjW",
+    id: 'standard',
+    name: 'Standard',
+    tagline: 'Tools + AI Chat for busy tradies',
+    monthlyAmountAUD: 29,
+    yearlyAmountAUD: 290, // 2 months free
+    monthlyPriceId: STANDARD_MONTHLY,
+    yearlyPriceId: STANDARD_YEARLY,
     features: [
-      "Everything in Pro",
-      "Try the 'upgrade plan' UX",
-      "Still actually free!",
+      'Unlimited Tools (quotes, proposals, socials)',
+      'AI Chat for job notes & emails',
+      'Single user, cancel anytime'
     ],
+    trialDays: 14,
+    isPopular: true
   },
-]
+  {
+    id: 'pro',
+    name: 'Pro',
+    tagline: 'Everything in Standard + the AI Assistant',
+    monthlyAmountAUD: 79,
+    yearlyAmountAUD: 790, // 2 months free
+    monthlyPriceId: PRO_MONTHLY, // leave empty until you have real IDs
+    yearlyPriceId: PRO_YEARLY,
+    features: [
+      'AI Assistant: answers from manuals, quotes & emails',
+      'Upload & search your own docs',
+      'Best for tradies living in paperwork'
+    ],
+    trialDays: 14
+  }
+];
+
+// Keep older imports happy (billing used to import these)
+export const defaultPlanId: Plan['id'] = 'standard';
+export const legacyPlans = pricingPlans;
