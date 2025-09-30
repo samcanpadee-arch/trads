@@ -1,6 +1,4 @@
 <script lang="ts">
-  import PricingModule from "./pricing_module.svelte";
-
   // Svelte 5 runes state for the toggle
   let billingInterval = $state<'month' | 'year'>('month');
 
@@ -12,20 +10,14 @@
 
   // Display amounts
   const PRICE = {
-    standard: { month: 'A$29.00', year: 'A$290.00' },
-    pro:      { month: 'A$79.00', year: 'A$790.00' }
+    standard: { month: 'A$29.00', year: 'A$290.00', monthlyNumber: 29, yearlyNumber: 290 },
+    pro:      { month: 'A$79.00', year: 'A$790.00', monthlyNumber: 79, yearlyNumber: 790 }
   };
 
-  function btn(cls: string, active: boolean) {
-    return `btn btn-sm ${cls} ${active ? 'bg-primary text-primary-content' : ''}`;
-  }
-
-  // Helpers for current interval
-  function standardHref() {
-    return `/account/subscribe/${billingInterval === 'month' ? STANDARD_MONTHLY : STANDARD_YEARLY}`;
-  }
-  function proHref() {
-    return `/account/subscribe/${billingInterval === 'month' ? PRO_MONTHLY : PRO_YEARLY}`;
+  // Savings copy (2 months free)
+  function savings(plan: 'standard' | 'pro') {
+    const save = PRICE[plan].monthlyNumber * 2;
+    return `2 months free (save A$${save})`;
   }
 </script>
 
@@ -41,79 +33,117 @@
   </p>
 </section>
 
-<!-- Existing cards (unchanged logic) -->
+<!-- Toggle -->
 <section class="max-w-5xl mx-auto px-4">
-  <PricingModule highlightedPlanId="pro" callToAction="Get started" />
-  <p class="mt-4 text-sm text-gray-500">
-    Prices include GST. Single user per account. Cancel anytime. Billing by Stripe.
-  </p>
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <p class="text-sm text-gray-500">Prices include GST. Single user per account. Cancel anytime. Billing by Stripe.</p>
+    <div class="flex gap-2">
+      <button
+        class={"btn btn-sm " + (billingInterval === 'month' ? 'bg-primary text-primary-content' : '')}
+        onclick={() => billingInterval = 'month'}
+      >Monthly</button>
+      <button
+        class={"btn btn-sm " + (billingInterval === 'year' ? 'bg-primary text-primary-content' : '')}
+        onclick={() => billingInterval = 'year'}
+      >Yearly</button>
+    </div>
+  </div>
 </section>
 
-<!-- NEW: Interval toggle + explicit CTAs (page-only, no module edits) -->
+<!-- 3 cards: Free, Standard, Pro -->
 <section class="max-w-5xl mx-auto px-4 py-8">
-  <div class="rounded-xl border border-gray-200 p-6">
-    <div class="flex items-center justify-between flex-wrap gap-4">
-      <h2 class="text-xl font-semibold">Choose your billing interval</h2>
-      <div class="flex gap-2">
-        <button class={btn('', billingInterval === 'month')}  onclick={() => billingInterval = 'month'}>Monthly</button>
-        <button class={btn('', billingInterval === 'year')}   onclick={() => billingInterval = 'year'}>Yearly</button>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Free -->
+    <div class="card card-bordered shadow-lg">
+      <div class="card-body">
+        <h3 class="card-title">Free</h3>
+        <p class="text-gray-600">Good for getting started</p>
+        <div class="pt-4">
+          <div class="text-3xl font-bold">A$0.00 <span class="text-base font-normal text-gray-400">/ month</span></div>
+          <div class="text-xs mt-1 text-gray-500">No credit card required</div>
+        </div>
+        <ul class="mt-4 text-sm space-y-1">
+          <li>✅ Access basic tools</li>
+          <li>✅ Community support</li>
+        </ul>
+        <div class="mt-6">
+          <a class="btn btn-outline w-full" href="/account">Get started — Free</a>
+        </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-      <!-- Standard -->
-      <div class="p-5 rounded-xl bg-base-200">
-        <div class="font-semibold text-lg">Standard</div>
-        <div class="mt-1 text-sm text-gray-600">Tools + AI Chat for busy tradies</div>
-        <div class="mt-4">
+    <!-- Standard -->
+    <div class="card card-bordered shadow-lg border-primary">
+      <div class="card-body">
+        <div class="flex items-center justify-between">
+          <h3 class="card-title">Standard</h3>
+          {#if billingInterval === 'year'}
+            <span class="badge badge-primary badge-outline">{savings('standard')}</span>
+          {/if}
+        </div>
+        <p class="text-gray-600">Tools + AI Chat for busy tradies</p>
+        <div class="pt-4">
           <div class="text-3xl font-bold">
             {billingInterval === 'month' ? PRICE.standard.month : PRICE.standard.year}
             <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
           </div>
           <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
         </div>
-        <div class="mt-4 flex items-center gap-2">
-          <a class="btn btn-primary" href={standardHref()}>
-            Get Standard — {billingInterval === 'month' ? 'Monthly' : 'Yearly'}
-          </a>
-        </div>
         <ul class="mt-4 text-sm space-y-1">
           <li>✅ Unlimited Tools (quotes, proposals, socials)</li>
           <li>✅ AI Chat for job notes & emails</li>
           <li>✅ Single user, cancel anytime</li>
         </ul>
-        <p class="mt-3 text-xs text-gray-500">Prices include GST. Single user per account. Cancel anytime. Billing by Stripe.</p>
+        <div class="mt-6">
+          <a
+            class="btn btn-primary w-full"
+            href={"/account/subscribe/" + (billingInterval === 'month' ? STANDARD_MONTHLY : STANDARD_YEARLY)}
+          >
+            Get Standard — {billingInterval === 'month' ? 'Monthly' : 'Yearly'}
+          </a>
+        </div>
       </div>
+    </div>
 
-      <!-- Pro -->
-      <div class="p-5 rounded-xl bg-base-200">
-        <div class="font-semibold text-lg">Pro</div>
-        <div class="mt-1 text-sm text-gray-600">Everything in Standard + the AI Assistant</div>
-        <div class="mt-4">
+    <!-- Pro -->
+    <div class="card card-bordered shadow-lg">
+      <div class="card-body">
+        <div class="flex items-center justify-between">
+          <h3 class="card-title">Pro</h3>
+          {#if billingInterval === 'year'}
+            <span class="badge badge-primary badge-outline">{savings('pro')}</span>
+          {/if}
+        </div>
+        <p class="text-gray-600">Everything in Standard + the AI Assistant</p>
+        <div class="pt-4">
           <div class="text-3xl font-bold">
             {billingInterval === 'month' ? PRICE.pro.month : PRICE.pro.year}
             <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
           </div>
           <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
         </div>
-        <div class="mt-4 flex items-center gap-2">
-          <a class="btn btn-primary" href={proHref()}>
-            Get Pro — {billingInterval === 'month' ? 'Monthly' : 'Yearly'}
-          </a>
-        </div>
         <ul class="mt-4 text-sm space-y-1">
           <li>✅ AI Assistant answers from your manuals, quotes & emails</li>
           <li>✅ Upload & search your own docs</li>
           <li>✅ Best for tradies who live in their paperwork</li>
         </ul>
-        <p class="mt-3 text-xs text-gray-500">Prices include GST. Single user per account. Cancel anytime. Billing by Stripe.</p>
+        <div class="mt-6">
+          <a
+            class="btn btn-primary w-full"
+            href={"/account/subscribe/" + (billingInterval === 'month' ? PRO_MONTHLY : PRO_YEARLY)}
+          >
+            Get Pro — {billingInterval === 'month' ? 'Monthly' : 'Yearly'}
+          </a>
+        </div>
       </div>
     </div>
+
   </div>
 </section>
 
 <!-- What's included -->
-<section class="max-w-5xl mx-auto px-4 py-10">
+<section class="max-w-5xl mx-auto px-4 pb-16">
   <h2 class="text-2xl font-semibold mb-4">What’s included</h2>
   <div class="overflow-x-auto">
     <table class="table">
@@ -133,30 +163,5 @@
         <tr><td>Email support</td><td>✅</td><td>✅</td></tr>
       </tbody>
     </table>
-  </div>
-</section>
-
-<!-- FAQs -->
-<section class="max-w-3xl mx-auto px-4 pb-16">
-  <h2 class="text-2xl font-semibold mb-4">Pricing FAQs</h2>
-
-  <div class="mb-6">
-    <h3 class="font-semibold">Do I get a free trial?</h3>
-    <p class="text-gray-600">Yes — Standard and Pro include a 14-day free trial.</p>
-  </div>
-
-  <div class="mb-6">
-    <h3 class="font-semibold">What’s the difference between Standard and Pro?</h3>
-    <p class="text-gray-600">Pro adds the AI Assistant that answers from your manuals, quotes and emails, plus document upload and search.</p>
-  </div>
-
-  <div class="mb-6">
-    <h3 class="font-semibold">Can I switch plans later?</h3>
-    <p class="text-gray-600">Yes — upgrade or downgrade anytime in your billing portal.</p>
-  </div>
-
-  <div class="mb-6">
-    <h3 class="font-semibold">Are prices inclusive of GST?</h3>
-    <p class="text-gray-600">Yes — all prices include GST.</p>
   </div>
 </section>
