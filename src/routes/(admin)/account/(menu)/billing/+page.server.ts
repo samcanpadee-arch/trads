@@ -7,18 +7,24 @@ import { getOrCreateCustomerId } from "../../subscription_helpers.server";
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
 
 export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supabaseServiceRole } }) => {
-  const debug = url.searchParams.get('debug') === '1';
-
   const { session, user } = await safeGetSession();
   if (!session) redirect(303, "/login");
 
   // 1) Resolve Stripe customer
   const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
-  if (idError || !customerId) {
-    return { portalUrl: null, sub: null, debug: debug ? { customerId: null, error: String(idError || 'no_customer') } : undefined };
+
+  // Prepare debug object up-front
+  const debug: any = {
+    customerId: customerId ?? null,
+    getOrCreateError: idError ? String(idError) : null,
+    steps: [] as any[]
+  };
+
+  if (!customerId) {
+    return { portalUrl: null, sub: null, debug };
   }
 
-  // 2) Create portal link (best-effort)
+  // 2) Create a billing portal link (non-fatal)
   let portalUrl: string | null = null;
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
@@ -26,8 +32,9 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
       return_url: `${url.origin}/account/billing`
     });
     portalUrl = portalSession.url ?? null;
-  } catch (e) {
-    // swallow
+    debug.steps.push({ step: "create_portal_session", ok: !!portalUrl });
+  } catch (e: any) {
+    debug.steps.push({ step: "create_portal_session_error", message: String(e?.message || e) });
   }
 
   // helper: normalize a subscription for UI
@@ -40,6 +47,7 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     const trialEnds = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
     const nextBill = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
     return {
+      id: sub.id,
       status: sub.status,
       planName: product?.name ?? "Subscription",
       interval,
@@ -48,40 +56,37 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     };
   }
 
-  // 3) Collect data defensively
+  // 3) Robust find: list subs (all) then fallback via checkout sessions
   let found: Stripe.Subscription | null = null;
-  let dbg: any = debug ? { customerId, steps: [] as any[] } : undefined;
-
   try {
-    // a) make sure the customer exists
+    // a) Customer presence
     const customer = await stripe.customers.retrieve(customerId as string).catch(() => null);
-    if (dbg) dbg.steps.push({ step: 'retrieve_customer', ok: !!customer, customerId });
+    debug.steps.push({ step: "retrieve_customer", ok: !!customer });
 
-    // b) list subscriptions broadly
+    // b) List subscriptions (broad)
     const subs = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
       expand: ["data.items.data.price.product"],
       limit: 100
     });
-    if (dbg) dbg.steps.push({
-      step: 'list_subscriptions',
+    debug.steps.push({
+      step: "list_subscriptions",
       count: subs.data.length,
       ids: subs.data.map(s => ({ id: s.id, status: s.status }))
     });
 
-    // prefer a non-canceled one; otherwise most recent
     found = subs.data.find(s => s.status !== "canceled") ?? subs.data[0] ?? null;
 
-    // c) fallback: recent checkout sessions that created a sub
+    // c) Fallback: recent checkout sessions
     if (!found) {
       const sessions = await stripe.checkout.sessions.list({ customer: customerId, limit: 10 });
-      if (dbg) dbg.steps.push({
-        step: 'list_checkout_sessions',
+      debug.steps.push({
+        step: "list_checkout_sessions",
         count: sessions.data.length,
         subs: sessions.data.map(s => ({
           id: s.id,
-          subscription: typeof s.subscription === 'string' ? s.subscription : null,
+          subscription: typeof s.subscription === "string" ? s.subscription : null,
           mode: s.mode
         }))
       });
@@ -91,16 +96,15 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
           expand: ["items.data.price.product"]
         });
         found = sub;
-        if (dbg) dbg.steps.push({ step: 'retrieve_fallback_sub', id: sub.id, status: sub.status });
+        debug.steps.push({ step: "retrieve_fallback_subscription", id: sub.id, status: sub.status });
       }
     }
   } catch (e: any) {
-    if (dbg) dbg.steps.push({ step: 'error', message: String(e?.message || e) });
+    debug.steps.push({ step: "read_error", message: String(e?.message || e) });
   }
 
-  return {
-    portalUrl,
-    sub: normalize(found),
-    debug: dbg
-  };
+  const sub = normalize(found);
+  if (sub) debug.steps.push({ step: "normalized", sub });
+
+  return { portalUrl, sub, debug };
 };
