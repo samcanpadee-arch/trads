@@ -7,14 +7,15 @@ import { getOrCreateCustomerId } from "../../subscription_helpers.server";
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
 
 export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supabaseServiceRole } }) => {
+  const debug = url.searchParams.get('debug') === '1';
+
   const { session, user } = await safeGetSession();
   if (!session) redirect(303, "/login");
 
   // 1) Resolve Stripe customer
   const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
   if (idError || !customerId) {
-    console.error("Stripe customer error:", idError);
-    return { portalUrl: null, sub: null };
+    return { portalUrl: null, sub: null, debug: debug ? { customerId: null, error: String(idError || 'no_customer') } : undefined };
   }
 
   // 2) Create portal link (best-effort)
@@ -26,11 +27,11 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     });
     portalUrl = portalSession.url ?? null;
   } catch (e) {
-    console.error("Billing portal create error:", e);
+    // swallow
   }
 
-  // Helper to normalize a Stripe subscription to the UI shape
-  const normalize = (sub: Stripe.Subscription | null) => {
+  // helper: normalize a subscription for UI
+  function normalize(sub: Stripe.Subscription | null) {
     if (!sub) return null;
     const item = sub.items.data[0];
     const price = item?.price ?? null;
@@ -45,27 +46,44 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
       trialEnds,
       nextBill
     };
-  };
+  }
 
-  // 3) Try subscriptions.list first (broad + bigger limit)
+  // 3) Collect data defensively
+  let found: Stripe.Subscription | null = null;
+  let dbg: any = debug ? { customerId, steps: [] as any[] } : undefined;
+
   try {
-    let found: Stripe.Subscription | null = null;
+    // a) make sure the customer exists
+    const customer = await stripe.customers.retrieve(customerId as string).catch(() => null);
+    if (dbg) dbg.steps.push({ step: 'retrieve_customer', ok: !!customer, customerId });
 
+    // b) list subscriptions broadly
     const subs = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
       expand: ["data.items.data.price.product"],
       limit: 100
     });
+    if (dbg) dbg.steps.push({
+      step: 'list_subscriptions',
+      count: subs.data.length,
+      ids: subs.data.map(s => ({ id: s.id, status: s.status }))
+    });
 
-    // Prefer non-canceled; otherwise the most recent entry (Stripe returns sorted by created desc)
+    // prefer a non-canceled one; otherwise most recent
     found = subs.data.find(s => s.status !== "canceled") ?? subs.data[0] ?? null;
 
-    // 4) Fallback via checkout sessions if list is empty
+    // c) fallback: recent checkout sessions that created a sub
     if (!found) {
-      const sessions = await stripe.checkout.sessions.list({
-        customer: customerId,
-        limit: 10
+      const sessions = await stripe.checkout.sessions.list({ customer: customerId, limit: 10 });
+      if (dbg) dbg.steps.push({
+        step: 'list_checkout_sessions',
+        count: sessions.data.length,
+        subs: sessions.data.map(s => ({
+          id: s.id,
+          subscription: typeof s.subscription === 'string' ? s.subscription : null,
+          mode: s.mode
+        }))
       });
       const withSub = sessions.data.find(s => typeof s.subscription === "string");
       if (withSub && typeof withSub.subscription === "string") {
@@ -73,12 +91,16 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
           expand: ["items.data.price.product"]
         });
         found = sub;
+        if (dbg) dbg.steps.push({ step: 'retrieve_fallback_sub', id: sub.id, status: sub.status });
       }
     }
-
-    return { portalUrl, sub: normalize(found) };
-  } catch (e) {
-    console.error("Read subscription error:", e);
-    return { portalUrl, sub: null };
+  } catch (e: any) {
+    if (dbg) dbg.steps.push({ step: 'error', message: String(e?.message || e) });
   }
+
+  return {
+    portalUrl,
+    sub: normalize(found),
+    debug: dbg
+  };
 };
