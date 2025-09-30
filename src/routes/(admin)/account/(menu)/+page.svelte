@@ -109,3 +109,15 @@
     AI can draft and speed things up, but it doesn’t replace your judgement — please review and tweak before sending.
   </p>
 </section>
+
+<!-- Checkout success banner (client-only, safe) -->
+<script>
+  import { page } from '$app/stores';
+  $: sessionId = $page.url.searchParams.get('session_id');
+</script>
+
+{#if sessionId}
+  <div class="alert alert-success mt-4">
+    <span>🎉 You’re all set! Your subscription is active. You can manage it anytime in <a class="link" href="/account/billing">Billing</a>.</span>
+  </div>
+{/if}
