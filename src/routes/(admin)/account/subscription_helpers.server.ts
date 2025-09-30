@@ -110,9 +110,6 @@ export const fetchSubscription = async ({
       return {
         error:
           "Stripe subscription does not have matching app subscription in pricing_plans.ts (via product id match)",
-          // SAFETY: if we cannot map product/price to an app plan, do not 500.
-          // Fall back to a harmless "no plan" shape; let UI show upgrade CTA.
-          return { primarySubscription: null, appPlan: null };
       }
     }
   }
