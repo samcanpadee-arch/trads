@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { askWithAllSources } from "./_three_source";
   let trade = "";
   let brandModel = ""; // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
   let focus = "general"; // optional hint only (we'll inject into message text)
@@ -227,3 +228,43 @@ Include how to retrieve error codes from the remote and any safety notes.`;
     </div>
   </div>
 {/if}
+
+<!-- === Added: secondary ask button that uses uploaded + library + general === -->
+<div class="mt-4 flex flex-wrap gap-2">
+  <button
+    class="btn btn-secondary"
+    onclick={async () => {
+      try {
+        // Map these to your existing variables.
+        // If your page uses different names, adjust below:
+        const _prompt = typeof prompt !== 'undefined' ? prompt : '';
+        const _trade  = typeof trade  !== 'undefined' ? trade  : '';
+        const _brand  = typeof brand  !== 'undefined' ? brand  : '';
+        const _files  = typeof files  !== 'undefined' ? files  : [];
+        const _share  = typeof allowShare !== 'undefined' ? allowShare : false;
+
+        const { text } = await askWithAllSources({
+          prompt: _prompt,
+          trade: _trade,
+          brand: _brand,
+          files: _files,
+          allowShare: _share
+        });
+
+        // Write into your existing answer binding if present
+        if (typeof answer !== 'undefined') {
+          answer = text || '(no text output)';
+        } else {
+          // fallback: simple alert (shouldn’t be needed)
+          alert(text || '(no text output)');
+        }
+      } catch (err) {
+        console.error(err);
+        alert((err as Error)?.message || 'Query failed');
+      }
+    }}
+  >
+    Ask — use uploaded + library
+  </button>
+</div>
+<!-- === /Added === -->
