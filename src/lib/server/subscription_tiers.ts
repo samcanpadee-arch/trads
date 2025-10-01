@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { PRIVATE_STRIPE_API_KEY } from "$env/static/private";
 import type { Database } from "$lib/types/supabase"; // if you don't have this, remove the type and use 'any'
-import { getOrCreateCustomerId } from "$routes/(admin)/account/(menu)/subscription_helpers.server"; // adjust path if needed
+import { getOrCreateCustomerId } from "$lib/server/subscription_helpers_bridge"; // adjust path if needed
 
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
 
