@@ -1,3 +1,4 @@
+export const config = { runtime: "nodejs20.x" };
 import type { RequestHandler } from "./$types";
 import { json, redirect } from "@sveltejs/kit";
 import OpenAI from "openai";
