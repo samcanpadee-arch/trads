@@ -13,6 +13,13 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabaseS
 
   if (!profile?.is_admin) throw redirect(303, "/account/assistant");
 
-  // Important: mark as allowed so /account/assistant +layout doesn't show the upgrade panel
-  return { allowed: true };
+  const { data: rows } = await supabaseServiceRole
+    .from('user_documents')
+    .select('document_id, documents(id, file_name, mime_type, canonical_path, uploaded_at)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  const items = (rows ?? []).map(r => r.documents);
+  return { allowed: true, items };
 };
