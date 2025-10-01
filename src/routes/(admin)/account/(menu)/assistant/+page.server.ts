@@ -1,12 +1,9 @@
 import type { PageServerLoad } from "./$types";
-import { redirect } from "@sveltejs/kit";
 import { getUserTier } from "$lib/server/subscription_tiers";
 
 export const load: PageServerLoad = async ({ locals }) => {
   const tier = await getUserTier(locals);
-  if (tier !== "pro") {
-    // Only Pro can access Assistant
-    throw redirect(303, "/pricing?upgrade=assistant");
-  }
-  return { tier };
+  const allowed = tier === "pro";
+  // No redirect here — the +layout.svelte renders the upgrade panel when !allowed
+  return { tier, allowed, needed: "pro" as const };
 };
