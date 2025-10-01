@@ -109,3 +109,10 @@
     AI can draft and speed things up, but it doesn’t replace your judgement — please review and tweak before sending.
   </p>
 </section>
+
+<!-- Checkout success banner (client-only, safe) -->
+{#if typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('session_id')}
+  <div class="alert alert-success mt-4">
+    <span>🎉 You’re all set! Your subscription is active. You can manage it anytime in <a class="link" href="/account/billing">Billing</a>.</span>
+  </div>
+{/if}

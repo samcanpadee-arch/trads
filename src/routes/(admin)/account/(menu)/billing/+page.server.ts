@@ -12,21 +12,9 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
 
   // Resolve Stripe customer
   const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user });
-  if (idError || !customerId) {
-    return { portalUrl: null, sub: null };
-  }
+  if (idError || !customerId) return { portalUrl: null, sub: null };
 
-  // Create portal link (best-effort)
-  let portalUrl: string | null = null;
-  try {
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${url.origin}/account/billing`
-    });
-    portalUrl = portalSession.url ?? null;
-  } catch {}
-
-  // Normalize a subscription
+  // Find current subscription (expand price only; fetch product separately)
   function normalize(sub: Stripe.Subscription | null, productName: string | null) {
     if (!sub) return null;
     const item = sub.items.data[0];
@@ -57,7 +45,6 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     }
   }
 
-  // Find current subscription (expand price only; fetch product separately)
   let found: Stripe.Subscription | null = null;
   let productName: string | null = null;
 
@@ -67,7 +54,7 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     const subs = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
-      expand: ["data.items.data.price"], // keep within expand depth limits
+      expand: ["data.items.data.price"],
       limit: 100
     });
 
@@ -91,5 +78,19 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession, supa
     // non-fatal
   }
 
-  return { portalUrl, sub: normalize(found, productName) };
+  const sub = normalize(found, productName);
+
+  // Only create portal if we have a subscription; otherwise null (portal would be empty)
+  let portalUrl: string | null = null;
+  if (sub) {
+    try {
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${url.origin}/account/billing`
+      });
+      portalUrl = portalSession.url ?? null;
+    } catch { /* ignore */ }
+  }
+
+  return { portalUrl, sub };
 };
