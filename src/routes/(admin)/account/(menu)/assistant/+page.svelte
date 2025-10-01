@@ -102,7 +102,7 @@ Include how to retrieve error codes from the remote and any safety notes.`;
   <a href="/account/caption" class="btn btn-ghost">← Back</a>
 </header>
 
-<form class="card bg-base-100 border" onsubmit={(e)=>{ e.preventDefault(); onAsk(); }}>
+<form class="card bg-base-100 border" onsubmit={onAsk}>
   <div class="card-body space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Trade -->

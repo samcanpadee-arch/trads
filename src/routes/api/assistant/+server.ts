@@ -5,6 +5,7 @@ import { getUserTier } from "$lib/server/subscription_tiers";
 
 const FILE_FIELD_CANDIDATES = ["file", "files", "files[]", "upload", "document", "documents"];
 
+// __DBG_WRAP_BEGIN__
 export const POST: RequestHandler = async ({ request, locals }) => {
   const { session, user } = await locals.safeGetSession();
   if (!session || !user) throw redirect(303, "/login");
@@ -17,7 +18,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   // If the client sent JSON (e.g., only metadata), don't error — just acknowledge
   if (ctype.includes("application/json")) {
-    const body = await request.json().catch(() => ({}));
+{ try {
     const allowShare = !!body?.allow_share;
     return json({ ok: true, uploaded: [], consent: allowShare, note: "no files in JSON body" });
   }
@@ -70,4 +71,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   }
 
   return json({ ok: true, store_id: storeId, consent: allowShare, uploaded });
-};
+} catch (err) {
+  console.error("/api/assistant error:", err);
+  return new Response(JSON.stringify({ error: (err as any)?.message || "Internal Error" }), { status: 400, headers: {"content-type":"application/json"}});
+}
+}
+// __DBG_WRAP_END__
