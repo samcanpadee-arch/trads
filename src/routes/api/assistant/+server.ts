@@ -1,138 +1,286 @@
+import type { RequestHandler } from "@sveltejs/kit";
+import { env as privateEnv } from "$env/dynamic/private";
+import crypto from "node:crypto";
+// @ts-ignore – your JSON that lists library vector stores
+import registry from "$lib/vectorstores.json";
+
 export const config = { runtime: "nodejs20.x" };
-import type { RequestHandler } from "./$types";
-import { json, redirect } from "@sveltejs/kit";
-import OpenAI from "openai";
 
-const openai = new OpenAI();
-
-function hasNumbers(s: string) {
-  // loose check for numeric specs; we’ll pair with a citation check
-  return /\b\d+(\.\d+)?\s?(V|A|Hz|kW|W|mm|cm|m|°C|A|VA|%|ms|s)\b/i.test(s) || /\b\d{2,}\b/.test(s);
-}
-
-function mentionsCitationOf(allowed: string[], text: string) {
-  // look for file id or filename tokens in model citations format
-  const needle = allowed.map((t) => t.toLowerCase());
-  const lc = text.toLowerCase();
-  return needle.some((n) => lc.includes(n));
-}
-
-export const POST: RequestHandler = async ({ request, locals }) => {
-  const { session } = await locals.safeGetSession();
-  if (!session) throw redirect(303, "/login");
-
-  // Expect multipart form-data
-  const form = await request.formData().catch(() => null);
-  if (!form) return json({ message: "Please POST multipart form-data with fields: message, trade?, brand?, files[]?" }, { status: 400 });
-
-  const message = String(form.get("message") || "");
-  const trade = String(form.get("trade") || "");
-  const brand = String(form.get("brand") || "");
-  const files = form.getAll("files");
-
-  // Build a human-friendly file list + collect OpenAI File IDs if present in the form
-  // Your frontend already uploads to OpenAI first and sends back file ids; if not, you can adapt here.
-  const fileIds = files
-    .map((f) => {
-      try {
-        // Expect JSON like: {"id":"file_abc123","name":"Manual.pdf"}
-        const parsed = typeof f === "string" ? JSON.parse(f) : JSON.parse(String((f as any)?.toString?.() ?? "{}"));
-        return parsed?.id ? { id: parsed.id, name: parsed.name ?? parsed.id } : null;
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean) as { id: string; name: string }[];
-
-  // STRICT MODE: if user attached any files for this question,
-  // answer **only** from those files. No library blending for specs.
-  const uploadsOnly = fileIds.length > 0;
-
-  const sys = uploadsOnly
-    ? [
-        "You are a technical assistant for Australian tradies.",
-        "Use the attached files ONLY for any numeric specifications (voltages, currents, dimensions, limits, frequencies, torques, page numbers, etc.).",
-        "If a numeric spec is not present in the attached files, say: 'Not found in the uploaded file(s).' Do not estimate.",
-        "If needed, you may add general explanations (non-numeric) after the SPEC block.",
-        "Always output:",
-        "SOURCE: MANUAL (if you used the uploaded file) or SOURCE: GENERAL (if no uploads and no library citations).",
-        "Then a concise technical answer with inline references like (filename or file_id, page if you know it).",
-        "End with a short checklist."
-      ].join("\n")
-    : [
-        "You are a technical assistant for Australian tradies.",
-        "Prefer citations from the shared library for any numeric specifications. If you cannot cite a spec, say you cannot find it.",
-        "General explanations are allowed but must not invent numeric specs.",
-        "Always output SOURCE line, then answer with citations, then a checklist."
-      ].join("\n");
-
-  const userContext = [
-    trade ? `Trade: ${trade}` : "",
-    brand ? `Brand/Model or Standard: ${brand}` : "",
-    uploadsOnly ? `Attached files: ${fileIds.map((f) => f.name).join(", ")}` : ""
-  ].filter(Boolean).join("\n");
-
-  const userMsg = [
-    userContext,
-    "",
-    "Question:",
-    message,
-    "",
-    uploadsOnly
-      ? "IMPORTANT: Use only the attached files for any numbers/specs. If a spec is not present in the attached files, reply: 'Not found in the uploaded file(s).' Include citations."
-      : "IMPORTANT: Do not invent numbers. If you cannot find an exact figure in cited documents, say so."
-  ].join("\n");
-
-  // Build the tool list:
-  // - If uploadsOnly: restrict file_search to the provided file_ids.
-  // - Else: your existing behavior (e.g., vector store ids) can be added back later; we keep it simple now.
-  const tools: any[] = uploadsOnly
-    ? [
-        {
-          type: "file_search",
-          file_search: {
-            // Restrict to the exact uploaded File IDs so retrieval cannot wander off
-            // Newer SDKs accept {file_ids:[...]} for scoped retrieval
-            // If your SDK doesn’t, the model instruction still forces compliance.
-            maximal_marginal_relevance: true
-          }
-        }
-      ]
-    : [
-        { type: "file_search" } // non-strict when no uploads; you can wire vector_store_ids later
-      ];
-
-  const toolChoice = uploadsOnly
-    ? { type: "file_search" as const } // require file_search when uploads exist
-    : "auto" as const;
-
-  // Call Responses API with strict inputs
-  const resp = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
-      { role: "system", content: sys },
-      ...(uploadsOnly
-        ? [{ role: "user", content: [{ type: "text", text: userMsg }, ...fileIds.map((f) => ({ type: "input_text", text: `ALLOW_FILE_ID: ${f.id}` }))] as any }]
-        : [{ role: "user", content: userMsg }])
-    ],
-    tools,
-    tool_choice: toolChoice,
-    temperature: 0.1
-  } as any);
-
-  const text = resp.choices?.[0]?.message?.content ?? "";
-  // Basic post-check: if we see numbers but no citation of allowed file ids, reject
-  if (uploadsOnly && hasNumbers(text) && !mentionsCitationOf(fileIds.map((f) => f.id).concat(fileIds.map((f) => f.name)), text)) {
-    return json({
-      source: "MANUAL",
-      answer: "Not found in the uploaded file(s). Please point me to a page/section or attach a manual that includes those specifications.",
-      checklist: [
-        "Confirm the exact model variant on the cover/spec page",
-        "Provide a page or section reference where the spec appears",
-        "Attach the PDF/manual that includes the numeric spec"
-      ]
-    }, { status: 200 });
+/** ---------- Utils ---------- **/
+async function sha256OfFile(file: File): Promise<string> {
+  const hash = crypto.createHash("sha256");
+  // @ts-ignore Node 20 File.stream()
+  const reader = file.stream().getReader();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) hash.update(value);
   }
+  return hash.digest("hex");
+}
 
-  return json({ ok: true, text }, { status: 200 });
+async function listAllFiles(apiKey: string): Promise<any[]> {
+  const out: any[] = [];
+  let after: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const url = new URL("https://api.openai.com/v1/files");
+    if (after) url.searchParams.set("after", after);
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (!r.ok) throw new Error(`Files list failed: ${await r.text()}`);
+    const j = await r.json();
+    const arr = Array.isArray(j.data) ? j.data : [];
+    out.push(...arr);
+    if (!j.has_more || !arr.length) break;
+    after = arr[arr.length - 1]?.id ?? null;
+  }
+  return out;
+}
+
+async function findFileByStableName(apiKey: string, stableName: string): Promise<string | null> {
+  const all = await listAllFiles(apiKey);
+  const match = all.find((f: any) => (f.filename || f.name) === stableName);
+  return match?.id ?? null;
+}
+
+async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string) {
+  const form = new FormData();
+  form.append("purpose", "assistants");
+  form.append("file", file, stableName);
+  const resp = await fetch("https://api.openai.com/v1/files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form
+  });
+  if (!resp.ok) throw new Error(`OpenAI file upload failed: ${await resp.text()}`);
+  const json = await resp.json();
+  return { id: json.id as string, filename: (json.filename as string) || stableName };
+}
+
+async function createVectorStore(apiKey: string, name: string): Promise<string> {
+  const resp = await fetch("https://api.openai.com/v1/vector_stores", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name })
+  });
+  if (!resp.ok) throw new Error(`Create vector store failed: ${await resp.text()}`);
+  const json = await resp.json();
+  return json.id as string;
+}
+
+async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<void> {
+  const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_id: fileId })
+  });
+  if (!resp.ok) throw new Error(`Attach file to vector store failed: ${await resp.text()}`);
+}
+
+async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs = 20000): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
+    const json = await resp.json();
+    const files = (json.data || []) as Array<any>;
+    const pending = files.find((f) => f.status !== "completed");
+    if (!pending) return;
+    await new Promise((r) => setTimeout(r, 700));
+  }
+}
+
+function extractTextFromResponses(resJson: any): string {
+  if (!resJson) return "";
+  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
+  if (Array.isArray(resJson.output)) {
+    const texts: string[] = [];
+    for (const item of resJson.output) {
+      const parts = item?.content || item?.contents || [];
+      for (const p of parts) {
+        if (p?.type === "output_text" && typeof p?.text === "string") texts.push(p.text);
+        if (p?.type === "text" && typeof p?.text === "string") texts.push(p.text);
+      }
+    }
+    if (texts.length) return texts.join("\n");
+  }
+  if (Array.isArray(resJson.content)) {
+    const first = resJson.content.find((c: any) => typeof c?.text === "string");
+    if (first?.text) return first.text;
+  }
+  return "";
+}
+
+// Simple guard for numbers with units in GENERAL mode
+const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
+
+/** ---------- GET: health ---------- **/
+export const GET: RequestHandler = async () => {
+  return new Response(JSON.stringify({ ok: true, route: "/api/assistant" }), {
+    headers: { "Content-Type": "application/json" }
+  });
+};
+
+/** ---------- POST: main assistant ---------- **/
+export const POST: RequestHandler = async ({ request }) => {
+  try {
+    const OPENAI_KEY =
+      privateEnv.OPENAI_API_KEY || privateEnv.PRIVATE_OPENAI_API_KEY || "";
+    if (!OPENAI_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
+
+    // IMPORTANT: Vercel body limit ~4–5MB; reject early to avoid 413
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (contentLength > 4_500_000) {
+      return new Response("File too large for server upload. Please upload a smaller PDF (≲4MB).", { status: 413 });
+    }
+
+    const ctype = request.headers.get("content-type") || "";
+    if (!ctype.includes("multipart/form-data")) {
+      return new Response(
+        "Send multipart/form-data with fields: message and optional trade, brand, files[], share",
+        { status: 400 }
+      );
+    }
+
+    const form = await request.formData();
+    const message = (form.get("message") as string || "").trim();
+    const trade = (form.get("trade") as string || "").trim();
+    const brand = (form.get("brand") as string || "").trim();
+    const share = ((form.get("share") as string) || "off") === "on";
+    if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
+
+    // Upload or reuse files with stable hashed filename
+    const files = form.getAll("files").filter((f) => f instanceof File) as File[];
+    const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
+    for (const f of files) {
+      const hash = await sha256OfFile(f);
+      const stableName = `${hash}-${f.name}`;
+      let fileId = await findFileByStableName(OPENAI_KEY, stableName);
+      if (!fileId) {
+        const up = await uploadToOpenAIWithStableName(f, OPENAI_KEY, stableName);
+        fileId = up.id;
+      }
+      uploaded.push({ id: fileId, filename: stableName, hash });
+    }
+
+    // Temp per-request store for uploaded files
+    let tempVectorStoreId: string | null = null;
+    if (uploaded.length) {
+      tempVectorStoreId = await createVectorStore(OPENAI_KEY, `session-${Date.now()}`);
+      for (const u of uploaded) await attachFileToVectorStore(OPENAI_KEY, tempVectorStoreId, u.id);
+      await waitForIndexing(OPENAI_KEY, tempVectorStoreId);
+    }
+
+    // Library stores from registry JSON
+    const libraryIds: string[] = Array.isArray(registry?.library_store_ids)
+      ? registry.library_store_ids.filter(Boolean)
+      : [];
+
+    // If opted-in, attach uploaded files to all library stores
+    if (share && uploaded.length && libraryIds.length) {
+      for (const libId of libraryIds) {
+        for (const u of uploaded) {
+          try { await attachFileToVectorStore(OPENAI_KEY, libId, u.id); } catch {}
+        }
+      }
+    }
+
+    // System rules
+    const SYSTEM = `
+You are a technical assistant for experienced Australian tradies.
+
+GROUNDING & CITATIONS (MANDATORY RULES):
+1) If you used retrieved manual/standard content, your FIRST LINE must be exactly: "SOURCE: MANUAL".
+   - Include inline citations like [<short doc>, p.<page>] or [<short doc>, §<clause>].
+   - Do NOT fabricate page/section numbers. If unknown, write [<doc>, page unknown] and say so briefly.
+2) If no relevant content was retrieved or applicable, your FIRST LINE must be exactly: "SOURCE: GENERAL".
+   - Do NOT provide exact specifications (numbers with units) in GENERAL mode.
+   - If asked for exact values while in GENERAL, explain you cannot provide numeric specs without a manual citation.
+
+STYLE:
+- Be concise but technical. Safety/compliance notes where relevant.
+- End with a short checklist.
+`.trim();
+
+    const userText = [
+      trade ? `Trade: ${trade}` : null,
+      brand ? `Brand/Model or Standard: ${brand}` : null,
+      `Question: ${message}`,
+      "Task:",
+      "- Provide detailed, technical guidance.",
+      "- If exact values/specs are requested, only provide them when grounded in retrieved text (with page/section citation).",
+      "- Otherwise explain that specs require a cited manual/standard.",
+      "- End with a short checklist."
+    ].filter(Boolean).join("\n");
+
+    // Build vector_store_ids: libraries + temp
+    const vsIds = [...libraryIds];
+    if (tempVectorStoreId) vsIds.push(tempVectorStoreId);
+    const uniqueVsIds = Array.from(new Set(vsIds));
+
+    // Tools config
+    const tools: any[] = [];
+    if (uniqueVsIds.length) tools.push({ type: "file_search", vector_store_ids: uniqueVsIds });
+
+    // Call Responses API
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
+          { role: "user", content: [{ type: "input_text", text: userText }] }
+        ],
+        tools,
+        tool_choice: (uniqueVsIds.length ? "required" : "auto"),
+        temperature: 0.1
+      })
+    });
+
+    if (!resp.ok) {
+      const msg = await resp.text();
+      console.error("OpenAI Responses error", msg);
+      return new Response(`OpenAI error: ${msg}`, { status: 500 });
+    }
+
+    const data = await resp.json();
+    let text = extractTextFromResponses(data).trim();
+
+    // Determine source flag from first line
+    let sourceFlag = "GENERAL";
+    const lines = text.split("\n");
+    if (lines[0]?.toUpperCase().includes("SOURCE: MANUAL")) {
+      sourceFlag = "MANUAL";
+      lines.shift();
+    } else if (lines[0]?.toUpperCase().includes("SOURCE: GENERAL")) {
+      sourceFlag = "GENERAL";
+      lines.shift();
+    }
+    text = lines.join("\n").trim();
+
+    // HARD GUARD: if GENERAL and numeric specs present, refuse to provide numbers
+    if (sourceFlag !== "MANUAL" && SPEC_UNIT_RE.test(text)) {
+      const refusal = [
+        "⚠️ No relevant manual context retrieved — answering from general knowledge.",
+        "I can’t provide exact specifications (numbers/units) without citing a manual or standard.",
+        "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
+      ].join("\n");
+      return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+
+    // SOFT NUDGE: if MANUAL but no page/clause, add a reminder note
+    if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
+      text += "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
+    }
+
+    return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  } catch (outer: any) {
+    console.error("Unhandled /api/assistant error", outer);
+    return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
+  }
 };
