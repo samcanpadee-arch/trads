@@ -3,7 +3,7 @@ import { json, redirect } from "@sveltejs/kit";
 import OpenAI from "openai";
 
 // Hard require Node runtime to avoid Edge 1MB body limits on form-data
-export const config = { runtime: "nodejs18.x" };
+export const config = { runtime: "nodejs20.x" };
 
 // If you’ve already got these helpers, feel free to reuse; otherwise envs are fine here:
 const APPROVED_STORE_ID = process.env.PRIVATE_ASSISTANT_APPROVED_STORE_ID || "";
