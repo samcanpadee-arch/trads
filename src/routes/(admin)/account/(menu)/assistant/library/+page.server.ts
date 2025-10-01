@@ -5,7 +5,6 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabaseS
   const { session, user } = await safeGetSession();
   if (!session) throw redirect(303, "/login");
 
-  // Server-side check via service role; no hardcoded emails
   const { data: profile } = await supabaseServiceRole
     .from("profiles")
     .select("is_admin")
@@ -13,5 +12,7 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabaseS
     .single();
 
   if (!profile?.is_admin) throw redirect(303, "/account/assistant");
-  return {};
+
+  // Important: mark as allowed so /account/assistant +layout doesn't show the upgrade panel
+  return { allowed: true };
 };
