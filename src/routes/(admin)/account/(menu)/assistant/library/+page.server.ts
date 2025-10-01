@@ -1,23 +1,17 @@
-import type { PageServerLoad } from './$types';
-import { redirect, error } from '@sveltejs/kit';
-import { ADMIN_EMAILS } from '$lib/config/admin';
+import type { PageServerLoad } from "./$types";
+import { redirect } from "@sveltejs/kit";
 
-export const load: PageServerLoad = async (event) => {
-  const localsAny = event.locals as any;
+export const load: PageServerLoad = async ({ locals: { safeGetSession, supabaseServiceRole } }) => {
+  const { session, user } = await safeGetSession();
+  if (!session) throw redirect(303, "/login");
 
-  // Supabase helpers typically put the user on locals.session.user
-  const email: string | undefined =
-    localsAny?.session?.user?.email ??
-    localsAny?.user?.email ??
-    undefined;
+  // Server-side check via service role; no hardcoded emails
+  const { data: profile } = await supabaseServiceRole
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
 
-  if (!email) {
-    throw redirect(302, '/login?next=/account/assistant/library');
-  }
-
-  if (!ADMIN_EMAILS.has(email)) {
-    throw error(403, 'Forbidden: admin only');
-  }
-
+  if (!profile?.is_admin) throw redirect(303, "/account/assistant");
   return {};
 };
