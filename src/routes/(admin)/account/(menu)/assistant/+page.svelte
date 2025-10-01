@@ -102,7 +102,7 @@ Include how to retrieve error codes from the remote and any safety notes.`;
   <a href="/account/caption" class="btn btn-ghost">← Back</a>
 </header>
 
-<form class="card bg-base-100 border" on:submit|preventDefault={onAsk}>
+<form class="card bg-base-100 border" onsubmit={(e)=>{ e.preventDefault(); onAsk(); }}>
   <div class="card-body space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Trade -->
@@ -161,7 +161,7 @@ Include how to retrieve error codes from the remote and any safety notes.`;
         type="file"
         multiple
         accept=".pdf,.txt,.md"
-        on:change={(e) => (files = Array.from((e.target as HTMLInputElement).files ?? []))}
+        onchange={(e) => (files = Array.from((e.target as HTMLInputElement).files ?? []))}
       />
       <label class="label">
         <span class="label-text-alt opacity-70">
@@ -188,7 +188,7 @@ Include how to retrieve error codes from the remote and any safety notes.`;
       <button
         type="button"
         class="btn btn-outline btn-sm"
-        on:click={fillExample}
+        onclick={fillExample}
         disabled={loading}
         aria-label="Fill with an example question"
       >
@@ -205,7 +205,7 @@ Include how to retrieve error codes from the remote and any safety notes.`;
       <button
         type="button"
         class="btn btn-ghost"
-        on:click={() => { message = ""; brandModel = ""; trade = ""; focus = "general"; files = []; answer = ""; errorMsg = ""; }}
+        onclick={() => { message = ""; brandModel = ""; trade = ""; focus = "general"; files = []; answer = ""; errorMsg = ""; }}
         disabled={loading}
       >
         Reset
