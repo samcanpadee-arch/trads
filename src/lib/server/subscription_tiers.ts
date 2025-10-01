@@ -13,36 +13,63 @@ const TIER_BY_PRICE: Record<string, "free" | "standard" | "pro"> = {
   "price_1OtoXXKLg7O2VGgD6EUiD0Aw": "pro",      // yearly
 };
 
-export type Tier = "free" | "standard" | "pro";
+type Tier = "free" | "standard" | "pro";
+export type { Tier };
 
-/**
- * Read the user's tier without mutating anything:
- * - Reads profiles.stripe_customer_id via service role
- * - If missing, returns "free"
- * - Otherwise, reads Stripe subscriptions and maps the first active item's price id to a tier
- */
-export async function getUserTier(locals: {
-  safeGetSession: () => Promise<{ session: any; user: { id: string } | null }>;
+async function ensureCustomerId(locals: {
   supabaseServiceRole: any;
-}): Promise<Tier> {
+  safeGetSession: () => Promise<{ session: any; user: { id: string; email?: string|null } | null }>;
+}): Promise<string | null> {
   const { session, user } = await locals.safeGetSession();
-  if (!session || !user) return "free";
+  if (!session || !user) return null;
 
-  // 1) Read stripe_customer_id from profiles
-  const { data: profile, error: profErr } = await locals.supabaseServiceRole
+  // 1) Try profiles.stripe_customer_id
+  const { data: prof } = await locals.supabaseServiceRole
     .from("profiles")
     .select("stripe_customer_id")
     .eq("id", user.id)
     .single();
 
-  if (profErr || !profile?.stripe_customer_id) {
-    // No customer yet => treat as free (don't create one here)
-    return "free";
+  if (prof?.stripe_customer_id) return prof.stripe_customer_id as string;
+
+  // 2) Fallback: try to find existing customer by email
+  const email = user.email ?? undefined;
+  let customerId: string | null = null;
+
+  try {
+    if (email) {
+      const found = await stripe.customers.list({ email, limit: 1 });
+      if (found.data[0]?.id) customerId = found.data[0].id;
+    }
+
+    // 3) If not found, create a new customer
+    if (!customerId) {
+      const created = await stripe.customers.create({
+        email,
+        metadata: { user_id: user.id }
+      });
+      customerId = created.id;
+    }
+
+    // 4) Persist to profiles
+    await locals.supabaseServiceRole
+      .from("profiles")
+      .update({ stripe_customer_id: customerId })
+      .eq("id", user.id);
+
+    return customerId;
+  } catch {
+    return null;
   }
+}
 
-  const customerId = profile.stripe_customer_id as string;
+export async function getUserTier(locals: {
+  safeGetSession: () => Promise<{ session: any; user: { id: string; email?: string|null } | null }>;
+  supabaseServiceRole: any;
+}): Promise<Tier> {
+  const customerId = await ensureCustomerId(locals);
+  if (!customerId) return "free";
 
-  // 2) Get subs and map to tier
   try {
     const subs = await stripe.subscriptions.list({
       customer: customerId,
@@ -51,15 +78,25 @@ export async function getUserTier(locals: {
       limit: 10
     });
 
-    // Prefer a non-canceled subscription
-    const current = subs.data.find((s) => s.status !== "canceled") ?? subs.data[0];
-    if (!current) return "free";
+    if (!subs.data.length) return "free";
 
-    const firstItem = current.items.data[0];
+    // Prefer: active > trialing > past_due > unpaid > everything else
+    const rank: Record<string, number> = {
+      active: 0,
+      trialing: 1,
+      past_due: 2,
+      unpaid: 3,
+      incomplete: 4,
+      incomplete_expired: 5,
+      paused: 6,
+      canceled: 99
+    };
+
+    const current = [...subs.data].sort((a, b) => (rank[a.status] ?? 50) - (rank[b.status] ?? 50))[0];
+    const firstItem = current?.items?.data?.[0];
     const priceId = typeof firstItem?.price?.id === "string" ? firstItem.price.id : null;
-    if (priceId && TIER_BY_PRICE[priceId]) {
-      return TIER_BY_PRICE[priceId];
-    }
+
+    if (priceId && TIER_BY_PRICE[priceId]) return TIER_BY_PRICE[priceId];
     return "free";
   } catch {
     return "free";
