@@ -1,11 +1,9 @@
 import Stripe from "stripe";
 import { PRIVATE_STRIPE_API_KEY } from "$env/static/private";
-import type { Database } from "$lib/types/supabase"; // if you don't have this, remove the type and use 'any'
-import { getOrCreateCustomerId } from "$lib/server/subscription_helpers_bridge"; // adjust path if needed
 
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
 
-// Map Stripe price IDs to our app tiers
+/** Map Stripe price IDs to tiers */
 const TIER_BY_PRICE: Record<string, "free" | "standard" | "pro"> = {
   // Standard
   "price_1OtoRqKLg7O2VGgDn5t5kB4n": "standard", // monthly
@@ -17,6 +15,12 @@ const TIER_BY_PRICE: Record<string, "free" | "standard" | "pro"> = {
 
 export type Tier = "free" | "standard" | "pro";
 
+/**
+ * Read the user's tier without mutating anything:
+ * - Reads profiles.stripe_customer_id via service role
+ * - If missing, returns "free"
+ * - Otherwise, reads Stripe subscriptions and maps the first active item's price id to a tier
+ */
 export async function getUserTier(locals: {
   safeGetSession: () => Promise<{ session: any; user: { id: string } | null }>;
   supabaseServiceRole: any;
@@ -24,34 +28,38 @@ export async function getUserTier(locals: {
   const { session, user } = await locals.safeGetSession();
   if (!session || !user) return "free";
 
-  // Resolve Stripe customer
-  const { error, customerId } = await getOrCreateCustomerId({
-    supabaseServiceRole: locals.supabaseServiceRole,
-    user
-  });
-  if (error || !customerId) return "free";
+  // 1) Read stripe_customer_id from profiles
+  const { data: profile, error: profErr } = await locals.supabaseServiceRole
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("id", user.id)
+    .single();
 
-  // Fetch latest subscription and derive tier by price id
+  if (profErr || !profile?.stripe_customer_id) {
+    // No customer yet => treat as free (don't create one here)
+    return "free";
+  }
+
+  const customerId = profile.stripe_customer_id as string;
+
+  // 2) Get subs and map to tier
   try {
     const subs = await stripe.subscriptions.list({
-      customer: customerId as string,
+      customer: customerId,
       status: "all",
       expand: ["data.items.data.price"],
       limit: 10
     });
 
-    // pick an active (not canceled) subscription first
-    const current = subs.data.find(s => s.status !== "canceled") ?? subs.data[0];
+    // Prefer a non-canceled subscription
+    const current = subs.data.find((s) => s.status !== "canceled") ?? subs.data[0];
     if (!current) return "free";
 
     const firstItem = current.items.data[0];
-    const priceId =
-      typeof firstItem?.price?.id === "string" ? firstItem.price.id : null;
-
+    const priceId = typeof firstItem?.price?.id === "string" ? firstItem.price.id : null;
     if (priceId && TIER_BY_PRICE[priceId]) {
       return TIER_BY_PRICE[priceId];
     }
-    // unknown price -> treat as free (conservative)
     return "free";
   } catch {
     return "free";
