@@ -168,7 +168,7 @@ export const POST: RequestHandler = async ({ request }) => {
     // Temp per-request store for uploaded files
     if (uploaded.length) {
       tempVectorStoreId = await createVectorStore(API, `session-${Date.now()}`);
-      for (const f of uploaded) await attachFileToVectorStore(API, tempVectorStoreId, f.id);
+      for (const u of uploaded) await attachFileToVectorStore(API, tempVectorStoreId, u.id);
       await waitForIndexing(API, tempVectorStoreId);
     }
 
@@ -179,9 +179,9 @@ export const POST: RequestHandler = async ({ request }) => {
     // If opted-in, attach uploaded files to all library stores
         if (share && uploaded.length && libraryIds.length) {
       for (const libId of libraryIds) {
-        for (const f of uploaded) {
-                  console.log("share-attach", { file: f.filename, id: f.id, to: libId });
-try { await attachFileToVectorStore(API, libId, f.id); } catch {}
+        for (const u of uploaded) {
+                  console.log("share-attach", { file: u.filename, id: u.id, to: libId });
+try { await attachFileToVectorStore(API, libId, u.id); } catch {}
         }
       }
     }
