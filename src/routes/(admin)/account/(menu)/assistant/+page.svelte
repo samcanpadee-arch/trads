@@ -22,6 +22,21 @@
     "Other",
   ]
 
+function handleFileChange(e: Event) {
+  const input = e.target as HTMLInputElement | null;
+  const maxSize = 4 * 1024 * 1024; // 4 MB
+  const allFiles = Array.from(input?.files ?? []);
+  const oversized = allFiles.find((f) => f.size > maxSize);
+
+  if (oversized) {
+    alert(`File "${oversized.name}" is too large. Max size is 4 MB.`);
+  }
+
+  // `files` is your existing component state array
+  files = allFiles.filter((f) => f.size <= maxSize);
+}
+
+
   const focuses = [
     { value: "general", label: "General help" },
     { value: "diagnosis", label: "Diagnosis & fault codes" },
@@ -161,18 +176,18 @@ Include how to retrieve error codes from the remote and any safety notes.`
       <label for="files" class="label">
         <span class="label-text">Attach manuals or notes (PDF/TXT)</span>
       </label>
+
       <input
         id="files" name="files"
         class="file-input file-input-bordered w-full max-w-xl"
         type="file"
         multiple
         accept=".pdf,.txt,.md"
-        on:change={(e) =>
-          (files = Array.from((e.target as HTMLInputElement).files ?? []))}
+        on:change={handleFileChange}
       />
       <label class="label">
         <span class="label-text-alt opacity-70">
-          We’ll reference your files and cite them inline where relevant.
+              Max 4 MB per file. We’ll reference your files and cite them where relevant.
         </span>
       </label>
 
