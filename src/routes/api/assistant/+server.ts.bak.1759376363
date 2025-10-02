@@ -2,6 +2,7 @@ import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 import crypto from "node:crypto";
 // @ts-ignore
+import registry from "$lib/vectorstores.json";
 
 export const config = { runtime: 'nodejs20.x' };
 
@@ -146,9 +147,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const trade = (form.get("trade") as string || "").trim();
     const brand = (form.get("brand") as string || "").trim(); // combined brand/model input
     const model = (form.get("model") as string || "").trim(); // optional
-    const shareRaw = String(form.get("share") ?? "");
-    const share = /^(on|true|1|yes)$/i.test(shareRaw);
-
+    const share = ((form.get("share") as string) || "off") === "on";
 
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
@@ -165,19 +164,6 @@ export const POST: RequestHandler = async ({ request }) => {
       }
       uploaded.push({ id: fileId, filename: stableName, hash });
     }
-    
-// Attach to the shared (approved) vector store when "share" is ticked
-const approvedStoreId = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID;
-if (approvedStoreId && share && uploaded.length) {
-  for (const u of uploaded) {
-    try {
-      await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, approvedStoreId, u.id);
-    } catch (e) {
-      console.error("[assistant] failed to attach to approved store", approvedStoreId, u.id, e);
-    }
-  }
-  console.log(`[assistant] share=true files=${uploaded.length} approved=${approvedStoreId}`);
-}
 
     // Temp per-request store for uploaded files
     if (uploaded.length) {
@@ -187,10 +173,10 @@ if (approvedStoreId && share && uploaded.length) {
     }
 
     // Library stores from registry JSON
-    const libraryIds: string[] = [privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID].filter(Boolean) as string[];
+    const libraryIds: string[] =
+      Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
 
     // If opted-in, attach uploaded files to all library stores
-    console.log("[assistant] share=%s files=%d approved=%s", share, uploaded.length, privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID);
         if (share && uploaded.length && libraryIds.length) {
       for (const libId of libraryIds) {
         for (const f of uploaded) {

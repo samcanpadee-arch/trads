@@ -1,11 +1,6 @@
-import { PRIVATE_ASSISTANT_APPROVED_STORE_ID, PRIVATE_ASSISTANT_PENDING_STORE_ID } from "$env/static/private";
+import { env as privateEnv } from "$env/dynamic/private";
 
-export function getApprovedStoreId() {
-  if (!PRIVATE_ASSISTANT_APPROVED_STORE_ID) throw new Error("Missing PRIVATE_ASSISTANT_APPROVED_STORE_ID");
-  return PRIVATE_ASSISTANT_APPROVED_STORE_ID;
-}
-
-export function getPendingStoreId() {
-  if (!PRIVATE_ASSISTANT_PENDING_STORE_ID) throw new Error("Missing PRIVATE_ASSISTANT_PENDING_STORE_ID");
-  return PRIVATE_ASSISTANT_PENDING_STORE_ID;
+export function getApprovedStoreId(): string | null {
+  const id = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID?.trim();
+  return id || null;
 }
