@@ -108,7 +108,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
           <span class="label-text">Trade (optional)</span>
         </label>
         <select
-          id="trade"
+          id="trade" name="trade"
           class="select select-bordered w-full"
           bind:value={trade}
         >
@@ -125,7 +125,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
           <span class="label-text">Brand / Model or Standard (optional)</span>
         </label>
         <input
-          id="brandModel"
+          id="brandModel" name="brand"
           type="text"
           class="input input-bordered w-full"
           placeholder='e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000"'
@@ -146,7 +146,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
         <span class="label-text">Focus (optional)</span>
       </label>
       <select
-        id="focus"
+        id="focus" name="focus"
         class="select select-bordered w-full max-w-md"
         bind:value={focus}
       >
@@ -162,7 +162,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
         <span class="label-text">Attach manuals or notes (PDF/TXT)</span>
       </label>
       <input
-        id="files"
+        id="files" name="files"
         class="file-input file-input-bordered w-full max-w-xl"
         type="file"
         multiple
@@ -202,7 +202,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
         <span class="label-text">Question</span>
       </label>
       <textarea
-        id="message"
+        id="message" name="message"
         class="textarea textarea-bordered w-full"
         rows="4"
         placeholder="Describe the issue or question. Include context like symptoms, environment, regulations, constraints, etc."
