@@ -128,7 +128,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
           id="brandModel"
           type="text"
           class="input input-bordered w-full"
-          placeholder="e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000""
+          placeholder='e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
         <label class="label">
