@@ -1,22 +1,22 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 import crypto from "node:crypto";
-// @ts-ignore – your JSON that lists library vector stores
+// @ts-ignore
 import registry from "$lib/vectorstores.json";
 
-export const config = { runtime: "nodejs20.x" };
+export const config = { runtime: 'nodejs20.x' };
 
-/** ---------- Utils ---------- **/
+// --- utils -------------------------------------------------
 async function sha256OfFile(file: File): Promise<string> {
-  const hash = crypto.createHash("sha256");
-  // @ts-ignore Node 20 File.stream()
+  const hash = crypto.createHash('sha256');
+  // @ts-ignore Node 20 File.stream
   const reader = file.stream().getReader();
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
     if (value) hash.update(value);
   }
-  return hash.digest("hex");
+  return hash.digest('hex');
 }
 
 async function listAllFiles(apiKey: string): Promise<any[]> {
@@ -31,7 +31,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
     const arr = Array.isArray(j.data) ? j.data : [];
     out.push(...arr);
     if (!j.has_more || !arr.length) break;
-    after = arr[arr.length - 1]?.id ?? null;
+    after = arr[arr.length - 1]?.id;
   }
   return out;
 }
@@ -42,7 +42,7 @@ async function findFileByStableName(apiKey: string, stableName: string): Promise
   return match?.id ?? null;
 }
 
-async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string) {
+async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string): Promise<{ id: string; filename: string }> {
   const form = new FormData();
   form.append("purpose", "assistants");
   form.append("file", file, stableName);
@@ -85,8 +85,10 @@ async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs 
     if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
     const json = await resp.json();
     const files = (json.data || []) as Array<any>;
-    const pending = files.find((f) => f.status !== "completed");
-    if (!pending) return;
+    if (files.length) {
+      const pending = files.find((f) => f.status !== "completed");
+      if (!pending) return;
+    }
     await new Promise((r) => setTimeout(r, 700));
   }
 }
@@ -112,42 +114,25 @@ function extractTextFromResponses(resJson: any): string {
   return "";
 }
 
-// Simple guard for numbers with units in GENERAL mode
+// Detect "exact spec" tokens in GENERAL answers
 const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
 
-/** ---------- GET: health ---------- **/
-export const GET: RequestHandler = async () => {
-  return new Response(JSON.stringify({ ok: true, route: "/api/assistant" }), {
-    headers: { "Content-Type": "application/json" }
-  });
-};
-
-/** ---------- POST: main assistant ---------- **/
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const OPENAI_KEY =
-      privateEnv.OPENAI_API_KEY || privateEnv.PRIVATE_OPENAI_API_KEY || "";
-    if (!OPENAI_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
-
-    // IMPORTANT: Vercel body limit ~4–5MB; reject early to avoid 413
-    const contentLength = Number(request.headers.get("content-length") || "0");
-    if (contentLength > 4_500_000) {
-      return new Response("File too large for server upload. Please upload a smaller PDF (≲4MB).", { status: 413 });
-    }
+    if (!privateEnv.OPENAI_API_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
-      return new Response(
-        "Send multipart/form-data with fields: message and optional trade, brand, files[], share",
-        { status: 400 }
-      );
+      return new Response("Send multipart/form-data with fields: message and optional trade, brand, model, files[], share", { status: 400 });
     }
 
     const form = await request.formData();
     const message = (form.get("message") as string || "").trim();
     const trade = (form.get("trade") as string || "").trim();
-    const brand = (form.get("brand") as string || "").trim();
+    const brand = (form.get("brand") as string || "").trim(); // combined brand/model input in UI
+    const model = (form.get("model") as string || "").trim(); // (optional/unused)
     const share = ((form.get("share") as string) || "off") === "on";
+
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
     // Upload or reuse files with stable hashed filename
@@ -156,9 +141,9 @@ export const POST: RequestHandler = async ({ request }) => {
     for (const f of files) {
       const hash = await sha256OfFile(f);
       const stableName = `${hash}-${f.name}`;
-      let fileId = await findFileByStableName(OPENAI_KEY, stableName);
+      let fileId = await findFileByStableName(privateEnv.OPENAI_API_KEY, stableName);
       if (!fileId) {
-        const up = await uploadToOpenAIWithStableName(f, OPENAI_KEY, stableName);
+        const up = await uploadToOpenAIWithStableName(f, privateEnv.OPENAI_API_KEY, stableName);
         fileId = up.id;
       }
       uploaded.push({ id: fileId, filename: stableName, hash });
@@ -167,26 +152,24 @@ export const POST: RequestHandler = async ({ request }) => {
     // Temp per-request store for uploaded files
     let tempVectorStoreId: string | null = null;
     if (uploaded.length) {
-      tempVectorStoreId = await createVectorStore(OPENAI_KEY, `session-${Date.now()}`);
-      for (const u of uploaded) await attachFileToVectorStore(OPENAI_KEY, tempVectorStoreId, u.id);
-      await waitForIndexing(OPENAI_KEY, tempVectorStoreId);
+      tempVectorStoreId = await createVectorStore(privateEnv.OPENAI_API_KEY, `session-${Date.now()}`);
+      for (const u of uploaded) await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, tempVectorStoreId, u.id);
+      await waitForIndexing(privateEnv.OPENAI_API_KEY, tempVectorStoreId);
     }
 
     // Library stores from registry JSON
-    const libraryIds: string[] = Array.isArray(registry?.library_store_ids)
-      ? registry.library_store_ids.filter(Boolean)
-      : [];
+    const libraryIds: string[] = Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
 
     // If opted-in, attach uploaded files to all library stores
     if (share && uploaded.length && libraryIds.length) {
       for (const libId of libraryIds) {
         for (const u of uploaded) {
-          try { await attachFileToVectorStore(OPENAI_KEY, libId, u.id); } catch {}
+          try { await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, libId, u.id); } catch {}
         }
       }
     }
 
-    // System rules
+    // Strict system rules
     const SYSTEM = `
 You are a technical assistant for experienced Australian tradies.
 
@@ -206,6 +189,7 @@ STYLE:
     const userText = [
       trade ? `Trade: ${trade}` : null,
       brand ? `Brand/Model or Standard: ${brand}` : null,
+      model ? `Model: ${model}` : null,
       `Question: ${message}`,
       "Task:",
       "- Provide detailed, technical guidance.",
@@ -227,7 +211,7 @@ STYLE:
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_KEY}`,
+        Authorization: `Bearer ${privateEnv.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -237,6 +221,7 @@ STYLE:
           { role: "user", content: [{ type: "input_text", text: userText }] }
         ],
         tools,
+        // Force retrieval if any vector stores are present; otherwise allow general
         tool_choice: (uniqueVsIds.length ? "required" : "auto"),
         temperature: 0.1
       })
@@ -273,11 +258,12 @@ STYLE:
       return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
-    // SOFT NUDGE: if MANUAL but no page/clause, add a reminder note
+    // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
     if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
       text += "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
     }
 
+    // Return final text
     return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
