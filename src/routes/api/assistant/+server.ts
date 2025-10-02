@@ -177,7 +177,8 @@ export const POST: RequestHandler = async ({ request }) => {
       Array.isArray(registry?.library_store_ids) ? registry.library_store_ids.filter(Boolean) : [];
 
     // If opted-in, attach uploaded files to all library stores
-    if (share && uploaded.length && libraryIds.length) {
+    console.log("share-attach", {file: u.filename, to: libId});
+        if (share && uploaded.length && libraryIds.length) {
       for (const libId of libraryIds) {
         for (const u of uploaded) {
           try { await attachFileToVectorStore(API, libId, u.id); } catch {}
