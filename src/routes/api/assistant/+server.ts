@@ -1,12 +1,11 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 import crypto from "node:crypto";
-// @ts-ignore – your JSON that lists library vector stores
-import registry from "$lib/vectorstores.json";
+import { getApprovedStoreId } from "$lib/server/assistant_stores";
 
 export const config = { runtime: "nodejs20.x" };
 
-/** ---------- Utils ---------- **/
+/** ---- tiny utils ---- */
 async function sha256OfFile(file: File): Promise<string> {
   const hash = crypto.createHash("sha256");
   // @ts-ignore Node 20 File.stream()
@@ -31,7 +30,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
     const arr = Array.isArray(j.data) ? j.data : [];
     out.push(...arr);
     if (!j.has_more || !arr.length) break;
-    after = arr[arr.length - 1]?.id ?? null;
+    after = arr[arr.length - 1]?.id;
   }
   return out;
 }
@@ -85,8 +84,7 @@ async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs 
     if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
     const json = await resp.json();
     const files = (json.data || []) as Array<any>;
-    const pending = files.find((f) => f.status !== "completed");
-    if (!pending) return;
+    if (files.length && !files.find((f) => f.status !== "completed")) return;
     await new Promise((r) => setTimeout(r, 700));
   }
 }
@@ -112,33 +110,18 @@ function extractTextFromResponses(resJson: any): string {
   return "";
 }
 
-// Simple guard for numbers with units in GENERAL mode
-const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
+const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/i;
 
-/** ---------- GET: health ---------- **/
-export const GET: RequestHandler = async () => {
-  return new Response(JSON.stringify({ ok: true, route: "/api/assistant" }), {
-    headers: { "Content-Type": "application/json" }
-  });
-};
-
-/** ---------- POST: main assistant ---------- **/
+/** ---- main handler ---- */
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const OPENAI_KEY =
-      privateEnv.OPENAI_API_KEY || privateEnv.PRIVATE_OPENAI_API_KEY || "";
-    if (!OPENAI_KEY) return new Response("Missing OPENAI_API_KEY", { status: 500 });
-
-    // IMPORTANT: Vercel body limit ~4–5MB; reject early to avoid 413
-    const contentLength = Number(request.headers.get("content-length") || "0");
-    if (contentLength > 4_500_000) {
-      return new Response("File too large for server upload. Please upload a smaller PDF (≲4MB).", { status: 413 });
-    }
+    const API = privateEnv.OPENAI_API_KEY;
+    if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
     const ctype = request.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
       return new Response(
-        "Send multipart/form-data with fields: message and optional trade, brand, files[], share",
+        "Send multipart/form-data with fields: message and optional trade, brand, model, files[], share",
         { status: 400 }
       );
     }
@@ -147,89 +130,81 @@ export const POST: RequestHandler = async ({ request }) => {
     const message = (form.get("message") as string || "").trim();
     const trade = (form.get("trade") as string || "").trim();
     const brand = (form.get("brand") as string || "").trim();
+    const model = (form.get("model") as string || "").trim();
     const share = ((form.get("share") as string) || "off") === "on";
+
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    // Upload or reuse files with stable hashed filename
+    // 1) Upload/reuse files (stable name = sha256-originalname)
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);
       const stableName = `${hash}-${f.name}`;
-      let fileId = await findFileByStableName(OPENAI_KEY, stableName);
+      let fileId = await findFileByStableName(API, stableName);
       if (!fileId) {
-        const up = await uploadToOpenAIWithStableName(f, OPENAI_KEY, stableName);
+        const up = await uploadToOpenAIWithStableName(f, API, stableName);
         fileId = up.id;
       }
       uploaded.push({ id: fileId, filename: stableName, hash });
     }
 
-    // Temp per-request store for uploaded files
+    // 2) Per-request store for uploaded files (so retrieval hits them immediately)
     let tempVectorStoreId: string | null = null;
     if (uploaded.length) {
-      tempVectorStoreId = await createVectorStore(OPENAI_KEY, `session-${Date.now()}`);
-      for (const u of uploaded) await attachFileToVectorStore(OPENAI_KEY, tempVectorStoreId, u.id);
-      await waitForIndexing(OPENAI_KEY, tempVectorStoreId);
+      tempVectorStoreId = await createVectorStore(API, `session-${Date.now()}`);
+      for (const u of uploaded) await attachFileToVectorStore(API, tempVectorStoreId, u.id);
+      await waitForIndexing(API, tempVectorStoreId);
     }
 
-    // Library stores from registry JSON
-    const libraryIds: string[] = Array.isArray(registry?.library_store_ids)
-      ? registry.library_store_ids.filter(Boolean)
-      : [];
+    // 3) Approved shared library is always searched (read-only)
+    const approvedId = getApprovedStoreId(); // from env
+    const vector_store_ids = [
+      ...(approvedId ? [approvedId] : []),
+      ...(tempVectorStoreId ? [tempVectorStoreId] : [])
+    ];
 
-    // If opted-in, attach uploaded files to all library stores
-    if (share && uploaded.length && libraryIds.length) {
-      for (const libId of libraryIds) {
-        for (const u of uploaded) {
-          try { await attachFileToVectorStore(OPENAI_KEY, libId, u.id); } catch {}
-        }
+    // 4) If user opted to share, also attach upload(s) to the approved library (write)
+    if (share && approvedId && uploaded.length) {
+      for (const u of uploaded) {
+        try { await attachFileToVectorStore(API, approvedId, u.id); } catch { /* ignore individual attach failures */ }
       }
     }
 
-    // System rules
+    // 5) Prompt with stronger citation rules
     const SYSTEM = `
 You are a technical assistant for experienced Australian tradies.
 
-GROUNDING & CITATIONS (MANDATORY RULES):
-1) If you used retrieved manual/standard content, your FIRST LINE must be exactly: "SOURCE: MANUAL".
-   - Include inline citations like [<short doc>, p.<page>] or [<short doc>, §<clause>].
-   - Do NOT fabricate page/section numbers. If unknown, write [<doc>, page unknown] and say so briefly.
-2) If no relevant content was retrieved or applicable, your FIRST LINE must be exactly: "SOURCE: GENERAL".
-   - Do NOT provide exact specifications (numbers with units) in GENERAL mode.
-   - If asked for exact values while in GENERAL, explain you cannot provide numeric specs without a manual citation.
+RETRIEVAL & CITATIONS (MANDATORY):
+- Prefer content retrieved from manuals/standards first. Include **inline citations** like: [<short doc>, p.<page>] or [<short doc>, §<clause>].
+- If you cannot determine a page/section from retrieved context, write: [<doc>, page unknown].
+- If no relevant retrieval applies, begin with "SOURCE: GENERAL" and **do not** provide exact numeric specifications.
+
+FIRST LINE:
+- If any retrieved manual/standard content is used: "SOURCE: MANUAL"
+- Otherwise: "SOURCE: GENERAL"
 
 STYLE:
-- Be concise but technical. Safety/compliance notes where relevant.
+- Be concise but technical. Call out safety/compliance issues.
 - End with a short checklist.
 `.trim();
 
     const userText = [
       trade ? `Trade: ${trade}` : null,
       brand ? `Brand/Model or Standard: ${brand}` : null,
+      model ? `Model: ${model}` : null,
       `Question: ${message}`,
       "Task:",
-      "- Provide detailed, technical guidance.",
-      "- If exact values/specs are requested, only provide them when grounded in retrieved text (with page/section citation).",
-      "- Otherwise explain that specs require a cited manual/standard.",
+      "- Use retrieved manuals/standards if available and cite pages/clauses.",
+      "- If exact values are requested, only give numbers when grounded by a citation.",
+      "- If you cannot cite a page/section, say page unknown.",
       "- End with a short checklist."
     ].filter(Boolean).join("\n");
 
-    // Build vector_store_ids: libraries + temp
-    const vsIds = [...libraryIds];
-    if (tempVectorStoreId) vsIds.push(tempVectorStoreId);
-    const uniqueVsIds = Array.from(new Set(vsIds));
-
-    // Tools config
-    const tools: any[] = [];
-    if (uniqueVsIds.length) tools.push({ type: "file_search", vector_store_ids: uniqueVsIds });
-
-    // Call Responses API
+    const tools: any[] = vector_store_ids.length ? [{ type: "file_search", vector_store_ids }] : [];
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json"
-      },
+      headers: { Authorization: `Bearer ${API}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         input: [
@@ -237,7 +212,7 @@ STYLE:
           { role: "user", content: [{ type: "input_text", text: userText }] }
         ],
         tools,
-        tool_choice: (uniqueVsIds.length ? "required" : "auto"),
+        tool_choice: vector_store_ids.length ? "required" : "auto",
         temperature: 0.1
       })
     });
@@ -251,36 +226,29 @@ STYLE:
     const data = await resp.json();
     let text = extractTextFromResponses(data).trim();
 
-    // Determine source flag from first line
+    // SOURCE banner handling + numeric guard
     let sourceFlag = "GENERAL";
     const lines = text.split("\n");
-    if (lines[0]?.toUpperCase().includes("SOURCE: MANUAL")) {
-      sourceFlag = "MANUAL";
-      lines.shift();
-    } else if (lines[0]?.toUpperCase().includes("SOURCE: GENERAL")) {
-      sourceFlag = "GENERAL";
-      lines.shift();
-    }
+    if (lines[0]?.toUpperCase().includes("SOURCE: MANUAL")) { sourceFlag = "MANUAL"; lines.shift(); }
+    else if (lines[0]?.toUpperCase().includes("SOURCE: GENERAL")) { sourceFlag = "GENERAL"; lines.shift(); }
     text = lines.join("\n").trim();
 
-    // HARD GUARD: if GENERAL and numeric specs present, refuse to provide numbers
     if (sourceFlag !== "MANUAL" && SPEC_UNIT_RE.test(text)) {
       const refusal = [
         "⚠️ No relevant manual context retrieved — answering from general knowledge.",
         "I can’t provide exact specifications (numbers/units) without citing a manual or standard.",
-        "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
+        "Please attach or reference the document, and I’ll give precise values with page/section citations."
       ].join("\n");
       return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
-    // SOFT NUDGE: if MANUAL but no page/clause, add a reminder note
-    if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
+    if (sourceFlag === "MANUAL" && !/\[(.+?),\s*(p\.\s*\d+|§\s*\d+|page unknown)\]/i.test(text)) {
       text += "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
     }
 
     return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-  } catch (outer: any) {
-    console.error("Unhandled /api/assistant error", outer);
-    return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
+  } catch (e: any) {
+    console.error("Unhandled /api/assistant error", e);
+    return new Response(`Internal error: ${e?.message || e}`, { status: 500 });
   }
 };
