@@ -1,13 +1,13 @@
 <script lang="ts">
-  let trade = "";
-  let brandModel = ""; // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
-  let focus = "general"; // optional hint only (we'll inject into message text)
-  let message = "";
-  let files: File[] = [];
+  let trade = ""
+  let brandModel = "" // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
+  let focus = "general" // optional hint only (we'll inject into message text)
+  let message = ""
+  let files: File[] = []
 
-  let answer = "";
-  let loading = false;
-  let errorMsg = "";
+  let answer = ""
+  let loading = false
+  let errorMsg = ""
 
   const trades = [
     "Electrical",
@@ -19,8 +19,8 @@
     "Tiling",
     "Painting",
     "Landscaping",
-    "Other"
-  ];
+    "Other",
+  ]
 
   const focuses = [
     { value: "general", label: "General help" },
@@ -28,62 +28,60 @@
     { value: "install", label: "Installation & commissioning" },
     { value: "compliance", label: "Compliance, standards & codes" },
     { value: "maintenance", label: "Maintenance & servicing" },
-    { value: "specs", label: "Parts & specifications" }
-  ];
+    { value: "specs", label: "Parts & specifications" },
+  ]
 
   function fillExample() {
-    trade = "HVAC";
-    brandModel = "Panasonic CS-Z50VKR";
-    focus = "diagnosis";
-    message =
-`Indoor unit shows blinking POWER/TIMER LEDs intermittently during heating.
+    trade = "HVAC"
+    brandModel = "Panasonic CS-Z50VKR"
+    focus = "diagnosis"
+    message = `Indoor unit shows blinking POWER/TIMER LEDs intermittently during heating.
 Explain what each indicator means on VKR series and when blinking is normal (e.g., defrost, preheat).
-Include how to retrieve error codes from the remote and any safety notes.`;
-    files = []; // leave file uploads empty; user can still attach a manual if they want
-    answer = "";
-    errorMsg = "";
+Include how to retrieve error codes from the remote and any safety notes.`
+    files = [] // leave file uploads empty; user can still attach a manual if they want
+    answer = ""
+    errorMsg = ""
   }
 
-  async function onAsk(e: Event) {
-    e.preventDefault();
-    answer = "";
-    errorMsg = "";
-    loading = true;
+  async function onAsk(e: SubmitEvent) {
+    e.preventDefault()
+    const formEl = e.currentTarget as HTMLFormElement
+    // Build FormData **from the form** so all inputs (incl. checkbox) are captured
+    const fd = new FormData(formEl)
+
+    // If you’re tracking files in a `files` array (not relying on the <input>’s name),
+    // ensure they’re appended too:
+    if (files && files.length && !fd.has("files")) {
+      for (const f of files) fd.append("files", f)
+    }
+
+    // Extra safety: if the checkbox is checked but (for any reason) didn’t serialize,
+    // add it explicitly:
+    const shareEl = formEl.querySelector(
+      'input[name="share"]',
+    ) as HTMLInputElement | null
+    if (shareEl && shareEl.checked && !fd.has("share")) {
+      fd.append("share", "yes")
+    }
 
     try {
-      // Build the outgoing question, optionally prefix with focus for better retrieval.
-      const msgParts = [];
-      if (focus && focus !== "general") {
-        msgParts.push(`Focus: ${focus}`);
-      }
-      msgParts.push(message.trim());
-      const outgoing = msgParts.join("\n");
+      loading = true
+      errorMsg = ""
+      answer = ""
 
-      const fd = new FormData();
-      fd.append("message", outgoing);
-      fd.append("trade", trade || "");
-      // Backend expects 'brand' and 'model'. We'll send the combined text as 'brand' and leave 'model' blank.
-      fd.append("brand", brandModel || "");
-      fd.append("model", "");
+      const res = await fetch("/api/assistant", { method: "POST", body: fd })
+      const text = await res.text()
 
-      for (const f of files) fd.append("files", f, f.name);
-
-      const resp = await fetch("/api/assistant", {
-        method: "POST",
-        body: fd
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || "Assistant error");
+      if (!res.ok) {
+        errorMsg = text || "Something went wrong"
+        return
       }
 
-      const text = await resp.text();
-      answer = text;
+      answer = text
     } catch (err: any) {
-      errorMsg = err?.message ?? String(err);
+      errorMsg = err?.message ?? String(err)
     } finally {
-      loading = false;
+      loading = false
     }
   }
 </script>
@@ -93,9 +91,9 @@ Include how to retrieve error codes from the remote and any safety notes.`;
     <h1 class="text-2xl font-semibold">AI Assistant</h1>
     <p class="text-sm opacity-70 mt-1">
       Ask technical, trade-level questions. We tap into a growing library of
-      manuals, guides, standards and codes — and you can also attach your own PDFs or notes.
-      We’ll combine that with AI to give you precise, cited answers, so you don’t have to
-      dig through documents yourself.
+      manuals, guides, standards and codes — and you can also attach your own
+      PDFs or notes. We’ll combine that with AI to give you precise, cited
+      answers, so you don’t have to dig through documents yourself.
     </p>
   </div>
   <a href="/account/caption" class="btn btn-ghost">← Back</a>
@@ -109,7 +107,11 @@ Include how to retrieve error codes from the remote and any safety notes.`;
         <label for="trade" class="label">
           <span class="label-text">Trade (optional)</span>
         </label>
-        <select id="trade" class="select select-bordered w-full" bind:value={trade}>
+        <select
+          id="trade"
+          class="select select-bordered w-full"
+          bind:value={trade}
+        >
           <option value="">— Select trade (optional) —</option>
           {#each trades as t}
             <option value={t}>{t}</option>
@@ -126,12 +128,13 @@ Include how to retrieve error codes from the remote and any safety notes.`;
           id="brandModel"
           type="text"
           class="input input-bordered w-full"
-          placeholder='e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000"'
+          placeholder="e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000""
           bind:value={brandModel}
         />
         <label class="label">
           <span class="label-text-alt opacity-70">
-            Useful when your question is appliance-specific or cites a standard/code.
+            Useful when your question is appliance-specific or cites a
+            standard/code.
           </span>
         </label>
       </div>
@@ -142,7 +145,11 @@ Include how to retrieve error codes from the remote and any safety notes.`;
       <label for="focus" class="label">
         <span class="label-text">Focus (optional)</span>
       </label>
-      <select id="focus" class="select select-bordered w-full max-w-md" bind:value={focus}>
+      <select
+        id="focus"
+        class="select select-bordered w-full max-w-md"
+        bind:value={focus}
+      >
         {#each focuses as f}
           <option value={f.value}>{f.label}</option>
         {/each}
@@ -153,14 +160,6 @@ Include how to retrieve error codes from the remote and any safety notes.`;
     <div class="form-control">
       <label for="files" class="label">
         <span class="label-text">Attach manuals or notes (PDF/TXT)</span>
-    <!-- Share with community consent -->
-    <div class="form-control mt-2">
-      <label class="label cursor-pointer gap-2">
-        <input type="checkbox" name="share" class="checkbox checkbox-sm" />
-        <span class="label-text text-sm">Share this upload to help other tradies (no personal data).</span>
-      </label>
-      <p class="text-xs opacity-70 mt-1">If unticked, the file is used for this answer only and not added to the shared library.</p>
-    </div>
       </label>
       <input
         id="files"
@@ -168,13 +167,33 @@ Include how to retrieve error codes from the remote and any safety notes.`;
         type="file"
         multiple
         accept=".pdf,.txt,.md"
-        on:change={(e) => (files = Array.from((e.target as HTMLInputElement).files ?? []))}
+        on:change={(e) =>
+          (files = Array.from((e.target as HTMLInputElement).files ?? []))}
       />
       <label class="label">
         <span class="label-text-alt opacity-70">
           We’ll reference your files and cite them inline where relevant.
         </span>
       </label>
+
+      <!-- Share with community consent -->
+      <div class="form-control mt-2">
+        <label class="label cursor-pointer gap-2">
+          <input
+            type="checkbox"
+            name="share"
+            value="yes"
+            class="checkbox checkbox-sm"
+          />
+          <span class="label-text text-sm"
+            >Share this upload to help other tradies (no personal data).</span
+          >
+        </label>
+        <p class="text-xs opacity-70 mt-1">
+          If unticked, the file is used for this answer only and not added to
+          the shared library.
+        </p>
+      </div>
     </div>
 
     <!-- Question -->
@@ -201,7 +220,11 @@ Include how to retrieve error codes from the remote and any safety notes.`;
       >
         Example
       </button>
-      <button type="submit" class="btn btn-primary" disabled={loading || !message.trim()}>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        disabled={loading || !message.trim()}
+      >
         {#if loading}
           <span class="loading loading-spinner loading-sm"></span>
           <span>Thinking…</span>
@@ -212,7 +235,15 @@ Include how to retrieve error codes from the remote and any safety notes.`;
       <button
         type="button"
         class="btn btn-ghost"
-        on:click={() => { message = ""; brandModel = ""; trade = ""; focus = "general"; files = []; answer = ""; errorMsg = ""; }}
+        on:click={() => {
+          message = ""
+          brandModel = ""
+          trade = ""
+          focus = "general"
+          files = []
+          answer = ""
+          errorMsg = ""
+        }}
         disabled={loading}
       >
         Reset
