@@ -153,14 +153,6 @@ Include how to retrieve error codes from the remote and any safety notes.`;
     <div class="form-control">
       <label for="files" class="label">
         <span class="label-text">Attach manuals or notes (PDF/TXT)</span>
-    <!-- Share with community consent -->
-    <div class="form-control mt-2">
-      <label class="label cursor-pointer gap-2">
-        <input type="checkbox" name="share" class="checkbox checkbox-sm" />
-        <span class="label-text text-sm">Share this upload to help other tradies (no personal data).</span>
-      </label>
-      <p class="text-xs opacity-70 mt-1">If unticked, the file is used for this answer only and not added to the shared library.</p>
-    </div>
       </label>
       <input
         id="files"
