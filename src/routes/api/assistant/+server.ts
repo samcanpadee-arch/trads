@@ -147,7 +147,8 @@ export const POST: RequestHandler = async ({ request }) => {
     const brand = (form.get("brand") as string || "").trim(); // combined brand/model input
     const model = (form.get("model") as string || "").trim(); // optional
     const shareRaw = String(form.get("share") ?? "");
-const share = /^(on|true|1|yes)i.test(shareRaw);
+    const share = /^(on|true|1|yes)$/i.test(shareRaw);
+
 
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
@@ -164,6 +165,19 @@ const share = /^(on|true|1|yes)i.test(shareRaw);
       }
       uploaded.push({ id: fileId, filename: stableName, hash });
     }
+    
+// Attach to the shared (approved) vector store when "share" is ticked
+const approvedStoreId = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID;
+if (approvedStoreId && share && uploaded.length) {
+  for (const u of uploaded) {
+    try {
+      await attachFileToVectorStore(privateEnv.OPENAI_API_KEY, approvedStoreId, u.id);
+    } catch (e) {
+      console.error("[assistant] failed to attach to approved store", approvedStoreId, u.id, e);
+    }
+  }
+  console.log(`[assistant] share=true files=${uploaded.length} approved=${approvedStoreId}`);
+}
 
     // Temp per-request store for uploaded files
     if (uploaded.length) {
