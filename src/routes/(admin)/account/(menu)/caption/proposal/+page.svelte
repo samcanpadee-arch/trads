@@ -146,3 +146,17 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   </div>
   {/if}
 </section>
+
+<!-- Rich preview (non-breaking): keep old output above until verified -->
+{#if (
+  typeof answer !== "undefined" && String(answer || "").trim() ||
+  typeof output !== "undefined" && String(output || "").trim() ||
+  typeof result !== "undefined" && String(result || "").trim()
+)}
+  <div class="card bg-base-100 border mt-4">
+    <div class="card-body">
+      <h3 class="card-title text-base">Formatted answer (preview)</h3>
+      <RichAnswer content={(answer ?? output ?? result ?? "")} />
+    </div>
+  </div>
+{/if}

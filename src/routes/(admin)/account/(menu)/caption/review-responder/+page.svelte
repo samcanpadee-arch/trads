@@ -193,3 +193,17 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
   </div>
   {/if}
 </section>
+
+<!-- Rich preview (non-breaking): keep old output above until verified -->
+{#if (
+  typeof answer !== "undefined" && String(answer || "").trim() ||
+  typeof output !== "undefined" && String(output || "").trim() ||
+  typeof result !== "undefined" && String(result || "").trim()
+)}
+  <div class="card bg-base-100 border mt-4">
+    <div class="card-body">
+      <h3 class="card-title text-base">Formatted answer (preview)</h3>
+      <RichAnswer content={(answer ?? output ?? result ?? "")} />
+    </div>
+  </div>
+{/if}
