@@ -1,23 +1,47 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
-  // form state
+  // --- selectable lists (restored & expanded) ---
+  const trades = [
+    "Electrical","HVAC","Plumbing","Gasfitting","Refrigeration",
+    "Solar / PV","Data & Comms","Carpentry / Joinery","Roofing",
+    "Flooring","Tiling","Plastering / Drywall","Painting",
+    "Masonry / Concrete","Welding / Metalwork","Glazing",
+    "Landscaping","Auto Panel & Paint","General Building"
+  ];
+
+  const focuses = [
+    { value: "general", label: "General" },
+    { value: "safety", label: "Safety" },
+    { value: "specs", label: "Specifications" },
+    { value: "compliance", label: "Compliance / Codes" },
+    { value: "installation", label: "Installation" },
+    { value: "commissioning", label: "Commissioning" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "troubleshooting", label: "Troubleshooting" },
+    { value: "wiring", label: "Wiring / Diagrams" },
+    { value: "sizing", label: "Sizing / Selection" },
+    { value: "materials", label: "Materials / Adhesives" },
+    { value: "tools", label: "Tools / Torque" }
+  ];
+
+  // --- form state ---
   let trade = "";
-  let brandModel = "";         // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
-  let focus = "general";       // optional hint (kept for compatibility)
+  let brandModel = "";     // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
+  let focus = "general";
   let files: File[] = [];
   let share = false;
   let message = "";
 
-  // ui state
+  // --- ui state ---
   let loading = false;
   let errorMsg = "";
   let answer = "";
+  let copied = false;
 
   function handleFileChange(e: Event) {
     const el = e.target as HTMLInputElement;
-    const list = Array.from(el.files ?? []);
-    files = list;
+    files = Array.from(el.files ?? []);
   }
 
   async function onAsk(e?: Event) {
@@ -26,7 +50,7 @@
     try {
       loading = true;
       errorMsg = "";
-      answer = ""; // clear once at start
+      answer = "";
 
       const fd = new FormData();
       fd.set("message", (typeof message === "string" ? message : "").trim());
@@ -57,6 +81,16 @@
   function fillExample() {
     message = "What clearances and breaker size are required for a wall-mount split AC? Include page references.";
   }
+
+  async function copyAnswer() {
+    try {
+      await navigator.clipboard.writeText(answer || "");
+      copied = true;
+      setTimeout(() => (copied = false), 1500);
+    } catch {
+      errorMsg = "Couldn’t copy to clipboard.";
+    }
+  }
 </script>
 
 <!-- Header -->
@@ -75,10 +109,9 @@
         </label>
         <select id="trade" class="select select-bordered w-full" bind:value={trade}>
           <option value="">— Select trade (optional) —</option>
-          <option value="Electrical">Electrical</option>
-          <option value="HVAC">HVAC</option>
-          <option value="Plumbing">Plumbing</option>
-          <option value="Carpentry">Carpentry</option>
+          {#each trades as t}
+            <option value={t}>{t}</option>
+          {/each}
         </select>
       </div>
 
@@ -108,10 +141,9 @@
         <span class="label-text">Focus (optional)</span>
       </label>
       <select id="focus" class="select select-bordered w-full max-w-md" bind:value={focus}>
-        <option value="general">General</option>
-        <option value="safety">Safety</option>
-        <option value="specs">Specifications</option>
-        <option value="compliance">Compliance</option>
+        {#each focuses as f}
+          <option value={f.value}>{f.label}</option>
+        {/each}
       </select>
     </div>
 
@@ -198,11 +230,12 @@
     {:else if errorMsg}
       <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
     {:else if answer && answer.length > 0}
+      <div class="flex items-center justify-end gap-2 mb-2">
+        <button type="button" class="btn btn-outline btn-xs" on:click={copyAnswer} aria-label="Copy answer">
+          {#if copied}Copied!{:else}Copy{/if}
+        </button>
+      </div>
       <RichAnswer text={answer} />
-      <details class="mt-2 opacity-70 text-xs">
-        <summary>debug</summary>
-        <pre class="whitespace-pre-wrap break-words">{answer.slice(0, 800)}</pre>
-      </details>
     {/if}
     <!-- /Answer -->
   </div>
