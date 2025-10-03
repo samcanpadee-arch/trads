@@ -1,6 +1,7 @@
 <!-- /account/caption/review-responder (v1.1) -->
 <script lang="ts">
-  // Minimal inputs
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
+// Minimal inputs
   let businessName = "";
   let customerName = "";
   let platform = "Google";
@@ -204,6 +205,21 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
     <div class="card-body">
       <h3 class="card-title text-base">Formatted answer (preview)</h3>
       <RichAnswer content={(answer ?? output ?? result ?? "")} />
+    </div>
+  </div>
+{/if}
+
+
+<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
+{#if typeof answer === "string" && answer.trim().length}
+  <div class="mt-6">
+    <RichAnswer text={answer} />
+    <div class="mt-2 flex gap-2">
+      <button type="button"
+              class="btn btn-outline btn-sm"
+              on:click={() => navigator.clipboard.writeText(answer)}>
+        Copy answer
+      </button>
     </div>
   </div>
 {/if}

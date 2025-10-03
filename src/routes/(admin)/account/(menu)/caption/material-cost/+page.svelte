@@ -1,6 +1,7 @@
 <header class="flex justify-end mb-4"><a href="/account/caption" class="btn btn-ghost">← Back</a></header>
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+import RichAnswer from "$lib/components/RichAnswer.svelte";
   type Item = { name: string; unitCost: number; quantity: number; discountPct: number };
 
   let items: Item[] = [{ name: '', unitCost: 0, quantity: 1, discountPct: 0 }];
@@ -176,6 +177,21 @@
     <div class="card-body">
       <h3 class="card-title text-base">Formatted answer (preview)</h3>
       <RichAnswer content={(answer ?? output ?? result ?? "")} />
+    </div>
+  </div>
+{/if}
+
+
+<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
+{#if typeof answer === "string" && answer.trim().length}
+  <div class="mt-6">
+    <RichAnswer text={answer} />
+    <div class="mt-2 flex gap-2">
+      <button type="button"
+              class="btn btn-outline btn-sm"
+              on:click={() => navigator.clipboard.writeText(answer)}>
+        Copy answer
+      </button>
     </div>
   </div>
 {/if}

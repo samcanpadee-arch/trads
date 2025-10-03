@@ -1,6 +1,7 @@
 <!-- /account/caption/proposal — Long-form Sales Proposal Generator (no client name input) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+import RichAnswer from "$lib/components/RichAnswer.svelte";
   let trade = "Electrical";
   let projectBrief = "";
   let businessName = "";
@@ -158,6 +159,21 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
     <div class="card-body">
       <h3 class="card-title text-base">Formatted answer (preview)</h3>
       <RichAnswer content={(answer ?? output ?? result ?? "")} />
+    </div>
+  </div>
+{/if}
+
+
+<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
+{#if typeof answer === "string" && answer.trim().length}
+  <div class="mt-6">
+    <RichAnswer text={answer} />
+    <div class="mt-2 flex gap-2">
+      <button type="button"
+              class="btn btn-outline btn-sm"
+              on:click={() => navigator.clipboard.writeText(answer)}>
+        Copy answer
+      </button>
     </div>
   </div>
 {/if}
