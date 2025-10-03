@@ -1,5 +1,6 @@
 <header class="flex justify-end mb-4"><a href="/account/caption" class="btn btn-ghost">← Back</a></header>
 <script lang="ts">
+  import RichAnswer from "/components/RichAnswer.svelte";
   type Item = { name: string; unitCost: number; quantity: number; discountPct: number };
 
   let items: Item[] = [{ name: '', unitCost: 0, quantity: 1, discountPct: 0 }];
