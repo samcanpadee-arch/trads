@@ -3,27 +3,18 @@
 
   // --- selectable lists (restored & expanded) ---
   const trades = [
-    "Electrical","HVAC","Plumbing","Gasfitting","Refrigeration",
-    "Solar / PV","Data & Comms","Carpentry / Joinery","Roofing",
-    "Flooring","Tiling","Plastering / Drywall","Painting",
-    "Masonry / Concrete","Welding / Metalwork","Glazing",
-    "Landscaping","Auto Panel & Paint","General Building"
-  ];
+  "Electrical","Plumbing","HVAC","General Construction","Carpentry",
+  "Roofing","Tiling","Painting","Landscaping","Other"
+];
 
   const focuses = [
-    { value: "general", label: "General" },
-    { value: "safety", label: "Safety" },
-    { value: "specs", label: "Specifications" },
-    { value: "compliance", label: "Compliance / Codes" },
-    { value: "installation", label: "Installation" },
-    { value: "commissioning", label: "Commissioning" },
-    { value: "maintenance", label: "Maintenance" },
-    { value: "troubleshooting", label: "Troubleshooting" },
-    { value: "wiring", label: "Wiring / Diagrams" },
-    { value: "sizing", label: "Sizing / Selection" },
-    { value: "materials", label: "Materials / Adhesives" },
-    { value: "tools", label: "Tools / Torque" }
-  ];
+  { value: "general", label: "General help" },
+  { value: "diagnosis", label: "Diagnosis & fault codes" },
+  { value: "install", label: "Installation & commissioning" },
+  { value: "compliance", label: "Compliance, standards & codes" },
+  { value: "maintenance", label: "Maintenance & servicing" },
+  { value: "specs", label: "Parts & specifications" }
+];
 
   // --- form state ---
   let trade = "";
@@ -107,7 +98,7 @@
         <label for="trade" class="label">
           <span class="label-text">Trade (optional)</span>
         </label>
-        <select id="trade" class="select select-bordered w-full" bind:value={trade}>
+        <select id="trade" name="trade" class="select select-bordered w-full" bind:value={trade}>
           <option value="">— Select trade (optional) —</option>
           {#each trades as t}
             <option value={t}>{t}</option>
@@ -140,7 +131,7 @@
       <label for="focus" class="label">
         <span class="label-text">Focus (optional)</span>
       </label>
-      <select id="focus" class="select select-bordered w-full max-w-md" bind:value={focus}>
+      <select id="focus" name="focus" class="select select-bordered w-full max-w-md" bind:value={focus}>
         {#each focuses as f}
           <option value={f.value}>{f.label}</option>
         {/each}
