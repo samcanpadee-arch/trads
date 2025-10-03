@@ -100,6 +100,10 @@ Include how to retrieve error codes from the remote and any safety notes.`
       loading = false
     }
   }
+  $: if (typeof answer !== "undefined") console.log("[assistant] answer len=", (answer||"").length, "snippet:", (answer||"").slice(0,200));
+  $: if (typeof errorMsg !== "undefined" && errorMsg) console.warn("[assistant] error:", errorMsg);
+  $: if (typeof answer !== "undefined") console.log("[assistant] answer len=", (answer||"").length, "snippet:", (answer||"").slice(0,200));
+  $: if (typeof errorMsg !== "undefined" && errorMsg) console.warn("[assistant] error:", errorMsg);
 </script>
 
 <header class="mb-6 flex items-start justify-between gap-4">
