@@ -1,5 +1,5 @@
 <script lang="ts">
-  import RichAnswer from \"$lib/components/RichAnswer.svelte\";
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
   let trade = ""
   let brandModel = "" // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
   let focus = "general" // optional hint only (we'll inject into message text)
