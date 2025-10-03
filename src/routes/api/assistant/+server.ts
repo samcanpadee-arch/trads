@@ -144,7 +144,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
     if (!message) return new Response("Please include a question in 'message'.", { status: 400 });
 
-    const files = form.getAll("files").filter((f) => f instanceof File) as File[];
+    // Collect files but ignore zero-byte or unnamed placeholders some browsers send
+    const __raw = form.getAll("files").filter((x) => x instanceof File) as File[];
+    const files = __raw.filter(f => (f?.size || 0) > 0 && (f?.name || "").trim() !== "");
 
     // Server-side sanity guard (protects from 413 / oversized payloads)
     if (files.length > SERVER_MAX_FILES) {
