@@ -59,17 +59,43 @@ Include how to retrieve error codes from the remote and any safety notes.`
     errorMsg = ""
   }
 
-  async function onAsk(e: SubmitEvent) {
-    e.preventDefault()
-    const formEl = e.currentTarget as HTMLFormElement
-    // Build FormData **from the form** so all inputs (incl. checkbox) are captured
-    const fd = new FormData(formEl)
+async function onAsk(e?: Event) {
+  e?.preventDefault?.();
 
-    // If you’re tracking files in a `files` array (not relying on the <input>’s name),
-    // ensure they’re appended too:
-    if (files && files.length && !fd.has("files")) {
-      for (const f of files) fd.append("files", f)
+  try {
+    loading = true;
+    errorMsg = "";
+    // Clear *once* at the start so we don’t race clear after the response:
+    answer = "";
+
+    const fd = new FormData();
+    fd.set("message", (typeof message === "string" ? message : "").trim());
+    if (trade) fd.set("trade", trade);
+    if (brandModel) fd.set("brand", brandModel);
+    if (share) fd.set("share", "yes");
+    for (const f of files) fd.append("files", f);
+
+    const res = await fetch("/api/assistant", { method: "POST", body: fd });
+    const txt = (await res.text()) ?? "";
+
+    if (!res.ok) {
+      // Make sure the UI shows why it failed:
+      errorMsg = txt || `HTTP ${res.status}`;
+      console.error("[assistant] http error", res.status, txt.slice(0, 200));
+      return;
     }
+
+    answer = txt.trim();
+    console.log("[assistant] answer len=", answer.length, "snippet:", answer.slice(0, 120));
+  } catch (err) {
+    console.error("[assistant] fetch error", err);
+    errorMsg = (err as Error)?.message || String(err);
+  } finally {
+    // ALWAYS clear loading so the block can render:
+    loading = false;
+  }
+}
+
 
     // Extra safety: if the checkbox is checked but (for any reason) didn’t serialize,
     // add it explicitly:
@@ -282,7 +308,28 @@ Include how to retrieve error codes from the remote and any safety notes.`
   <div class="card bg-base-100 border mt-4">
     <div class="card-body">
       <h2 class="card-title text-base">Answer</h2>
-      <pre class="whitespace-pre-wrap text-sm leading-relaxed"><RichAnswer content={answer} /></pre>
+      <pre class="whitespace-pre-wrap text-sm leading-relaxed"><RichAnswer text={answer} /></pre>
     </div>
   </div>
 {/if}
+
+<!-- Answer -->
+{#if loading}
+  <div class="flex items-center gap-2 opacity-80">
+    <span class="loading loading-spinner loading-sm"></span>
+    Thinking…
+  </div>
+{:else if errorMsg}
+  <div class="alert alert-error whitespace-pre-wrap">{errorMsg}</div>
+{:else if answer && answer.length > 0}
+  <!-- Rich renderer -->
+  <RichAnswer text={answer} />
+
+  <!-- Debug fallback so we always see the raw text if something renders oddly -->
+  <details class="mt-2 opacity-70 text-xs">
+    <summary>debug</summary>
+    <pre class="whitespace-pre-wrap break-words">{answer.slice(0, 600)}</pre>
+  </details>
+{/if}
+<!-- /Answer -->
+
