@@ -15,11 +15,6 @@ const SERVER_MAX_TOTAL_BYTES = 4 * 1024 * 1024;   // 4 MB total (matches UI cap)
 const SERVER_MAX_FILES = 4;                        // at most 4 files per ask
 
 
-// -------- performance caps (efficiency-only; no output changes) --------
-const SERVER_MAX_TOTAL_BYTES = 4 * 1024 * 1024;   // 4 MB total (matches UI cap)
-const SERVER_MAX_FILES = 4;                        // at most 4 files per ask
-
-
 /* ================= utils ================= */
 
 async function sha256OfFile(file: File): Promise<string> {
@@ -110,6 +105,27 @@ async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs 
     }
   }
 
+function extractTextFromResponses(resJson: any): string {
+  if (!resJson) return "";
+  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
+  if (Array.isArray(resJson.output)) {
+    const texts: string[] = [];
+    for (const item of resJson.output) {
+      const parts = item?.content || item?.contents || [];
+      for (const p of parts) {
+        if (p?.type === "output_text" && typeof p?.text === "string") texts.push(p.text);
+        if (p?.type === "text" && typeof p?.text === "string") texts.push(p.text);
+      }
+    }
+    if (texts.length) return texts.join("\n");
+  }
+  if (Array.isArray(resJson.content)) {
+    const first = resJson.content.find((c: any) => typeof c?.text === "string");
+    if (first?.text) return first.text;
+  }
+  return "";
+}
+
 // Detect "exact spec" tokens in GENERAL answers
 const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
 
@@ -143,16 +159,26 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Upload or reuse files with stable hashed filename
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
-    
     // Server-side sanity guard (protects from 413 / oversized payloads)
-    if (files.length > 4) { return new Response("Too many files: max 4", { status: 400 }); }
-    let __total = 0; for (const __f of files) __total += (__f.size || 0);
-    if (__total > 4 * 1024 * 1024) { return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 }); }
+    if (files.length > SERVER_MAX_FILES) {
+      return new Response("Too many files: max " + SERVER_MAX_FILES, { status: 400 });
+    }
     let totalBytes = 0;
     for (const f of files) totalBytes += f.size || 0;
     if (totalBytes > SERVER_MAX_TOTAL_BYTES) {
       return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 });
     }
+
+    // Server-side sanity guard (protects from 413 / oversized payloads)
+    if (files.length > SERVER_MAX_FILES) {
+      return new Response("Too many files: max " + SERVER_MAX_FILES, { status: 400 });
+    }
+    let totalBytes = 0;
+    for (const f of files) totalBytes += f.size || 0;
+    if (totalBytes > SERVER_MAX_TOTAL_BYTES) {
+      return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 });
+    }
+
     const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);

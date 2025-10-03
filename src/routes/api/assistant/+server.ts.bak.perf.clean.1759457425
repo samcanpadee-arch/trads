@@ -143,16 +143,36 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Upload or reuse files with stable hashed filename
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
-    
     // Server-side sanity guard (protects from 413 / oversized payloads)
-    if (files.length > 4) { return new Response("Too many files: max 4", { status: 400 }); }
-    let __total = 0; for (const __f of files) __total += (__f.size || 0);
-    if (__total > 4 * 1024 * 1024) { return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 }); }
+    if (files.length > SERVER_MAX_FILES) {
+      return new Response("Too many files: max " + SERVER_MAX_FILES, { status: 400 });
+    }
     let totalBytes = 0;
     for (const f of files) totalBytes += f.size || 0;
     if (totalBytes > SERVER_MAX_TOTAL_BYTES) {
       return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 });
     }
+
+    // Server-side sanity guard (protects from 413 / oversized payloads)
+    if (files.length > SERVER_MAX_FILES) {
+      return new Response("Too many files: max " + SERVER_MAX_FILES, { status: 400 });
+    }
+    let totalBytes = 0;
+    for (const f of files) totalBytes += f.size || 0;
+    if (totalBytes > SERVER_MAX_TOTAL_BYTES) {
+      return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 });
+    }
+
+    // Server-side sanity guard (protects from 413 / oversized payloads)
+    if (files.length > SERVER_MAX_FILES) {
+      return new Response("Too many files: max " + SERVER_MAX_FILES, { status: 400 });
+    }
+    let totalBytes = 0;
+    for (const f of files) totalBytes += f.size || 0;
+    if (totalBytes > SERVER_MAX_TOTAL_BYTES) {
+      return new Response("Uploads exceed 4MB total. Please remove files or compress.", { status: 400 });
+    }
+
     const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);
