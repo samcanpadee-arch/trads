@@ -1,6 +1,6 @@
 <!-- /account/caption/proposal — Long-form Sales Proposal Generator (no client name input) -->
 <script lang="ts">
-  import RichAnswer from "/components/RichAnswer.svelte";
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
   let trade = "Electrical";
   let projectBrief = "";
   let businessName = "";
