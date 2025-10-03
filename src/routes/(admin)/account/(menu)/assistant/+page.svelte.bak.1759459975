@@ -1,5 +1,4 @@
 <script lang="ts">
-  import RichAnswer from \"$lib/components/RichAnswer.svelte\";
   let trade = ""
   let brandModel = "" // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
   let focus = "general" // optional hint only (we'll inject into message text)
@@ -278,7 +277,7 @@ Include how to retrieve error codes from the remote and any safety notes.`
   <div class="card bg-base-100 border mt-4">
     <div class="card-body">
       <h2 class="card-title text-base">Answer</h2>
-      <pre class="whitespace-pre-wrap text-sm leading-relaxed"><RichAnswer content={answer} /></pre>
+      <pre class="whitespace-pre-wrap text-sm leading-relaxed">{answer}</pre>
     </div>
   </div>
 {/if}
