@@ -1,11 +1,12 @@
-<!-- /account/caption/job-estimation (v2.2 – rich preview, auto-ingest materials, reset controls) -->
+<!-- /account/caption/job-estimation (v3.0) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
   /***** Minimal inputs *****/
   let clientName = "";
   let siteAddress = "";
-  let projectBrief = ""; // drives AI (overview/scope/timeline/assumptions/risks)
+  let projectBrief = ""; // drives AI (overview/scope/assumptions/risks/timeline)
+
   type Trade =
     | "General"
     | "HVAC"
@@ -27,13 +28,15 @@
   let gstRate = 0.10;
   let validityDays = 30;
 
-  // Materials (paste → auto-ingest)
+  // Materials (paste → import)
   type MaterialRow = {
     item: string;
+    unitCost: number;
     qty: number;
-    unit: string;
-    unitCost: number;        // already post-discount if imported from Costing Summary
-    markupPctWhole: number;  // global markup from Costing Summary, if present
+    costBefore: number;
+    discountAmt: number;
+    discountPct: number; // parsed but not shown
+    subtotal: number;    // post-discount
   };
   let materialsText = "";
   let materials: MaterialRow[] = [];
@@ -64,236 +67,149 @@
       maximumFractionDigits: 2
     }).format(n || 0);
 
-  function deriveTitle(brief: string, trade: string) {
+  function randomRef() {
+    const d = new Date();
+    const ymd =
+      d.getFullYear().toString() +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      String(d.getDate()).padStart(2, "0");
+    const tail = Math.floor(Math.random() * 9000 + 1000);
+    return `Q-${ymd}-${tail}`;
+  }
+
+  function deriveTitle(brief: string) {
     const clean = (brief || "").replace(/\s+/g, " ").trim();
-    if (!clean) return trade + " Job";
-    const sentence = clean.split(/[.!?]/)[0];
-    const words = sentence.split(" ").slice(0, 12).join(" ");
-    return words.charAt(0).toUpperCase() + words.slice(1);
-  }
-
-  function matLineTotal(m: MaterialRow) {
-    const base = (m.qty || 0) * (m.unitCost || 0);
-    const markup = base * ((m.markupPctWhole || 0) / 100);
-    return base + markup;
-  }
-
-  /************ Auto-ingest Costing Summary ************/
-  function resetMaterialsSection(opts: { all?: boolean } = {}) {
-    materialsText = "";
-    materials = [];
-    parseFeedback = "";
-    if (opts.all) {
-      labour = [];
-      subcontractors = [];
-      equipment = [];
-      clientName = "";
-      siteAddress = "";
-      projectBrief = "";
-      trade = "General";
-      overheadPctWhole = 10;
-      marginPctWhole = 10;
-      contingencyPctWhole = 0;
-      includeGST = true;
-      validityDays = 30;
-      output = "";
+    if (!clean) return "Job Estimate";
+    // take first sentence or up to ~16 words; avoid broken parentheses
+    const firstSentence = clean.split(/(?<=[.!?])\s+/)[0] || clean;
+    const words = firstSentence.split(" ");
+    let out = words.slice(0, 16).join(" ");
+    // if open paren not closed, extend until closed or 24 words
+    let opens = (out.match(/\(/g) || []).length;
+    let closes = (out.match(/\)/g) || []).length;
+    let i = 16;
+    while (opens > closes && i < Math.min(words.length, 24)) {
+      out += " " + words[i++];
+      opens = (out.match(/\(/g) || []).length;
+      closes = (out.match(/\)/g) || []).length;
     }
+    return out.replace(/[.!?]+$/, "");
   }
 
-  function ingestCostingSummaryText(text: string) {
-    // returns { rows, markupPct }
-    const rows: MaterialRow[] = [];
-    let markupPct = 0;
-
-    const cleanMoney = (v: string) =>
-      Number(String(v).replace(/[^0-9.\-]/g, "")) || 0;
-    const cleanPct = (v: string) =>
-      Number(String(v).replace(/[^0-9.\-]/g, "")) || 0;
-    const toNum = (v: string, d = 0) => {
-      const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
-      return Number.isFinite(n) ? n : d;
-    };
-
-    // 1) Pull markup like "**Profit from Markup (20%)**"
-    const m = text.match(/Profit\s+from\s+Markup\s*\((\d{1,3})%\)/i);
-    if (m) markupPct = toNum(m[1], 0);
-
-    // 2) Locate the markdown table that starts with "| Item"
-    const lines = text.split(/\r?\n/);
-    const startIdx = lines.findIndex((l) => /^\|\s*Item\s*\|/i.test(l));
-    if (startIdx === -1) return { rows, markupPct };
-
-    // data starts after the separator row (dashes)
-    for (let i = startIdx + 2; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line.startsWith("|")) break; // end of table
-
-      // Skip totals footer rows
-      if (/\*\*Total/i.test(line)) break;
-
-      // Columns: | Item | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
-      const parts = line
-        .split("|")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (parts.length < 7) continue;
-
-      const itemName = parts[0] || "";
-      const unitCost = cleanMoney(parts[1]);
-      const qty = toNum(parts[2], 1);
-      const discPct = cleanPct(parts[4]);
-
-      if (!itemName || qty <= 0) continue;
-
-      // Effective per-unit **after** discount so our totals align to the Costing Summary
-      const effectiveUnit = unitCost * (1 - discPct / 100);
-
-      rows.push({
-        item: itemName,
-        qty,
-        unit: "ea",
-        unitCost: effectiveUnit,
-        markupPctWhole: markupPct
-      });
-    }
-    return { rows, markupPct };
-  }
-
-  function parseMaterialsFromTextarea() {
+  // ---------- Import from “Costing Summary” table ----------
+  // Expected header:
+  // | Item | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
+  function importFromCostingSummary() {
     materials = [];
     parseFeedback = "";
 
-    const text = materialsText.trim();
+    const text = (materialsText || "").trim();
     if (!text) {
-      parseFeedback = "";
+      parseFeedback = "Nothing to import — paste the Costing Summary block first.";
       return;
     }
 
-    // Prefer Costing Summary table if present
-    if (/\|\s*Item\s*\|\s*Unit\s*Cost\s*\|/i.test(text)) {
-      const { rows } = ingestCostingSummaryText(text);
-      if (rows.length) {
-        materials = rows;
-        parseFeedback = `Imported ${rows.length} items from Costing Summary.`;
-        return;
-      }
-      // else fall through
+    const lines = text.split(/\r?\n/);
+    const headerIdx = lines.findIndex((l) =>
+      /\|\s*Item\s*\|\s*Unit\s*Cost\s*\|\s*Quantity\s*\|\s*Cost\s*Before\s*Discount\s*\|\s*Discount\s*%?\s*\|\s*Discount\s*Amount\s*\|\s*Subtotal\s*\|/i.test(
+        l
+      )
+    );
+    if (headerIdx === -1) {
+      parseFeedback =
+        "Couldn’t find a Costing Summary table. Paste from the Material & Cost Calculator.";
+      return;
     }
 
-    // Fallback to legacy delimited lines
-    let ok = 0,
-      bad: number[] = [];
-    text
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .forEach((line, i) => {
-        const parts = line
-          .split(/\s*\|\s*|\s*,\s*|\t/g)
-          .map((p) => p.trim())
-          .filter(Boolean);
-        if (!parts.length) return;
+    // Find the separator row after header (---|---)
+    const sepIdx =
+      lines
+        .slice(headerIdx + 1)
+        .findIndex((l) => /^\s*\|\s*-+\s*\|/.test(l)) + headerIdx + 1;
+    if (sepIdx <= headerIdx) {
+      parseFeedback = "Table looks malformed (no separator row).";
+      return;
+    }
 
-        const [
-          itemRaw,
-          qtyRaw = "1",
-          unitRaw = "",
-          unitCostRaw = "0",
-          markupRaw = "0"
-        ] = parts;
+    // Iterate data rows until we hit a blank line or a non-table line
+    let ok = 0;
+    for (let i = sepIdx + 1; i < lines.length; i++) {
+      const raw = lines[i];
+      if (!/^\s*\|/.test(raw)) break; // end of table
 
-        const item = itemRaw || "";
-        const qty = Number(qtyRaw) || 1;
-        const unitCost = Number(unitCostRaw) || 0;
-        const markupPctWhole =
-          Number(String(markupRaw).replace("%", "")) || 0;
+      // split | columns
+      const cols = raw
+        .split("|")
+        .map((c) => c.trim())
+        .filter((c, idx) => !(idx === 0 || idx === raw.split("|").length - 1)); // drop leading/trailing empties
 
-        if (!item || qty <= 0) {
-          bad.push(i + 1);
-          return;
-        }
-        materials.push({
-          item,
-          qty,
-          unit: unitRaw || "ea",
-          unitCost,
-          markupPctWhole
-        });
-        ok++;
-      });
+      if (cols.length < 7) continue; // skip malformed rows
+
+      let [item, unitCost, qty, costBefore, discountPct, discountAmt, subtotal] =
+        cols;
+
+      // Drop bold markers and commas/dollar/% signs
+      const stripMd = (s: string) => s.replace(/^\*\*|\*\*$/g, "").trim();
+
+      const row: MaterialRow = {
+        item: stripMd(item),
+        unitCost: toNumber(unitCost),
+        qty: toNumber(qty, 1),
+        costBefore: toNumber(costBefore),
+        discountPct: toNumber(discountPct),
+        discountAmt: toNumber(discountAmt),
+        subtotal: toNumber(stripMd(subtotal))
+      };
+
+      // Skip totals or empty item rows
+      if (!row.item || /^total/i.test(row.item)) continue;
+
+      materials.push(row);
+      ok++;
+    }
 
     parseFeedback = ok
-      ? `Added ${ok} item${ok === 1 ? "" : "s"}${
-          bad.length ? `; skipped rows ${bad.join(", ")}` : ""
-        }`
-      : "Couldn’t read those rows — check formatting.";
+      ? `Imported ${ok} item${ok === 1 ? "" : "s"} from Costing Summary.`
+      : "Found the table but no line items (totals/blank rows were skipped).";
   }
 
-  function addLabour() {
-    labour = [...labour, { role: "", hours: 0, rate: 0 }];
-  }
-  function removeLabour(i: number) {
-    labour = labour.filter((_, idx) => idx !== i);
-  }
-  function addSub() {
-    subcontractors = [...subcontractors, { label: "", amount: 0 }];
-  }
-  function removeSub(i: number) {
-    subcontractors = subcontractors.filter((_, idx) => idx !== i);
-  }
-  function addEquip() {
-    equipment = [...equipment, { label: "", amount: 0 }];
-  }
-  function removeEquip(i: number) {
-    equipment = equipment.filter((_, idx) => idx !== i);
+  function resetAll() {
+    clientName = "";
+    siteAddress = "";
+    projectBrief = "";
+    overheadPctWhole = 10;
+    marginPctWhole = 10;
+    contingencyPctWhole = 0;
+    includeGST = true;
+    gstRate = 0.1;
+    validityDays = 30;
+
+    materialsText = "";
+    materials = [];
+    parseFeedback = "";
+    labour = [];
+    subcontractors = [];
+    equipment = [];
+    output = "";
   }
 
-  // Derived totals
-  $: materialsSubtotal = materials.reduce((s, m) => s + matLineTotal(m), 0);
+  // Derived totals (client-facing folds internal costs)
+  $: materialsSubtotal = materials.reduce((s, m) => s + (m.subtotal || 0), 0);
   $: labourSubtotal = labour.reduce(
     (s, l) => s + toNumber(l.hours) * toNumber(l.rate),
     0
   );
   $: subsTotal = subcontractors.reduce((s, x) => s + toNumber(x.amount), 0);
   $: equipTotal = equipment.reduce((s, x) => s + toNumber(x.amount), 0);
-  $: baseSubtotal = materialsSubtotal + labourSubtotal + subsTotal + equipTotal;
-  $: overhead = baseSubtotal * (toNumber(overheadPctWhole) / 100);
-  $: withOverhead = baseSubtotal + overhead;
-  $: contingency = withOverhead * (toNumber(contingencyPctWhole) / 100);
-  $: withContingency = withOverhead + contingency;
-  $: margin = withContingency * (toNumber(marginPctWhole) / 100);
-  $: subtotal = withContingency + margin;
-  $: gst = includeGST ? subtotal * (gstRate || 0) : 0;
-  $: grandTotal = subtotal + gst;
 
-  // Example
-  function useExample() {
-    clientName = "Jordan Moore";
-    siteAddress = "12 Rivergum Rd, Brunswick VIC 3056";
-    trade = "Electrical";
-    projectBrief =
-      "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard work if required. Patch small penetrations; tidy finish.";
-    overheadPctWhole = 10;
-    marginPctWhole = 12;
-    contingencyPctWhole = 5;
-    includeGST = true;
-    validityDays = 30;
-
-    materialsText = [
-      "Split system 7.1kW | 2 | ea | 1750 | 10",
-      "Copper pipe (pair) | 20 | m | 12.5 | 15",
-      "Condensate hose | 12 | m | 4.5 | 15",
-      "Cable TPS 2.5mm | 18 | m | 2.8 | 10"
-    ].join("\n");
-    parseMaterialsFromTextarea();
-
-    labour = [
-      { role: "Electrician", hours: 12, rate: 90 },
-      { role: "Apprentice", hours: 6, rate: 55 }
-    ];
-    subcontractors = [];
-    equipment = [{ label: "Vacuum pump hire", amount: 45 }];
-  }
+  // Internal folding of overhead/contingency/margin (NOT shown as separate lines)
+  $: baseBeforeBusiness = materialsSubtotal + labourSubtotal + subsTotal + equipTotal;
+  $: withOverhead = baseBeforeBusiness * (1 + toNumber(overheadPctWhole) / 100);
+  $: withContingency =
+    withOverhead * (1 + toNumber(contingencyPctWhole) / 100);
+  $: clientSubtotal = withContingency * (1 + toNumber(marginPctWhole) / 100);
+  $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
+  $: grandTotal = clientSubtotal + gst;
 
   // ---------- AI sections (JSON-only, robust) ----------
   async function aiSections(): Promise<{
@@ -303,20 +219,19 @@
     exclusions: string[];
     risks: string[];
     timeline: string[];
+    options: string[]; // additional options (not included)
     labourSuggest: LabourRow[];
-    materialsSuggest: MaterialRow[];
   }> {
     const SYSTEM = `You are an AI assistant for Australian tradies. Reply in Australian English.
-Return ONLY JSON (no prose) with keys:
-- overview: string (80-120 words, friendly, client-facing, mentions specific context from the brief)
+Return ONLY JSON with keys:
+- overview: string (80-120 words; friendly, client-facing; mention specifics from the brief)
 - scope: string[] (6-10 bullets, concrete tasks tailored to the trade & brief)
-- assumptions: string[] (trade-specific; practical)
-- exclusions: string[] (clear boundaries; e.g., Electrical: no switchboard relocation unless stated; Plumbing: no slab cutting)
-- risks: string[] (flag guesses/unknowns; prompt client review)
+- assumptions: string[]
+- exclusions: string[]
+- risks: string[]
 - timeline: string[] (3-6 milestones)
-- labourSuggest: {role,hours,rate}[]
-- materialsSuggest: {item,qty,unit,unitCost,markupPctWhole}[]
-Keep quantities conservative if inferring.`;
+- options: string[] (3-5 value-adding items NOT included; e.g. extended warranty, preventative maintenance, minor upgrades)
+- labourSuggest: {role,hours,rate}[] (only if clearly useful; else [])`;
 
     const user =
       "Trade: " +
@@ -363,23 +278,17 @@ Keep quantities conservative if inferring.`;
         assumptions: Array.isArray(j.assumptions)
           ? j.assumptions.map(String)
           : [],
-        exclusions: Array.isArray(j.exclusions) ? j.exclusions.map(String) : [],
+        exclusions: Array.isArray(j.exclusions)
+          ? j.exclusions.map(String)
+          : [],
         risks: Array.isArray(j.risks) ? j.risks.map(String) : [],
         timeline: Array.isArray(j.timeline) ? j.timeline.map(String) : [],
+        options: Array.isArray(j.options) ? j.options.map(String) : [],
         labourSuggest: Array.isArray(j.labourSuggest)
           ? j.labourSuggest.map((r: any) => ({
               role: String(r.role || ""),
               hours: toNumber(r.hours, 0),
               rate: toNumber(r.rate, 0)
-            }))
-          : [],
-        materialsSuggest: Array.isArray(j.materialsSuggest)
-          ? j.materialsSuggest.map((m: any) => ({
-              item: String(m.item || ""),
-              qty: toNumber(m.qty, 0),
-              unit: String(m.unit || ""),
-              unitCost: toNumber(m.unitCost, 0),
-              markupPctWhole: toNumber(m.markupPctWhole, 0)
             }))
           : []
       };
@@ -391,8 +300,8 @@ Keep quantities conservative if inferring.`;
         exclusions: [],
         risks: [],
         timeline: [],
-        labourSuggest: [],
-        materialsSuggest: []
+        options: [],
+        labourSuggest: []
       };
     }
   }
@@ -400,42 +309,32 @@ Keep quantities conservative if inferring.`;
   async function generate(e: Event) {
     e.preventDefault();
     loading = true;
-    output = "";
-
-    // Ensure materials are parsed if user pasted but didn't blur the field
-    if (!materials.length && materialsText.trim()) {
-      parseMaterialsFromTextarea();
-    }
 
     const ai = await aiSections();
-
-    const usingAISuggestedLabour =
-      labour.length === 0 && ai.labourSuggest.length > 0;
+    const usingAISuggestedLabour = labour.length === 0 && ai.labourSuggest.length > 0;
     if (usingAISuggestedLabour) labour = ai.labourSuggest;
 
-    const usingAISuggestedMaterials =
-      materials.length === 0 && ai.materialsSuggest.length > 0;
-    if (usingAISuggestedMaterials) materials = ai.materialsSuggest;
+    const title = deriveTitle(projectBrief);
+    const quoteRef = randomRef();
 
-    // Recompute derived after AI suggestions
-    const _materialsSubtotal = materials.reduce((s, m) => s + matLineTotal(m), 0);
-    const _labourSubtotal = labour.reduce(
-      (s, l) => s + toNumber(l.hours) * toNumber(l.rate),
-      0
-    );
-    const _subsTotal = subcontractors.reduce((s, x) => s + toNumber(x.amount), 0);
-    const _equipTotal = equipment.reduce((s, x) => s + toNumber(x.amount), 0);
-    const _baseSubtotal = _materialsSubtotal + _labourSubtotal + _subsTotal + _equipTotal;
-    const _overhead = _baseSubtotal * (toNumber(overheadPctWhole) / 100);
-    const _withOverhead = _baseSubtotal + _overhead;
-    const _contingency = _withOverhead * (toNumber(contingencyPctWhole) / 100);
-    const _withContingency = _withOverhead + _contingency;
-    const _margin = _withContingency * (toNumber(marginPctWhole) / 100);
-    const _subtotal = _withContingency + _margin;
-    const _gst = includeGST ? _subtotal * (gstRate || 0) : 0;
-    const _grandTotal = _subtotal + _gst;
+    // Build Markdown for RichAnswer
+    let md = "";
+    md += `# Job Estimate (Quote)\n\n`;
+    md += `**Quote Ref:** ${quoteRef}  \n`;
+    md += `**To:** ${clientName || "_Client_"}  \n`;
+    md += `**Site:** ${siteAddress || "_Site Address_"}  \n`;
+    md += `**Project:** ${title}  \n`;
+    md += `**Estimate Valid For:** ${validityDays} days\n\n`;
 
-    const title = deriveTitle(projectBrief, trade);
+    // Overview
+    md += `## Overview\n\n`;
+    if (ai.overview) {
+      md += ai.overview.trim() + `\n\n`;
+    } else {
+      md += `We propose to complete the requested works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate outlines the scope, indicative timeline and pricing, subject to final site verification.\n\n`;
+    }
+
+    // Scope
     const baseTasks: Record<Trade, string[]> = {
       General: ["Site prep & safety", "Core works per brief", "Cleanup & handover"],
       HVAC: ["Indoor/outdoor unit placement", "Refrigerant, condensate & electrical", "Commissioning & handover"],
@@ -449,110 +348,54 @@ Keep quantities conservative if inferring.`;
       Other: ["Site prep", "Core works per brief", "Cleanup & handover"]
     };
     const scopeList = ai.scope && ai.scope.length ? ai.scope : baseTasks[trade];
-
-    // Build Markdown (rendered nicely by RichAnswer)
-    let md = "";
-    md += "# Job Estimate (Quote)\n\n";
-    md += "**To:** " + (clientName || "_Client_") + "  \n";
-    md += "**Site:** " + (siteAddress || "_Site Address_") + "  \n";
-    md += "**Project:** " + title + "  \n";
-    md += "**Trade:** " + trade + "  \n";
-    md += "**Estimate Valid For:** " + validityDays + " days\n\n";
-
-    md += "> **Disclaimer:** This document includes AI-assisted sections and some values may be **estimated**. Please **review and confirm** quantities, rates and assumptions before sending to your client.\n\n";
-
-    // Overview
-    md += "## Overview\n\n";
-    if (ai.overview) {
-      md += ai.overview.trim() + "\n\n";
-    } else {
-      md +=
-        "We propose to complete the requested " +
-        trade.toLowerCase() +
-        " works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate outlines the scope, indicative timeline and pricing, subject to final site verification.\n\n";
-    }
-
-    // Scope
-    md += "## Scope / Services\n\n";
-    md += "| # | Task Description |\n|---|------------------|\n";
+    md += `## Scope / Services\n\n`;
+    md += `| # | Task Description |\n|---|------------------|\n`;
     scopeList.forEach((t, i) => {
-      md += "| " + (i + 1) + " | " + String(t) + " |\n";
+      md += `| ${i + 1} | ${String(t)} |\n`;
     });
-    md += "\n";
+    md += `\n`;
 
-    // Materials
-    md += "## Materials\n\n";
+    // Materials (client view; no unit/markup)
+    md += `## Materials\n\n`;
     if (materials.length) {
-      if (usingAISuggestedMaterials)
-        md +=
-          "_The following materials were **AI-suggested** from your brief — **review and adjust** as needed._\n\n";
-      md +=
-        "| Item | Qty | Unit | Unit Cost | Markup % | Line Total |\n|------|-----|------|----------:|---------:|-----------:|\n";
+      md += `| Item | Unit Cost | Quantity | Cost Before Discount | Discount Amount | Subtotal |\n|------|----------:|---------:|---------------------:|---------------:|---------:|\n`;
       materials.forEach((m) => {
-        md +=
-          "| " +
-          m.item +
-          " | " +
-          (m.qty || 0) +
-          " | " +
-          (m.unit || "-") +
-          " | " +
-          fmt(m.unitCost || 0) +
-          " | " +
-          (toNumber(m.markupPctWhole) || 0) +
-          "% | " +
-          fmt(matLineTotal(m)) +
-          " |\n";
+        md += `| ${m.item || "-"} | ${fmt(m.unitCost || 0)} | ${m.qty || 0} | ${fmt(m.costBefore || 0)} | ${fmt(m.discountAmt || 0)} | ${fmt(m.subtotal || 0)} |\n`;
       });
-      md += "\n**Materials Subtotal:** " + fmt(_materialsSubtotal) + "\n\n";
+      md += `\n**Materials Subtotal:** ${fmt(materialsSubtotal)}\n\n`;
     } else {
-      md +=
-        "_No materials entered — paste from the **Material & Cost Calculator** into the box above._\n\n";
+      md += `_No materials entered._\n\n`;
     }
 
     // Labour
-    md += "## Labour\n\n";
+    md += `## Labour\n\n`;
     if (labour.length) {
-      if (usingAISuggestedLabour)
-        md +=
-          "_Labour roles were **AI-suggested** — **review and adjust** as needed._\n\n";
-      md +=
-        "| Role | Hours | Rate | Total |\n|------|------:|-----:|------:|\n";
+      md += `| Role | Hours | Rate | Total |\n|------|------:|-----:|------:|\n`;
       labour.forEach((l) => {
         const total = toNumber(l.hours) * toNumber(l.rate);
-        md +=
-          "| " +
-          (l.role || "-") +
-          " | " +
-          (toNumber(l.hours) || 0) +
-          " | " +
-          fmt(toNumber(l.rate) || 0) +
-          " | " +
-          fmt(total) +
-          " |\n";
+        md += `| ${l.role || "-"} | ${toNumber(l.hours) || 0} | ${fmt(toNumber(l.rate) || 0)} | ${fmt(total)} |\n`;
       });
-      md += "\n**Labour Subtotal:** " + fmt(_labourSubtotal) + "\n\n";
+      md += `\n**Labour Subtotal:** ${fmt(labourSubtotal)}\n\n`;
     } else {
-      md += "_No labour entered._\n\n";
+      md += `_No labour entered._\n\n`;
     }
 
     // Subs / Equipment
-    md += "## Subcontractors / Equipment\n\n";
+    if (subcontractors.length || equipment.length) md += `## Subcontractors / Equipment\n\n`;
     if (subcontractors.length) {
-      md += "**Subcontractors**\n\n| Item | Cost |\n|------|-----:|\n";
+      md += `**Subcontractors**\n\n| Item | Cost |\n|------|-----:|\n`;
       subcontractors.forEach((s) => {
-        md += "| " + (s.label || "-") + " | " + fmt(toNumber(s.amount) || 0) + " |\n";
+        md += `| ${s.label || "-"} | ${fmt(toNumber(s.amount) || 0)} |\n`;
       });
-      md += "\n";
+      md += `\n`;
     }
     if (equipment.length) {
-      md += "**Equipment / Hire**\n\n| Item | Cost |\n|------|-----:|\n";
+      md += `**Equipment / Hire**\n\n| Item | Cost |\n|------|-----:|\n`;
       equipment.forEach((s) => {
-        md += "| " + (s.label || "-") + " | " + fmt(toNumber(s.amount) || 0) + " |\n";
+        md += `| ${s.label || "-"} | ${fmt(toNumber(s.amount) || 0)} |\n`;
       });
-      md += "\n";
+      md += `\n`;
     }
-    if (!subcontractors.length && !equipment.length) md += "_None._\n\n";
 
     // Assumptions & Exclusions
     const assumptions =
@@ -567,14 +410,20 @@ Keep quantities conservative if inferring.`;
         ? ai.exclusions
         : ["Structural changes unless specified.", "Asbestos testing/removal."];
 
-    md += "## Assumptions & Exclusions\n\n";
-    md += "**Assumptions**\n\n" + assumptions.map((a) => "- " + a).join("\n") + "\n\n";
-    md += "**Exclusions**\n\n" + exclusions.map((a) => "- " + a).join("\n") + "\n\n";
+    md += `## Assumptions & Exclusions\n\n`;
+    md += `**Assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `**Exclusions**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
 
-    // Risks & Notes
+    // Additional Options (not included) — after Assumptions & Exclusions
+    if (ai.options && ai.options.length) {
+      md += `## Additional Options (not included)\n\n`;
+      md += ai.options.map((o) => `- ${o}`).join("\n") + `\n\n`;
+    }
+
+    // Risks & Notes (optional)
     if (ai.risks && ai.risks.length) {
-      md += "## Risks & Notes (review)\n\n";
-      md += ai.risks.map((r) => "- " + r).join("\n") + "\n\n";
+      md += `## Risks & Notes (review)\n\n`;
+      md += ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
     }
 
     // Timeline
@@ -582,36 +431,30 @@ Keep quantities conservative if inferring.`;
       ai.timeline && ai.timeline.length
         ? ai.timeline
         : ["Scheduling & prep", "Core works", "Finishing & handover"];
-    md += "## Timeline (indicative)\n\n";
-    md += timeline.map((t) => "- " + t).join("\n") + "\n\n";
+    md += `## Timeline (indicative)\n\n`;
+    md += timeline.map((t) => `- ${t}`).join("\n") + `\n\n`;
 
-    // Cost summary
-    md += "## Cost Summary\n\n";
-    md += "| Description | Amount |\n|-------------|-------:|\n";
-    md += "| Materials Subtotal | " + fmt(_materialsSubtotal) + " |\n";
-    md += "| Labour Subtotal | " + fmt(_labourSubtotal) + " |\n";
-    md += "| Subcontractors | " + fmt(_subsTotal) + " |\n";
-    md += "| Equipment / Hire | " + fmt(_equipTotal) + " |\n";
-    md += "| Overhead (" + toNumber(overheadPctWhole) + "%) | " + fmt(_overhead) + " |\n";
-    if (toNumber(contingencyPctWhole) > 0)
-      md +=
-        "| Contingency (" +
-        toNumber(contingencyPctWhole) +
-        "%) | " +
-        fmt(_contingency) +
-        " |\n";
-    md += "| Margin (" + toNumber(marginPctWhole) + "%) | " + fmt(_margin) + " |\n";
-    md += "| **Subtotal** | **" + fmt(_subtotal) + "** |\n";
-    if (includeGST) md += "| **GST (" + (gstRate * 100).toFixed(0) + "%)** | **" + fmt(_gst) + "** |\n";
-    md += "| **Total (AUD)** | **" + fmt(_grandTotal) + "** |\n\n";
+    // Cost Summary (client view only; folded)
+    md += `## Cost Summary\n\n`;
+    md += `| Description | Amount |\n|-------------|-------:|\n`;
+    md += `| Materials Subtotal | ${fmt(materialsSubtotal)} |\n`;
+    md += `| Labour Subtotal | ${fmt(labourSubtotal)} |\n`;
+    md += `| Subcontractors | ${fmt(subsTotal)} |\n`;
+    md += `| Equipment / Hire | ${fmt(equipTotal)} |\n`;
+    md += `| **Subtotal** | **${fmt(clientSubtotal)}** |\n`;
+    if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
+    md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
 
-    // Terms
-    md += "## Terms, Validity & Acceptance\n\n";
-    md += "**Estimate validity:** " + validityDays + " days from the date of issue.  \n";
-    md += "**Payment terms:** Deposit on acceptance; balance as agreed.  \n";
-    md += "**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n";
-    md += "**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n";
-    md += "Signature: __________________ Date: ________________\n";
+    // Payment Terms + Thank you / Contact
+    md += `## Payment Terms & Acceptance\n\n`;
+    md += `**Estimate validity:** ${validityDays} days from the date of issue.  \n`;
+    md += `**Payment terms:** Deposit on acceptance; balance as agreed.  \n`;
+    md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n`;
+    md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
+    md += `Signature: __________________ Date: ________________\n\n`;
+
+    md += `## Thank You / Contact\n\n`;
+    md += `Thanks for the opportunity. If you have any questions about this quote, please reach out and we’ll help straight away.\n`;
 
     output = md;
     loading = false;
@@ -622,6 +465,37 @@ Keep quantities conservative if inferring.`;
       navigator.clipboard.writeText(output || "");
     } catch {}
   }
+
+  function useExample() {
+    clientName = "Jordan Moore";
+    siteAddress = "12 Rivergum Rd, Brunswick VIC 3056";
+    trade = "Electrical";
+    projectBrief =
+      "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard work if required. Patch small penetrations; tidy finish.";
+
+    // Example materials: paste your Costing Summary block, then click Import
+    materialsText = `**Quote Summary**
+
+**Currency:** AUD
+
+| Item       | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
+|------------|-----------|----------|----------------------|------------|-----------------|----------|
+| Wiring     | $20       | 2        | $40                  | 0%         | $0              | $40      |
+| Cabling    | $10       | 1        | $10                  | 0%         | $0              | $10      |
+| **Total Material Cost** |           |          |                      |            |                 | **$50**  |
+
+**Profit from Markup (20%)**: $10  
+**Final Total**: $60  
+
+Thank you for considering our services!`;
+
+    labour = [
+      { role: "Electrician", hours: 12, rate: 90 },
+      { role: "Apprentice", hours: 6, rate: 55 }
+    ];
+    subcontractors = [];
+    equipment = [{ label: "Vacuum pump hire", amount: 45 }];
+  }
 </script>
 
 <svelte:head><title>Job Estimation Wizard</title></svelte:head>
@@ -631,7 +505,7 @@ Keep quantities conservative if inferring.`;
     <div>
       <h1 class="text-2xl font-semibold">Job Estimation Wizard</h1>
       <p class="text-sm opacity-70">
-        Type a short brief, optionally add materials, and generate a client-ready quote. Advanced is optional.
+        Type a short brief, optionally import materials from the Cost Calculator, and generate a client-ready quote.
       </p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
@@ -647,7 +521,8 @@ Keep quantities conservative if inferring.`;
         <textarea
           class="textarea textarea-bordered h-24"
           bind:value={projectBrief}
-          placeholder="Describe the job in your words. We’ll draft the overview, tailored scope, assumptions, risks and timeline."></textarea>
+          placeholder="Describe the job in your words. We’ll draft the overview, tailored scope, assumptions, risks and timeline."
+        ></textarea>
       </label>
     </div>
 
@@ -655,16 +530,16 @@ Keep quantities conservative if inferring.`;
       <!-- Materials -->
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-3">
-          <h2 class="card-title text-base">Materials (paste to import)</h2>
+          <h2 class="card-title text-base">Materials (paste → Import)</h2>
           <textarea
             class="textarea textarea-bordered h-28"
             bind:value={materialsText}
-            on:blur={parseMaterialsFromTextarea}
-            placeholder="Paste the Costing Summary block from the Material & Cost Calculator. We'll auto-detect the table and import the items."></textarea>
-
-          <div class="flex items-center gap-2">
-            <button type="button" class="btn btn-sm" on:click={() => parseMaterialsFromTextarea()}>Import now</button>
-            <button type="button" class="btn btn-sm btn-ghost" on:click={() => resetMaterialsSection()}>Reset materials</button>
+            placeholder="Paste the Costing Summary block from the Material & Cost Calculator, then click Import now."
+          ></textarea>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline" on:click={importFromCostingSummary}>Import now</button>
+            <button type="button" class="btn btn-sm" on:click={useExample}>Use example</button>
+            <button type="button" class="btn btn-ghost btn-sm" on:click={() => { materialsText=''; materials=[]; parseFeedback=''; }}>Clear materials</button>
             {#if parseFeedback}<span class="text-xs opacity-70">{parseFeedback}</span>{/if}
           </div>
 
@@ -672,17 +547,24 @@ Keep quantities conservative if inferring.`;
             {#if materials.length}
               <table class="table table-sm">
                 <thead>
-                  <tr><th>Item</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Markup %</th><th>Line Total</th></tr>
+                  <tr>
+                    <th>Item</th>
+                    <th class="text-right">Unit Cost</th>
+                    <th class="text-right">Quantity</th>
+                    <th class="text-right">Cost Before Discount</th>
+                    <th class="text-right">Discount Amount</th>
+                    <th class="text-right">Subtotal</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {#each materials as m, i}
+                  {#each materials as m}
                     <tr>
-                      <td><input class="input input-bordered input-xs w-48" bind:value={m.item}></td>
-                      <td><input type="number" class="input input-bordered input-xs w-20" bind:value={m.qty}></td>
-                      <td><input class="input input-bordered input-xs w-20" bind:value={m.unit}></td>
-                      <td><input type="number" step="0.01" class="input input-bordered input-xs w-24" bind:value={m.unitCost}></td>
-                      <td><input type="number" step="1" class="input input-bordered input-xs w-20" bind:value={m.markupPctWhole}></td>
-                      <td class="text-right">{fmt(matLineTotal(m))}</td>
+                      <td><input class="input input-bordered input-xs w-56" bind:value={m.item}></td>
+                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={m.unitCost}></td>
+                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-24 text-right" bind:value={m.qty}></td>
+                      <td class="text-right">{fmt(m.costBefore)}</td>
+                      <td class="text-right">{fmt(m.discountAmt)}</td>
+                      <td class="text-right font-semibold">{fmt(m.subtotal)}</td>
                     </tr>
                   {/each}
                 </tbody>
@@ -708,13 +590,13 @@ Keep quantities conservative if inferring.`;
                     <td><input type="number" min="0" class="input input-bordered input-xs w-20" bind:value={l.hours}></td>
                     <td><input type="number" step="0.01" class="input input-bordered input-xs w-24" bind:value={l.rate}></td>
                     <td class="text-right">{fmt((Number(l.hours) || 0) * (Number(l.rate) || 0))}</td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => removeLabour(i)}>✕</button></td>
+                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (labour = labour.filter((_, idx) => idx !== i))}>✕</button></td>
                   </tr>
                 {/each}
               </tbody>
             </table>
           </div>
-          <button type="button" class="btn btn-sm" on:click={addLabour}>+ Add labour row</button>
+          <button type="button" class="btn btn-sm" on:click={() => (labour = [...labour, { role: "", hours: 0, rate: 0 }])}>+ Add labour row</button>
 
           <div class="divider my-2"></div>
 
@@ -727,13 +609,13 @@ Keep quantities conservative if inferring.`;
                   <tr>
                     <td><input class="input input-bordered input-xs w-48" bind:value={s.label}></td>
                     <td><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={s.amount}></td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => removeSub(i)}>✕</button></td>
+                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (subcontractors = subcontractors.filter((_, idx) => idx !== i))}>✕</button></td>
                   </tr>
                 {/each}
               </tbody>
             </table>
           </div>
-          <button type="button" class="btn btn-sm" on:click={addSub}>+ Add subcontractor</button>
+          <button type="button" class="btn btn-sm" on:click={() => (subcontractors = [...subcontractors, { label: "", amount: 0 }])}>+ Add subcontractor</button>
 
           <div class="overflow-x-auto mt-3">
             <table class="table table-sm">
@@ -743,13 +625,13 @@ Keep quantities conservative if inferring.`;
                   <tr>
                     <td><input class="input input-bordered input-xs w-48" bind:value={s.label}></td>
                     <td><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={s.amount}></td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => removeEquip(i)}>✕</button></td>
+                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (equipment = equipment.filter((_, idx) => idx !== i))}>✕</button></td>
                   </tr>
                 {/each}
               </tbody>
             </table>
           </div>
-          <button type="button" class="btn btn-sm" on:click={addEquip}>+ Add equipment</button>
+          <button type="button" class="btn btn-sm" on:click={() => (equipment = [...equipment, { label: "", amount: 0 }])}>+ Add equipment</button>
         </div>
       </div>
     </div>
@@ -778,8 +660,7 @@ Keep quantities conservative if inferring.`;
             <div><div class="opacity-60">Labour</div><div class="font-semibold">{fmt(labourSubtotal)}</div></div>
             <div><div class="opacity-60">Subs</div><div class="font-semibold">{fmt(subsTotal)}</div></div>
             <div><div class="opacity-60">Equipment</div><div class="font-semibold">{fmt(equipTotal)}</div></div>
-            <div><div class="opacity-60">Overhead</div><div class="font-semibold">{fmt(baseSubtotal * (Number(overheadPctWhole)/100))}</div></div>
-            <div><div class="opacity-60">Subtotal</div><div class="font-semibold">{fmt(subtotal)}</div></div>
+            <div><div class="opacity-60">Subtotal</div><div class="font-semibold">{fmt(clientSubtotal)}</div></div>
             {#if includeGST}
               <div><div class="opacity-60">GST</div><div class="font-semibold">{fmt(gst)}</div></div>
             {/if}
@@ -800,31 +681,27 @@ Keep quantities conservative if inferring.`;
             <span class="label-text">Include GST ({(gstRate * 100).toFixed(0)}%)</span>
           </label>
           <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-          <button type="button" class="btn btn-outline" on:click={() => resetMaterialsSection({ all: true })}>Reset all</button>
+          <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
         </div>
       </div>
 
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body">
           <p class="text-xs opacity-70">
-            Tip: Generate and review. You can tweak rows and regenerate for updated totals.
+            Tip: Copy the <em>Costing Summary</em> block from the
+            <a href="/account/caption/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
           </p>
         </div>
       </div>
     </div>
   </form>
 
-  <!-- Formatted output only (no old markdown block) -->
-  {#if output}
-    <div class="card bg-base-100 border">
+  <!-- Rich Answer (final rendered quote) -->
+  {#if output.trim().length}
+    <div class="card bg-base-100 border mt-2">
       <div class="card-body">
-        <h2 class="card-title text-base">Quote Preview</h2>
+        <!-- Removed the old “Quote Preview” heading as requested -->
         <RichAnswer text={output} />
-        <div class="mt-2">
-          <button type="button" class="btn btn-outline btn-sm" on:click={() => navigator.clipboard.writeText(output)}>
-            Copy quote
-          </button>
-        </div>
       </div>
     </div>
   {/if}
