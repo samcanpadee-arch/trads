@@ -1,10 +1,10 @@
-<!-- /account/caption/email-template -->
+<!-- /account/caption/email-template (v1.2 rich preview) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
-// Minimal inputs
+
+  // Minimal inputs
   let clientName = "";
-  let purpose =
-    "Job summary (after completion)"; // default includes your job summary use case
+  let purpose = "Job summary (after completion)"; // default
   let keyPoints = ""; // multi-line; one point per line (or sentences)
 
   // Optional tradie/brand details
@@ -23,8 +23,7 @@
   function useExample() {
     clientName = "Jordan";
     purpose = "Job summary (after completion)";
-    keyPoints =
-`• Replaced old switchboard with compliant RCBOs
+    keyPoints = `• Replaced old switchboard with compliant RCBOs
 • Added two new GPOs in kitchen
 • Swapped 6x downlights to LED warm white
 • Left work area clean; tested and labelled
@@ -40,8 +39,7 @@
     output = "";
     loading = true;
 
-    const SYSTEM =
-`You are an advanced Email Template Generator AI for Australian tradies. Each request is independent.
+    const SYSTEM = `You are an advanced Email Template Generator AI for Australian tradies. Each request is independent.
 Write in Australian English; personable yet professional.
 Always:
 - Identify the email purpose and keep the copy aligned to it.
@@ -104,14 +102,23 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     }
   }
 
-  function copyOut() { try { navigator.clipboard.writeText(output || ""); } catch {} }
+  function copyOut() {
+    try {
+      navigator.clipboard.writeText(output || "");
+    } catch {}
+  }
   function downloadOut() {
     const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "email-template.txt"; a.click();
+    a.href = url;
+    a.download = "email-template.txt";
+    a.click();
     URL.revokeObjectURL(url);
   }
+
+  // Rich preview content comes straight from the generated output
+  $: __rich = (output || "").trim();
 </script>
 
 <svelte:head><title>Email Template Generator</title></svelte:head>
@@ -120,7 +127,10 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
   <header class="flex items-start justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Email Template Generator</h1>
-      <p class="text-sm opacity-70">Generate a polished, client-ready email from a few key points — with friendly, professional Aussie tone. Includes a purpose for job summaries.</p>
+      <p class="text-sm opacity-70">
+        Generate a polished, client-ready email from a few key points — with friendly, professional Aussie tone.
+        Includes a purpose for job summaries.
+      </p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
@@ -150,7 +160,10 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
 
         <label class="form-control">
           <span class="label-text">Key points (one per line)</span>
-          <textarea class="textarea textarea-bordered h-40" bind:value={keyPoints} placeholder="List the essentials. Example:
+          <textarea
+            class="textarea textarea-bordered h-40"
+            bind:value={keyPoints}
+            placeholder="List the essentials. Example:
 • Install 2x GPOs in kitchen
 • Replace switchboard with RCBOs
 • Fit-off scheduled Tuesday
@@ -162,11 +175,19 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
       <div class="space-y-4">
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
-          <input class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightSpark Electrical" />
+          <input
+            class="input input-bordered"
+            bind:value={businessName}
+            placeholder="e.g. BrightSpark Electrical"
+          />
         </label>
         <label class="form-control">
           <span class="label-text">Email signature / contact details (optional)</span>
-          <input class="input input-bordered" bind:value={contact} placeholder="e.g. 0400 123 456 | hello@bright.au | bright.au/book" />
+          <input
+            class="input input-bordered"
+            bind:value={contact}
+            placeholder="e.g. 0400 123 456 | hello@bright.au | bright.au/book"
+          />
         </label>
 
         <label class="form-control">
@@ -200,41 +221,32 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     </div>
   </form>
 
+  <!-- Plain text fallback (keep it for safety) -->
   {#if output}
-  <div class="card bg-base-100 border border-base-300">
-    <div class="card-body">
-      <h2 class="card-title text-base">Generated Email</h2>
-      <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+        <h2 class="card-title text-base">Generated Email</h2>
+        <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+      </div>
     </div>
-  </div>
+  {/if}
+
+  <!-- Rich preview (single reliable block) -->
+  {#if __rich.length}
+    <div class="card bg-base-100 border mt-4">
+      <div class="card-body">
+        <h3 class="card-title text-base">Formatted preview</h3>
+        <RichAnswer text={__rich} />
+        <div class="mt-2">
+          <button
+            type="button"
+            class="btn btn-outline btn-sm"
+            on:click={() => navigator.clipboard.writeText(__rich)}
+          >
+            Copy answer
+          </button>
+        </div>
+      </div>
+    </div>
   {/if}
 </section>
-
-<!-- Rich preview (non-breaking): keep old output above until verified -->
-{#if (
-  typeof answer !== "undefined" && String(answer || "").trim() ||
-  typeof output !== "undefined" && String(output || "").trim() ||
-  typeof result !== "undefined" && String(result || "").trim()
-)}
-  <div class="card bg-base-100 border mt-4">
-    <div class="card-body">
-      <h3 class="card-title text-base">Formatted answer (preview)</h3>
-      <RichAnswer content={(answer ?? output ?? result ?? "")} />
-    </div>
-  </div>
-{/if}
-
-
-<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
-{#if typeof answer === "string" && answer.trim().length}
-  <div class="mt-6">
-    <RichAnswer text={answer} />
-    <div class="mt-2 flex gap-2">
-      <button type="button"
-              class="btn btn-outline btn-sm"
-              on:click={() => navigator.clipboard.writeText(answer)}>
-        Copy answer
-      </button>
-    </div>
-  </div>
-{/if}
