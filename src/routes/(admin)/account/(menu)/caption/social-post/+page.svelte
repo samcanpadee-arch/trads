@@ -354,23 +354,23 @@ Return ONLY strict JSON:
             </summary>
             <div class="collapse-content space-y-3">
               {#if variants.short}
-                <div>
-                  <h3 class="font-semibold text-sm">Short</h3>
-                  <pre class="whitespace-pre-wrap text-sm">{variants.short}</pre>
-                </div>
-              {/if}
-              {#if variants.standard}
-                <div>
-                  <h3 class="font-semibold text-sm">Standard</h3>
-                  <pre class="whitespace-pre-wrap text-sm">{variants.standard}</pre>
-                </div>
-              {/if}
-              {#if variants.promo}
-                <div>
-                  <h3 class="font-semibold text-sm">Promo</h3>
-                  <pre class="whitespace-pre-wrap text-sm">{variants.promo}</pre>
-                </div>
-              {/if}
+  <div>
+    <h3 class="font-semibold text-sm">Short</h3>
+    <RichAnswer text={variants.short} />
+  </div>
+{/if}
+{#if variants.standard}
+  <div>
+    <h3 class="font-semibold text-sm">Standard</h3>
+    <RichAnswer text={variants.standard} />
+  </div>
+{/if}
+{#if variants.promo}
+  <div>
+    <h3 class="font-semibold text-sm">Promo</h3>
+    <RichAnswer text={variants.promo} />
+  </div>
+{/if}
               {#if includeHashtags && hashtags.length}
                 <div>
                   <h3 class="font-semibold text-sm">Hashtags</h3>
