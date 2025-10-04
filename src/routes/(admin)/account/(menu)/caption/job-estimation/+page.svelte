@@ -584,6 +584,14 @@ Keep content practical and specific; avoid generic fluff.`;
     if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
     md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
 
+    // Payment Terms & Acceptance
+md += `## Payment Terms & Acceptance\n\n`;
+md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
+md += `**Payment terms:** A deposit is required to confirm your booking and secure materials. The remaining balance is payable once the job is completed, unless other arrangements have been agreed to in writing. Payment can be made by bank transfer, EFT, or another approved method.  \n`;
+md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n`;
+md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
+md += `Signature: __________________ Date: ________________\n`;
+
     // Remove “Thank You / Contact” per your request.
 
     output = md;
