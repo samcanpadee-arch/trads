@@ -1,75 +1,78 @@
-<!-- /account/caption/email-template (v1.3 rich-only) -->
+<!-- /account/caption/email-template (v1.4 — simplified UI: single required brief, clean spacing) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
-  // Minimal inputs
+  // Required
+  let brief = "";             // The only required field
+
+  // Optional inputs
   let clientName = "";
   let purpose = "Job summary (after completion)";
-  let keyPoints = "";
-
-  // Optional tradie/brand details
   let businessName = "";
-  let contact = ""; // phone or URL or email
-
-  // Tone & options
+  let contact = "";           // phone / url / email
   type Tone = "Professional" | "Friendly" | "Casual Aussie";
   let tone: Tone = "Friendly";
   let keepItShort = true;
 
-  // Output state
+  // UX state
   let output = "";
   let loading = false;
+  let briefTouched = false;
 
   function useExample() {
+    brief =
+      "Completed a switchboard upgrade with compliant RCBOs, added 2x kitchen GPOs, replaced 6x downlights with warm white LEDs, cleaned up. Next step: fit-off for the island pendant (awaiting delivery).";
     clientName = "Jordan";
     purpose = "Job summary (after completion)";
-    keyPoints = `• Replaced old switchboard with compliant RCBOs
-• Added two new GPOs in kitchen
-• Swapped 6x downlights to LED warm white
-• Left work area clean; tested and labelled
-• Next step: fit-off for pendant above island (awaiting delivery)`;
     businessName = "BrightSpark Electrical";
-    contact = "0400 123 456 | brightspark.au";
+    contact = "0400 123 456 · brightspark.au";
     tone = "Friendly";
     keepItShort = true;
   }
 
-  async function generate(e: Event) {
-    e.preventDefault();
-    output = "";
-    loading = true;
-
-    const SYSTEM = `You are an advanced Email Template Generator AI for Australian tradies. Each request is independent.
-Write in Australian English; personable yet professional.
-Always:
-- Identify the email purpose and keep the copy aligned to it.
-- Start with a personalised greeting using the client's name if provided (e.g., "Hi Jordan,").
-- Integrate all key points clearly and concisely (bullet points if suitable).
-- Maintain a professional but friendly tradie tone (no fluff, no hard sell).
-- End with a clear call to action aligned to the purpose.
-- Close with a professional signature that includes business name and contact if provided.
-If the purpose is a job summary (after completion):
-- Start with a one-sentence job type/context.
-- Present key tasks as bullet points in plain English.
-- Mention total effort/hours if provided in key points (don't fabricate values).
-- Thank the client for their trust and reinforce quality.
-If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return only the email body text.`;
-
-    // Make a clean list from keyPoints (but pass raw too so model can decide layout)
-    const points = keyPoints
+  function cleanPointsFromBrief(raw: string): string[] {
+    // If user typed multiple short lines, turn those into a clean list for the model.
+    return raw
       .split(/\r?\n/)
       .map((l) => l.replace(/^[•\-\*\s]+/, "").trim())
       .filter(Boolean);
+  }
 
+  async function generate(e: Event) {
+    e.preventDefault();
+    briefTouched = true;
+    if (!brief.trim()) return;
+
+    output = "";
+    loading = true;
+
+    const SYSTEM = `You are an advanced Email Template Generator AI for Australian tradies.
+Write in Australian English; personable yet professional.
+
+Always:
+- Identify the email purpose and keep the copy aligned to it.
+- Start with a personalised greeting using the client's name if provided (e.g., "Hi Jordan,").
+- Integrate the brief clearly and concisely. If the brief looks like multiple short lines, you may render key tasks as bullet points.
+- Maintain a professional but friendly tradie tone (no fluff, no hard sell).
+- End with a clear call to action aligned to the purpose.
+- Close with a professional signature that includes business name and contact if provided.
+If purpose is "Job summary (after completion)":
+- Start with a one-sentence job context.
+- If helpful, show key tasks as a short list in plain English.
+- Mention provided effort/hours only if included (do not invent).
+If keepItShort=true: target ~150–220 words.
+Return only the email body text (no preface, no quotes, no markdown).`;
+
+    const points = cleanPointsFromBrief(brief);
     const user =
+      `Brief:\n${brief.trim()}\n\n` +
+      (points.length ? `Brief (clean list):\n- ${points.join("\n- ")}\n\n` : "") +
       `Client: ${clientName || "TBA"}\n` +
       `Purpose: ${purpose}\n` +
       `Tone: ${tone}\n` +
       `KeepItShort: ${keepItShort ? "Yes" : "No"}\n` +
       `Business: ${businessName || "TBA"}\n` +
-      `Contact: ${contact || "TBA"}\n` +
-      `KeyPoints (raw):\n${keyPoints.trim()}\n` +
-      (points.length ? `KeyPoints (clean list):\n- ${points.join("\n- ")}\n` : "");
+      `Contact: ${contact || "TBA"}`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -106,8 +109,8 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     try { navigator.clipboard.writeText(output || ""); } catch {}
   }
 
-  // Rich preview content comes straight from the generated output
   $: __rich = (output || "").trim();
+  $: __briefInvalid = briefTouched && !brief.trim();
 </script>
 
 <svelte:head><title>Email Template Generator</title></svelte:head>
@@ -117,20 +120,41 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     <div>
       <h1 class="text-2xl font-semibold">Email Template Generator</h1>
       <p class="text-sm opacity-70">
-        Generate a polished, client-ready email from a few key points — with friendly, professional Aussie tone.
-        Includes a purpose for job summaries.
+        Give us a quick summary and we’ll draft a tidy client-ready email.
       </p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
 
   <form class="card bg-base-100 border border-base-300 p-6 space-y-6" on:submit={generate}>
+    <!-- Brief (the only required field) -->
+    <div class="form-control">
+      <label for="brief" class="label">
+        <span class="label-text">Quick brief <span class="text-error">*</span></span>
+      </label>
+      <textarea
+        id="brief"
+        class="textarea textarea-bordered h-32"
+        bind:value={brief}
+        on:blur={() => (briefTouched = true)}
+        placeholder="In one or two sentences, what did you do / what’s the purpose? (e.g., Completed switchboard upgrade, added kitchen GPOs, replaced 6x downlights; now ready to send a completion email.)"
+      ></textarea>
+      {#if __briefInvalid}
+        <span class="mt-1 text-xs text-error">Please enter a quick brief.</span>
+      {/if}
+      <label class="label">
+        <span class="label-text-alt opacity-70">
+          Tip: If you prefer bullet points, put each point on a new line — we’ll format it nicely.
+        </span>
+      </label>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left: key content -->
+      <!-- Left column: core meta -->
       <div class="lg:col-span-2 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label class="form-control">
-            <span class="label-text">Client name</span>
+            <span class="label-text">Client name (optional)</span>
             <input class="input input-bordered" bind:value={clientName} placeholder="e.g. Jordan" />
           </label>
           <label class="form-control">
@@ -146,36 +170,25 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
             </select>
           </label>
         </div>
-
-        <label class="form-control">
-          <span class="label-text">Key points (one per line)</span>
-          <textarea
-            class="textarea textarea-bordered h-40"
-            bind:value={keyPoints}
-            placeholder="List the essentials. Example:
-• Install 2x GPOs in kitchen
-• Replace switchboard with RCBOs
-• Fit-off scheduled Tuesday
-• Final invoice due in 7 days"></textarea>
-        </label>
       </div>
 
-      <!-- Right: brand + tone -->
+      <!-- Right column: brand & tone -->
       <div class="space-y-4">
+        <label class="form-control">
+          <span class="label-text">Email signature / contact details (optional)</span>
+          <input
+            class="input input-bordered"
+            bind:value={contact}
+            placeholder="e.g. 0400 123 456 · hello@bright.au · bright.au/book"
+          />
+        </label>
+
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
           <input
             class="input input-bordered"
             bind:value={businessName}
             placeholder="e.g. BrightSpark Electrical"
-          />
-        </label>
-        <label class="form-control">
-          <span class="label-text">Email signature / contact details (optional)</span>
-          <input
-            class="input input-bordered"
-            bind:value={contact}
-            placeholder="e.g. 0400 123 456 | hello@bright.au | bright.au/book"
           />
         </label>
 
@@ -196,7 +209,7 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <button class="btn btn-primary" type="submit" disabled={loading}>
+      <button class="btn btn-primary" type="submit" disabled={loading || !brief.trim()}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Email</span>
       </button>
@@ -205,11 +218,11 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     </div>
 
     <div class="alert alert-info">
-      <span>Draft only — please review names, dates, and amounts before sending.</span>
+      <span>Draft only -— please review names, dates, and amounts before sending.</span>
     </div>
   </form>
 
-  <!-- Rich preview (single, replaces old markdown block) -->
+  <!-- Rich preview -->
   {#if __rich.length}
     <div class="card bg-base-100 border mt-4">
       <div class="card-body">
