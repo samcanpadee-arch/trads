@@ -1,4 +1,4 @@
-<!-- /account/caption/review-responder (v1.2 rich preview) -->
+<!-- /account/caption/review-responder (v1.3 — rich-only, no download, no markdown) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -107,15 +107,6 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       navigator.clipboard.writeText(output || "");
     } catch {}
   }
-  function downloadOut() {
-    const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "review-response.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   // Rich preview source: use the generated output directly.
   $: __rich = (output || "").trim();
@@ -129,7 +120,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       <h1 class="text-2xl font-semibold">Review Responder</h1>
       <p class="text-sm opacity-70">
         Paste a customer review and generate a friendly, on-brand reply with
-        tone control - perfect for Google, Facebook, Instagram, ProductReview,
+        tone control — perfect for Google, Facebook, Instagram, ProductReview,
         Hipages and more.
       </p>
     </div>
@@ -224,13 +215,6 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}
         >Copy</button
       >
-      <button
-        type="button"
-        class="btn btn-outline"
-        on:click={downloadOut}
-        disabled={!output}
-        >Download .txt</button
-      >
     </div>
 
     <div class="alert alert-info">
@@ -241,31 +225,12 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
     </div>
   </form>
 
-  <!-- Plain text fallback (keep it for safety) -->
-  {#if output}
-    <div class="card bg-base-100 border border-base-300">
-      <div class="card-body">
-        <h2 class="card-title text-base">Suggested Response</h2>
-        <pre class="whitespace-pre-wrap text-sm">{output}</pre>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Rich preview (single reliable block) -->
+  <!-- Rich preview only -->
   {#if __rich.length}
     <div class="card bg-base-100 border mt-4">
       <div class="card-body">
-        <h3 class="card-title text-base">Formatted preview</h3>
+        <h3 class="card-title text-base">Suggested Response</h3>
         <RichAnswer text={__rich} />
-        <div class="mt-2">
-          <button
-            type="button"
-            class="btn btn-outline btn-sm"
-            on:click={() => navigator.clipboard.writeText(__rich)}
-          >
-            Copy answer
-          </button>
-        </div>
       </div>
     </div>
   {/if}

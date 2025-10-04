@@ -1,11 +1,11 @@
-<!-- /account/caption/email-template (v1.2 rich preview) -->
+<!-- /account/caption/email-template (v1.3 rich-only) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
   // Minimal inputs
   let clientName = "";
-  let purpose = "Job summary (after completion)"; // default
-  let keyPoints = ""; // multi-line; one point per line (or sentences)
+  let purpose = "Job summary (after completion)";
+  let keyPoints = "";
 
   // Optional tradie/brand details
   let businessName = "";
@@ -14,7 +14,7 @@
   // Tone & options
   type Tone = "Professional" | "Friendly" | "Casual Aussie";
   let tone: Tone = "Friendly";
-  let keepItShort = true; // aim for concise, ~150-220 words if true
+  let keepItShort = true;
 
   // Output state
   let output = "";
@@ -103,18 +103,7 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
   }
 
   function copyOut() {
-    try {
-      navigator.clipboard.writeText(output || "");
-    } catch {}
-  }
-  function downloadOut() {
-    const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "email-template.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+    try { navigator.clipboard.writeText(output || ""); } catch {}
   }
 
   // Rich preview content comes straight from the generated output
@@ -213,7 +202,6 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
       </button>
       <button type="button" class="btn" on:click={useExample}>Use example</button>
       <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-      <button type="button" class="btn btn-outline" on:click={downloadOut} disabled={!output}>Download .txt</button>
     </div>
 
     <div class="alert alert-info">
@@ -221,31 +209,12 @@ If keepItShort=true: target ~150–220 words. No markdown, no quotes. Return onl
     </div>
   </form>
 
-  <!-- Plain text fallback (keep it for safety) -->
-  {#if output}
-    <div class="card bg-base-100 border border-base-300">
-      <div class="card-body">
-        <h2 class="card-title text-base">Generated Email</h2>
-        <pre class="whitespace-pre-wrap text-sm">{output}</pre>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Rich preview (single reliable block) -->
+  <!-- Rich preview (single, replaces old markdown block) -->
   {#if __rich.length}
     <div class="card bg-base-100 border mt-4">
       <div class="card-body">
-        <h3 class="card-title text-base">Formatted preview</h3>
+        <h3 class="card-title text-base">Generated Email</h3>
         <RichAnswer text={__rich} />
-        <div class="mt-2">
-          <button
-            type="button"
-            class="btn btn-outline btn-sm"
-            on:click={() => navigator.clipboard.writeText(__rich)}
-          >
-            Copy answer
-          </button>
-        </div>
       </div>
     </div>
   {/if}
