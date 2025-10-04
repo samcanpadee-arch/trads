@@ -1,4 +1,4 @@
-<!-- /account/caption/social-post (v1.1 rich preview) -->
+<!-- /account/caption/social-post (v1.2 single rich preview + collapsible extras) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -43,7 +43,7 @@
 
   function useExample() {
     brief =
-      "Wrapped a full bathroom reno in Preston — waterproofing, tiling, and a walk-in shower with matte black fittings. Include a tip about grout care and an invite to book pre-Christmas spots.";
+      "Wrapped a full bathroom reno in Preston - waterproofing, tiling, and a walk-in shower with matte black fittings. Include a tip about grout care and an invite to book pre-Christmas spots.";
     category = "Project completion / Before–after";
     platforms = ["Instagram", "Google Business Profile"];
     tone = "Aussie friendly";
@@ -125,7 +125,7 @@ Return ONLY strict JSON:
       }
       outputText = text || "";
 
-      // Parse JSON; if fails, show raw text
+      // Parse JSON; if fails, show raw text in the rich box (fallback below)
       try {
         const j = JSON.parse(outputText);
         caption = String(j.caption || "");
@@ -139,7 +139,7 @@ Return ONLY strict JSON:
           ? j.mediaIdeas.map(String)
           : [];
       } catch {
-        // leave caption empty to show fallback section with raw text
+        // leave caption empty to use raw fallback in preview
       }
     } catch {
       outputText = "Network or server error. Please try again.";
@@ -154,42 +154,14 @@ Return ONLY strict JSON:
         navigator.clipboard.writeText(text);
       } catch {}
   }
-  function download(name: string, text: string) {
-    const blob = new Blob([text || ""], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
-  // ---------- Rich preview content (derived from parsed fields) ----------
-  function asList(items: string[]): string {
-    return items.map((s) => `- ${s}`).join("\n");
-  }
-  $: __rich = (() => {
-    // If we successfully parsed JSON, format nicely:
+  // ---------- Rich preview content (Main caption only; extras shown in collapsible) ----------
+  $: __richMain = (() => {
     if (caption.trim().length) {
-      let md = `## Main caption\n\n${caption}\n`;
-      if (variants.short || variants.standard || variants.promo) {
-        md += `\n---\n\n### Variants\n`;
-        if (variants.short) md += `\n**Short**\n\n${variants.short}\n`;
-        if (variants.standard)
-          md += `\n**Standard**\n\n${variants.standard}\n`;
-        if (variants.promo) md += `\n**Promo**\n\n${variants.promo}\n`;
-      }
-      if (includeHashtags && hashtags.length) {
-        md += `\n---\n\n### Hashtags\n\n${hashtags
-          .map((h) => `\`${h}\``)
-          .join(" ")}`;
-      }
-      if (mediaIdeas.length) {
-        md += `\n\n### Media ideas\n\n${asList(mediaIdeas)}\n`;
-      }
-      return md;
+      // No heading, as requested—just the caption itself
+      return caption;
     }
-    // Otherwise fall back to raw streamed text (often JSON or partial text)
+    // Fallback to whatever text streamed back (often JSON or partial text)
     return outputText || "";
   })();
 </script>
@@ -357,12 +329,6 @@ Return ONLY strict JSON:
         on:click={() => copy(caption || outputText)}
         disabled={!caption && !outputText}>Copy</button
       >
-      <button
-        type="button"
-        class="btn btn-outline"
-        on:click={() => download("social-post.txt", caption || outputText)}
-        disabled={!caption && !outputText}>Download .txt</button
-      >
     </div>
 
     <div class="alert alert-info">
@@ -373,40 +339,36 @@ Return ONLY strict JSON:
     </div>
   </form>
 
-  <!-- Plain text fallback (keep it for safety) -->
-  {#if caption || outputText}
-    <div class="card bg-base-100 border border-base-300">
+  <!-- Single Rich preview card -->
+  {#if (__richMain && __richMain.trim().length)}
+    <div class="card bg-base-100 border mt-2">
       <div class="card-body gap-3">
-        <h2 class="card-title text-base">Main Caption</h2>
-        <pre class="whitespace-pre-wrap text-sm">{caption || outputText}</pre>
+        <!-- No heading (per request) -->
+        <RichAnswer text={__richMain} />
 
+        <!-- Collapsible Variants & Extras (only when we parsed JSON) -->
         {#if caption}
-          <details
-            class="collapse collapse-arrow border border-base-300 rounded-box"
-          >
-            <summary class="collapse-title text-sm font-medium"
-              >Variants & Extras</summary
-            >
+          <details class="collapse collapse-arrow border border-base-300 rounded-box mt-2">
+            <summary class="collapse-title text-sm font-medium">
+              Variants & Extras
+            </summary>
             <div class="collapse-content space-y-3">
               {#if variants.short}
                 <div>
                   <h3 class="font-semibold text-sm">Short</h3>
-                  <pre
-                    class="whitespace-pre-wrap text-sm">{variants.short}</pre>
+                  <pre class="whitespace-pre-wrap text-sm">{variants.short}</pre>
                 </div>
               {/if}
               {#if variants.standard}
                 <div>
                   <h3 class="font-semibold text-sm">Standard</h3>
-                  <pre
-                    class="whitespace-pre-wrap text-sm">{variants.standard}</pre>
+                  <pre class="whitespace-pre-wrap text-sm">{variants.standard}</pre>
                 </div>
               {/if}
               {#if variants.promo}
                 <div>
                   <h3 class="font-semibold text-sm">Promo</h3>
-                  <pre
-                    class="whitespace-pre-wrap text-sm">{variants.promo}</pre>
+                  <pre class="whitespace-pre-wrap text-sm">{variants.promo}</pre>
                 </div>
               {/if}
               {#if includeHashtags && hashtags.length}
@@ -428,16 +390,6 @@ Return ONLY strict JSON:
             </div>
           </details>
         {/if}
-      </div>
-    </div>
-  {/if}
-
-  <!-- Rich preview (driven by parsed fields, or raw fallback) -->
-  {#if __rich.trim().length}
-    <div class="card bg-base-100 border mt-4">
-      <div class="card-body">
-        <h3 class="card-title text-base">Formatted preview</h3>
-        <RichAnswer text={__rich} />
       </div>
     </div>
   {/if}
