@@ -1,12 +1,16 @@
 <!-- /account/caption/proposal — Long-form Sales Proposal Generator (no client name input) -->
-<script lang="ts">  import RichAnswer from "$lib/components/RichAnswer.svelte";
-let __mdProposal: HTMLDivElement | null = null;
+<script lang="ts">
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
+
+  let __mdProposal: HTMLDivElement | null = null;
   let __previewProposal = "";
   $: __previewProposal = __mdProposal ? __mdProposal.innerText : "";
 
-let __md: HTMLDivElement | null = null;
-let __preview = "";
-$: __preview = __md ? __md.innerText : "";let trade = "Electrical";
+  let __md: HTMLDivElement | null = null;
+  let __preview = "";
+  $: __preview = __md ? __md.innerText : "";
+
+  let trade = "Electrical";
   let projectBrief = "";
   let businessName = "";
 
@@ -73,7 +77,10 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
     }
   }
 
-  function copyOut() { try { navigator.clipboard.writeText(output || ""); } catch {} }
+  function copyOut() {
+    try { navigator.clipboard.writeText(output || ""); } catch {}
+  }
+
   function downloadOut() {
     const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -104,12 +111,13 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
             <option>Electrical</option>
             <option>Plumbing</option>
             <option>HVAC</option>
-            <option>Carpentry</option>
             <option>General Construction</option>
+            <option>Carpentry</option>
+            <option>Roofing</option>
             <option>Tiling</option>
             <option>Painting</option>
             <option>Landscaping</option>
-            <option>Handyman</option>
+            <option>Other</option>
           </select>
         </label>
 
@@ -143,41 +151,24 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
     </div>
   </form>
 
-  {#if output}
-  <div class="card bg-base-100 border border-base-300">
-    <div class="card-body">
-      <h2 class="card-title text-base">Generated Proposal</h2>
-      <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+  {#if output && output.trim().length}
+    <!-- Rich preview first (desktop). Fallback to plain text on small screens -->
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+        <h2 class="card-title text-base">Generated Proposal</h2>
+
+        <!-- Rich formatting on md+ screens -->
+        <div class="hidden md:block">
+          <RichAnswer text={output} />
+          <div class="mt-3 flex gap-2">
+            <button type="button" class="btn btn-outline btn-sm" on:click={copyOut}>Copy</button>
+            <button type="button" class="btn btn-outline btn-sm" on:click={downloadOut}>Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Plain text fallback on small screens -->
+        <pre class="md:hidden whitespace-pre-wrap text-sm">{output}</pre>
+      </div>
     </div>
-  </div>
   {/if}
 </section>
-
-<!-- Rich preview (non-breaking): keep old output above until verified -->
-{#if (
-  typeof answer !== "undefined" && String(answer || "").trim() ||
-  typeof output !== "undefined" && String(output || "").trim() ||
-  typeof result !== "undefined" && String(result || "").trim()
-)}
-  <div class="card bg-base-100 border mt-4">
-    <div class="card-body">
-      <h3 class="card-title text-base">Formatted answer (preview)</h3>
-      <RichAnswer content={(answer ?? output ?? result ?? "")} />
-    </div>
-  </div>
-{/if}
-
-
-<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
-{#if typeof answer === "string" && answer.trim().length}
-  <div class="mt-6">
-    <RichAnswer text={answer} />
-    <div class="mt-2 flex gap-2">
-      <button type="button"
-              class="btn btn-outline btn-sm"
-              on:click={() => navigator.clipboard.writeText(answer)}>
-        Copy answer
-      </button>
-    </div>
-  </div>
-{/if}
