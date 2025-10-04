@@ -1,4 +1,4 @@
-<!-- /account/caption/material-cost (v1.2 rich preview + multi-currency + safe) -->
+<!-- /account/caption/material-cost (v1.3 — clean RichAnswer only, no extra headings, strips currency line) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -62,8 +62,29 @@
     }
   }
 
-  // Rich preview source (exactly what we generated)
-  $: __rich = (summary || "").trim();
+  // --- Clean the generated text: remove "Quote Summary" headings & "Currency: XXX" lines
+  function sanitizeRich(t: string): string {
+    if (!t) return "";
+    let out = t;
+
+    // Remove markdown heading variants for "Quote Summary" (e.g., "# Quote Summary", "## Quote Summary")
+    out = out.replace(/^\s*#{1,6}\s*quote\s+summary\s*$/gim, "");
+
+    // Remove plain line "Quote Summary" (any case)
+    out = out.replace(/^\s*quote\s+summary\s*$/gim, "");
+
+    // Remove standalone "Currency: XXX" line
+    out = out.replace(/^\s*currency:\s*[A-Z]{3}\s*$/gim, "");
+
+    // Trim excessive blank lines created by removals (collapse 3+ to 2, then 2+ to 1 where useful)
+    out = out.replace(/\n{3,}/g, "\n\n").trim();
+
+    return out;
+  }
+
+  // Rich preview source (exactly what we generated, then sanitized)
+  $: __richRaw = (summary || "").trim();
+  $: __rich = sanitizeRich(__richRaw);
 </script>
 
 <svelte:head><title>Material & Cost Calculator</title></svelte:head>
@@ -189,7 +210,7 @@
     </div>
   </div>
 
-  <!-- Costing Summary (RichAnswer + copy) -->
+  <!-- Costing Summary -->
   <div class="card bg-base-100 border">
     <div class="card-body">
       <div class="flex items-center justify-between">
@@ -199,28 +220,20 @@
         </button>
       </div>
 
-      {#if summary}
-        <!-- Plain text fallback (kept) -->
-        <div class="prose max-w-none mt-3 whitespace-pre-wrap">{summary}</div>
-
-        <!-- Rich preview (primary) -->
-        {#if __rich.length}
-          <div class="card bg-base-100 border mt-4">
-            <div class="card-body">
-              <h3 class="card-title text-base">Formatted preview</h3>
-              <RichAnswer text={__rich} />
-              <div class="mt-2">
-                <button
-                  type="button"
-                  class="btn btn-outline btn-sm"
-                  on:click={() => navigator.clipboard.writeText(__rich)}
-                >
-                  Copy answer
-                </button>
-              </div>
-            </div>
+      {#if __rich.length}
+        <!-- Rich preview only (no extra headings, no markdown fallback) -->
+        <div class="mt-3">
+          <RichAnswer text={__rich} />
+          <div class="mt-2">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              on:click={() => navigator.clipboard.writeText(__rich)}
+            >
+              Copy answer
+            </button>
           </div>
-        {/if}
+        </div>
       {/if}
     </div>
   </div>
