@@ -333,8 +333,7 @@ Return ONLY strict JSON:
 
     <div class="alert alert-info">
       <span
-        >Draft only — review names, details and tone before posting. We keep it
-        platform-aware and Aussie-friendly.</span
+        >Draft only - review names, details and tone before posting.</span
       >
     </div>
   </form>
