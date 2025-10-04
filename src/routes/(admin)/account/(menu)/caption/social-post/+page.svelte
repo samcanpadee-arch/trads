@@ -1,11 +1,17 @@
-<!-- /account/caption/social-post (v1.0) -->
+<!-- /account/caption/social-post (v1.1 rich preview) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
-// Minimal inputs
+
+  // Minimal inputs
   let brief = ""; // required
   let category = "Project completion / Before–after"; // required
   let platforms: string[] = ["Instagram"]; // multi
-  type Tone = "Casual" | "Warm" | "Professional-lite" | "Upbeat" | "Aussie friendly";
+  type Tone =
+    | "Casual"
+    | "Warm"
+    | "Professional-lite"
+    | "Upbeat"
+    | "Aussie friendly";
   let tone: Tone = "Aussie friendly";
 
   // Options
@@ -31,12 +37,13 @@
     if (checked) {
       if (!platforms.includes(p)) platforms = [...platforms, p];
     } else {
-      platforms = platforms.filter(x => x !== p);
+      platforms = platforms.filter((x) => x !== p);
     }
   }
 
   function useExample() {
-    brief = "Wrapped a full bathroom reno in Preston — waterproofing, tiling, and a walk-in shower with matte black fittings. Include a tip about grout care and an invite to book pre-Christmas spots.";
+    brief =
+      "Wrapped a full bathroom reno in Preston — waterproofing, tiling, and a walk-in shower with matte black fittings. Include a tip about grout care and an invite to book pre-Christmas spots.";
     category = "Project completion / Before–after";
     platforms = ["Instagram", "Google Business Profile"];
     tone = "Aussie friendly";
@@ -53,11 +60,12 @@
     e.preventDefault();
     loading = true;
     outputText = "";
-    caption = ""; variants = { short: "", standard: "", promo: "" };
-    hashtags = []; mediaIdeas = [];
+    caption = "";
+    variants = { short: "", standard: "", promo: "" };
+    hashtags = [];
+    mediaIdeas = [];
 
-    const SYSTEM =
-`Independent Social Media Post Generator AI for Australian tradies.
+    const SYSTEM = `Independent Social Media Post Generator AI for Australian tradies.
 - Write in Australian English with a balanced casual-professional tone (personable, not salesy).
 - Identify the category from user selection and match style.
 - Integrate ONLY provided context (no invented specifics).
@@ -66,44 +74,43 @@
 - Always end with a friendly, non-pushy CTA.
 Return ONLY strict JSON:
 {
-  "caption": string,
-  "variants": { "short": string, "standard": string, "promo": string },
-  "hashtags": string[],
-  "mediaIdeas": string[]
+"caption": string,
+"variants": { "short": string, "standard": string, "promo": string },
+"hashtags": string[],
+"mediaIdeas": string[]
 }`;
 
-    const user =
-{
-  category,
-  brief,
-  platforms,
-  tone,
-  options: {
-    keepUnderPlatformLimits,
-    includeEmojis,
-    includeHashtags,
-    prettyLineBreaks
-  },
-  brand: {
-    businessName,
-    serviceArea,
-    contact
-  }
-};
+    const user = {
+      category,
+      brief,
+      platforms,
+      tone,
+      options: {
+        keepUnderPlatformLimits,
+        includeEmojis,
+        includeHashtags,
+        prettyLineBreaks,
+      },
+      brand: {
+        businessName,
+        serviceArea,
+        contact,
+      },
+    };
 
-    let body = {
+    const body = {
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM },
-        { role: "user", content: JSON.stringify(user) }
-      ]
+        { role: "user", content: JSON.stringify(user) },
+      ],
     };
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       let text = "";
@@ -125,10 +132,12 @@ Return ONLY strict JSON:
         variants = {
           short: String(j?.variants?.short || ""),
           standard: String(j?.variants?.standard || ""),
-          promo: String(j?.variants?.promo || "")
+          promo: String(j?.variants?.promo || ""),
         };
         hashtags = Array.isArray(j.hashtags) ? j.hashtags.map(String) : [];
-        mediaIdeas = Array.isArray(j.mediaIdeas) ? j.mediaIdeas.map(String) : [];
+        mediaIdeas = Array.isArray(j.mediaIdeas)
+          ? j.mediaIdeas.map(String)
+          : [];
       } catch {
         // leave caption empty to show fallback section with raw text
       }
@@ -139,14 +148,50 @@ Return ONLY strict JSON:
     }
   }
 
-  function copy(text: string) { if (text) try { navigator.clipboard.writeText(text); } catch {} }
+  function copy(text: string) {
+    if (text)
+      try {
+        navigator.clipboard.writeText(text);
+      } catch {}
+  }
   function download(name: string, text: string) {
     const blob = new Blob([text || ""], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = name; a.click();
+    a.href = url;
+    a.download = name;
+    a.click();
     URL.revokeObjectURL(url);
   }
+
+  // ---------- Rich preview content (derived from parsed fields) ----------
+  function asList(items: string[]): string {
+    return items.map((s) => `- ${s}`).join("\n");
+  }
+  $: __rich = (() => {
+    // If we successfully parsed JSON, format nicely:
+    if (caption.trim().length) {
+      let md = `## Main caption\n\n${caption}\n`;
+      if (variants.short || variants.standard || variants.promo) {
+        md += `\n---\n\n### Variants\n`;
+        if (variants.short) md += `\n**Short**\n\n${variants.short}\n`;
+        if (variants.standard)
+          md += `\n**Standard**\n\n${variants.standard}\n`;
+        if (variants.promo) md += `\n**Promo**\n\n${variants.promo}\n`;
+      }
+      if (includeHashtags && hashtags.length) {
+        md += `\n---\n\n### Hashtags\n\n${hashtags
+          .map((h) => `\`${h}\``)
+          .join(" ")}`;
+      }
+      if (mediaIdeas.length) {
+        md += `\n\n### Media ideas\n\n${asList(mediaIdeas)}\n`;
+      }
+      return md;
+    }
+    // Otherwise fall back to raw streamed text (often JSON or partial text)
+    return outputText || "";
+  })();
 </script>
 
 <svelte:head><title>Social Media Post Generator</title></svelte:head>
@@ -155,23 +200,37 @@ Return ONLY strict JSON:
   <header class="flex items-start justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Social Media Post Generator</h1>
-      <p class="text-sm opacity-70">Generate a ready-to-post caption from a short brief. Category-aware, platform-savvy, Aussie-friendly tone — ends with a soft CTA.</p>
+      <p class="text-sm opacity-70">
+        Generate a ready-to-post caption from a short brief. Category-aware,
+        platform-savvy, Aussie-friendly tone — ends with a soft CTA.
+      </p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
 
-  <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={generate}>
+  <form
+    class="card bg-base-100 border border-base-300 p-4 space-y-4"
+    on:submit={generate}
+  >
     <!-- Brief -->
     <label class="form-control">
       <span class="label-text">Quick brief (1–3 sentences)</span>
-      <textarea class="textarea textarea-bordered h-28" bind:value={brief} placeholder="What’s the post about? e.g., Finished a kitchen reno in Coburg; before/after; promo for winter heater servicing; safety tip about RCDs…"></textarea>
+      <textarea
+        class="textarea textarea-bordered h-28"
+        bind:value={brief}
+        placeholder="What’s the post about? e.g., Finished a kitchen reno in Coburg; before/after; promo for winter heater servicing; safety tip about RCDs…"
+      ></textarea>
     </label>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Category -->
       <label class="form-control">
         <span class="label-text">Category</span>
-        <select class="select select-bordered" bind:value={category} aria-label="Category">
+        <select
+          class="select select-bordered"
+          bind:value={category}
+          aria-label="Category"
+        >
           <option>Project completion / Before–after</option>
           <option>Maintenance tip / Safety advice</option>
           <option>Promo / Offer / Seasonal</option>
@@ -184,7 +243,11 @@ Return ONLY strict JSON:
       <!-- Tone -->
       <label class="form-control">
         <span class="label-text">Tone</span>
-        <select class="select select-bordered" bind:value={tone} aria-label="Tone">
+        <select
+          class="select select-bordered"
+          bind:value={tone}
+          aria-label="Tone"
+        >
           <option>Casual</option>
           <option>Warm</option>
           <option>Professional-lite</option>
@@ -197,15 +260,27 @@ Return ONLY strict JSON:
       <div class="grid grid-cols-1 gap-3">
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
-          <input class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightBuild" />
+          <input
+            class="input input-bordered"
+            bind:value={businessName}
+            placeholder="e.g. BrightBuild"
+          />
         </label>
         <label class="form-control">
           <span class="label-text">Service area (optional)</span>
-          <input class="input input-bordered" bind:value={serviceArea} placeholder="e.g. Sydney Inner West" />
+          <input
+            class="input input-bordered"
+            bind:value={serviceArea}
+            placeholder="e.g. Sydney Inner West"
+          />
         </label>
         <label class="form-control">
           <span class="label-text">Phone/URL (optional)</span>
-          <input class="input input-bordered" bind:value={contact} placeholder="e.g. (02) 1234 5678 or brightbuild.au/book" />
+          <input
+            class="input input-bordered"
+            bind:value={contact}
+            placeholder="e.g. (02) 1234 5678 or brightbuild.au/book"
+          />
         </label>
       </div>
     </div>
@@ -215,14 +290,17 @@ Return ONLY strict JSON:
       <div class="card-body gap-3">
         <h2 class="card-title text-base">Platforms</h2>
         <div class="flex flex-wrap gap-3">
-          {#each ["Instagram","Facebook","LinkedIn","Google Business Profile","TikTok"] as p}
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox"
-                   class="checkbox"
-                   checked={platforms.includes(p)}
-                   on:change={(e:any)=>togglePlatform(p, e.currentTarget.checked)} />
-            <span class="label-text">{p}</span>
-          </label>
+          {#each ["Instagram", "Facebook", "LinkedIn", "Google Business Profile", "TikTok"] as p}
+            <label class="label cursor-pointer gap-2">
+              <input
+                type="checkbox"
+                class="checkbox"
+                checked={platforms.includes(p)}
+                on:change={(e: any) =>
+                  togglePlatform(p, e.currentTarget.checked)}
+              />
+              <span class="label-text">{p}</span>
+            </label>
           {/each}
         </div>
       </div>
@@ -231,7 +309,11 @@ Return ONLY strict JSON:
     <!-- Options -->
     <div class="flex flex-wrap items-center gap-4">
       <label class="label cursor-pointer gap-2">
-        <input type="checkbox" class="checkbox" bind:checked={keepUnderPlatformLimits} />
+        <input
+          type="checkbox"
+          class="checkbox"
+          bind:checked={keepUnderPlatformLimits}
+        />
         <span class="label-text">Keep under platform limits</span>
       </label>
       <label class="label cursor-pointer gap-2">
@@ -239,109 +321,124 @@ Return ONLY strict JSON:
         <span class="label-text">Include up to 2 emojis</span>
       </label>
       <label class="label cursor-pointer gap-2">
-        <input type="checkbox" class="checkbox" bind:checked={includeHashtags} />
+        <input
+          type="checkbox"
+          class="checkbox"
+          bind:checked={includeHashtags}
+        />
         <span class="label-text">Include hashtags</span>
       </label>
       <label class="label cursor-pointer gap-2">
-        <input type="checkbox" class="checkbox" bind:checked={prettyLineBreaks} />
+        <input
+          type="checkbox"
+          class="checkbox"
+          bind:checked={prettyLineBreaks}
+        />
         <span class="label-text">Readable line breaks</span>
       </label>
     </div>
 
     <!-- Actions -->
     <div class="flex flex-wrap items-center gap-2">
-      <button class="btn btn-primary" type="submit" disabled={loading || !brief.trim()}>
+      <button
+        class="btn btn-primary"
+        type="submit"
+        disabled={loading || !brief.trim()}
+      >
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Post</span>
       </button>
-      <button type="button" class="btn" on:click={useExample}>Use example</button>
-      <button type="button" class="btn btn-ghost" on:click={()=>copy(caption || outputText)} disabled={!caption && !outputText}>Copy</button>
-      <button type="button" class="btn btn-outline" on:click={()=>download('social-post.txt', caption || outputText)} disabled={!caption && !outputText}>Download .txt</button>
+      <button type="button" class="btn" on:click={useExample}
+        >Use example</button
+      >
+      <button
+        type="button"
+        class="btn btn-ghost"
+        on:click={() => copy(caption || outputText)}
+        disabled={!caption && !outputText}>Copy</button
+      >
+      <button
+        type="button"
+        class="btn btn-outline"
+        on:click={() => download("social-post.txt", caption || outputText)}
+        disabled={!caption && !outputText}>Download .txt</button
+      >
     </div>
 
     <div class="alert alert-info">
-      <span>Draft only — review names, details and tone before posting. We keep it platform-aware and Aussie-friendly.</span>
+      <span
+        >Draft only — review names, details and tone before posting. We keep it
+        platform-aware and Aussie-friendly.</span
+      >
     </div>
   </form>
 
-  <!-- Output -->
+  <!-- Plain text fallback (keep it for safety) -->
   {#if caption || outputText}
-  <div class="card bg-base-100 border border-base-300">
-    <div class="card-body gap-3">
-      <h2 class="card-title text-base">Main Caption</h2>
-      <pre class="whitespace-pre-wrap text-sm">{caption || outputText}</pre>
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body gap-3">
+        <h2 class="card-title text-base">Main Caption</h2>
+        <pre class="whitespace-pre-wrap text-sm">{caption || outputText}</pre>
 
-      {#if caption}
-      <details class="collapse collapse-arrow border border-base-300 rounded-box">
-        <summary class="collapse-title text-sm font-medium">Variants & Extras</summary>
-        <div class="collapse-content space-y-3">
-          {#if variants.short}
-            <div>
-              <h3 class="font-semibold text-sm">Short</h3>
-              <pre class="whitespace-pre-wrap text-sm">{variants.short}</pre>
+        {#if caption}
+          <details
+            class="collapse collapse-arrow border border-base-300 rounded-box"
+          >
+            <summary class="collapse-title text-sm font-medium"
+              >Variants & Extras</summary
+            >
+            <div class="collapse-content space-y-3">
+              {#if variants.short}
+                <div>
+                  <h3 class="font-semibold text-sm">Short</h3>
+                  <pre
+                    class="whitespace-pre-wrap text-sm">{variants.short}</pre>
+                </div>
+              {/if}
+              {#if variants.standard}
+                <div>
+                  <h3 class="font-semibold text-sm">Standard</h3>
+                  <pre
+                    class="whitespace-pre-wrap text-sm">{variants.standard}</pre>
+                </div>
+              {/if}
+              {#if variants.promo}
+                <div>
+                  <h3 class="font-semibold text-sm">Promo</h3>
+                  <pre
+                    class="whitespace-pre-wrap text-sm">{variants.promo}</pre>
+                </div>
+              {/if}
+              {#if includeHashtags && hashtags.length}
+                <div>
+                  <h3 class="font-semibold text-sm">Hashtags</h3>
+                  <div class="flex flex-wrap gap-2">
+                    {#each hashtags as h}<span class="badge">{h}</span>{/each}
+                  </div>
+                </div>
+              {/if}
+              {#if mediaIdeas.length}
+                <div>
+                  <h3 class="font-semibold text-sm">Media ideas</h3>
+                  <ul class="list-disc pl-5 text-sm">
+                    {#each mediaIdeas as m}<li>{m}</li>{/each}
+                  </ul>
+                </div>
+              {/if}
             </div>
-          {/if}
-          {#if variants.standard}
-            <div>
-              <h3 class="font-semibold text-sm">Standard</h3>
-              <pre class="whitespace-pre-wrap text-sm">{variants.standard}</pre>
-            </div>
-          {/if}
-          {#if variants.promo}
-            <div>
-              <h3 class="font-semibold text-sm">Promo</h3>
-              <pre class="whitespace-pre-wrap text-sm">{variants.promo}</pre>
-            </div>
-          {/if}
-          {#if includeHashtags && hashtags.length}
-            <div>
-              <h3 class="font-semibold text-sm">Hashtags</h3>
-              <div class="flex flex-wrap gap-2">
-                {#each hashtags as h}<span class="badge">{h}</span>{/each}
-              </div>
-            </div>
-          {/if}
-          {#if mediaIdeas.length}
-            <div>
-              <h3 class="font-semibold text-sm">Media ideas</h3>
-              <ul class="list-disc pl-5 text-sm">
-                {#each mediaIdeas as m}<li>{m}</li>{/each}
-              </ul>
-            </div>
-          {/if}
-        </div>
-      </details>
-      {/if}
+          </details>
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
+
+  <!-- Rich preview (driven by parsed fields, or raw fallback) -->
+  {#if __rich.trim().length}
+    <div class="card bg-base-100 border mt-4">
+      <div class="card-body">
+        <h3 class="card-title text-base">Formatted preview</h3>
+        <RichAnswer text={__rich} />
+      </div>
+    </div>
   {/if}
 </section>
-
-<!-- Rich preview (non-breaking): keep old output above until verified -->
-{#if (
-  typeof answer !== "undefined" && String(answer || "").trim() ||
-  typeof output !== "undefined" && String(output || "").trim() ||
-  typeof result !== "undefined" && String(result || "").trim()
-)}
-  <div class="card bg-base-100 border mt-4">
-    <div class="card-body">
-      <h3 class="card-title text-base">Formatted answer (preview)</h3>
-      <RichAnswer content={(answer ?? output ?? result ?? "")} />
-    </div>
-  </div>
-{/if}
-
-
-<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
-{#if typeof answer === "string" && answer.trim().length}
-  <div class="mt-6">
-    <RichAnswer text={answer} />
-    <div class="mt-2 flex gap-2">
-      <button type="button"
-              class="btn btn-outline btn-sm"
-              on:click={() => navigator.clipboard.writeText(answer)}>
-        Copy answer
-      </button>
-    </div>
-  </div>
-{/if}
