@@ -1,4 +1,4 @@
-<!-- /account/caption/job-estimation (v3.0) -->
+<!-- /account/caption/job-estimation (v3.2 — detailed sections, robust import, editable discounts) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -28,15 +28,15 @@
   let gstRate = 0.10;
   let validityDays = 30;
 
-  // Materials (paste → import)
+  // Materials (paste → import); client-facing columns + editable % discount
   type MaterialRow = {
     item: string;
-    unitCost: number;
-    qty: number;
-    costBefore: number;
-    discountAmt: number;
-    discountPct: number; // parsed but not shown
-    subtotal: number;    // post-discount
+    unitCost: number;   // editable
+    qty: number;        // editable
+    discountPct: number; // editable
+    costBefore: number; // derived
+    discountAmt: number; // derived
+    subtotal: number;    // derived
   };
   let materialsText = "";
   let materials: MaterialRow[] = [];
@@ -80,15 +80,14 @@
   function deriveTitle(brief: string) {
     const clean = (brief || "").replace(/\s+/g, " ").trim();
     if (!clean) return "Job Estimate";
-    // take first sentence or up to ~16 words; avoid broken parentheses
     const firstSentence = clean.split(/(?<=[.!?])\s+/)[0] || clean;
     const words = firstSentence.split(" ");
-    let out = words.slice(0, 16).join(" ");
-    // if open paren not closed, extend until closed or 24 words
+    let out = words.slice(0, 20).join(" ");
+    // ensure any open paren gets closed or extend up to 28 words
     let opens = (out.match(/\(/g) || []).length;
     let closes = (out.match(/\)/g) || []).length;
-    let i = 16;
-    while (opens > closes && i < Math.min(words.length, 24)) {
+    let i = 20;
+    while (opens > closes && i < Math.min(words.length, 28)) {
       out += " " + words[i++];
       opens = (out.match(/\(/g) || []).length;
       closes = (out.match(/\)/g) || []).length;
@@ -96,8 +95,28 @@
     return out.replace(/[.!?]+$/, "");
   }
 
+  // Keep derived columns synced when user edits unitCost/qty/discountPct
+  function recomputeMaterial(m: MaterialRow) {
+    const before = (toNumber(m.unitCost) || 0) * (toNumber(m.qty) || 0);
+    const discAmt = before * (toNumber(m.discountPct) / 100);
+    m.costBefore = before;
+    m.discountAmt = discAmt;
+    m.subtotal = before - discAmt;
+  }
+  $: materials = materials.map((m) => {
+    // ensure derived fields stay in sync
+    const before = (toNumber(m.unitCost) || 0) * (toNumber(m.qty) || 0);
+    const discAmt = before * (toNumber(m.discountPct) / 100);
+    return {
+      ...m,
+      costBefore: before,
+      discountAmt: discAmt,
+      subtotal: before - discAmt
+    };
+  });
+
   // ---------- Import from “Costing Summary” table ----------
-  // Expected header:
+  // Expected header (order-insensitive mapping by names):
   // | Item | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
   function importFromCostingSummary() {
     materials = [];
@@ -105,72 +124,109 @@
 
     const text = (materialsText || "").trim();
     if (!text) {
-      parseFeedback = "Nothing to import — paste the Costing Summary block first.";
+      parseFeedback = "Nothing to import — paste the Costing Summary table first.";
       return;
     }
 
-    const lines = text.split(/\r?\n/);
-    const headerIdx = lines.findIndex((l) =>
-      /\|\s*Item\s*\|\s*Unit\s*Cost\s*\|\s*Quantity\s*\|\s*Cost\s*Before\s*Discount\s*\|\s*Discount\s*%?\s*\|\s*Discount\s*Amount\s*\|\s*Subtotal\s*\|/i.test(
-        l
-      )
-    );
+    // Quick robust normalisation
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.replace(/\u00A0/g, " ").trim()); // strip non-breaking spaces
+
+    // find header row (contains pipes and required labels in some order)
+    const headerIdx = lines.findIndex((l) => /\|/.test(l) && /item/i.test(l) && /unit\s*cost/i.test(l) && /quantity/i.test(l) && /(before\s*discount|cost\s*before)/i.test(l) && /discount\s*%/i.test(l) && /discount\s*amount/i.test(l) && /subtotal/i.test(l));
     if (headerIdx === -1) {
       parseFeedback =
-        "Couldn’t find a Costing Summary table. Paste from the Material & Cost Calculator.";
+        "Couldn’t find a Costing Summary pipe-table. In the Material & Cost Calculator, copy the table **with | separators** and paste here.";
       return;
     }
 
-    // Find the separator row after header (---|---)
-    const sepIdx =
-      lines
-        .slice(headerIdx + 1)
-        .findIndex((l) => /^\s*\|\s*-+\s*\|/.test(l)) + headerIdx + 1;
-    if (sepIdx <= headerIdx) {
+    // parse header cells & build column index map
+    const headerCells = lines[headerIdx]
+      .split("|")
+      .map((c) => c.trim().replace(/^\*\*|\*\*$/g, ""))
+      .filter(Boolean);
+
+    const idx = (name: RegExp) =>
+      headerCells.findIndex((c) => name.test(c));
+
+    const col = {
+      item: idx(/^item$/i),
+      unitCost: idx(/unit\s*cost/i),
+      qty: idx(/^qty|quantity$/i),
+      before: idx(/(before\s*discount|cost\s*before)/i),
+      discPct: idx(/discount\s*%/i),
+      discAmt: idx(/discount\s*amount/i),
+      subtotal: idx(/^subtotal$/i)
+    };
+
+    // sanity check
+    if (Object.values(col).some((v) => v === -1)) {
+      parseFeedback = "Costing Summary header is missing required columns.";
+      return;
+    }
+
+    // find separator row like |---|---|
+    let sepIdx = -1;
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+      if (/^\s*\|\s*-+\s*\|/.test(lines[i])) {
+        sepIdx = i;
+        break;
+      }
+    }
+    if (sepIdx === -1) {
       parseFeedback = "Table looks malformed (no separator row).";
       return;
     }
 
-    // Iterate data rows until we hit a blank line or a non-table line
+    // iterate body rows until a non-pipe line
     let ok = 0;
     for (let i = sepIdx + 1; i < lines.length; i++) {
       const raw = lines[i];
-      if (!/^\s*\|/.test(raw)) break; // end of table
-
-      // split | columns
-      const cols = raw
+      if (!/^\|/.test(raw)) break;
+      const cells = raw
         .split("|")
-        .map((c) => c.trim())
-        .filter((c, idx) => !(idx === 0 || idx === raw.split("|").length - 1)); // drop leading/trailing empties
+        .map((c) => c.trim().replace(/^\*\*|\*\*$/g, ""))
+        .filter((_, j, arr) => !(j === 0 || j === arr.length - 1)); // drop outer empties
 
-      if (cols.length < 7) continue; // skip malformed rows
+      // minimum columns check
+      if (cells.length < headerCells.length) continue;
 
-      let [item, unitCost, qty, costBefore, discountPct, discountAmt, subtotal] =
-        cols;
+      const grab = (pos: number) => (pos >= 0 && pos < cells.length ? cells[pos] : "");
 
-      // Drop bold markers and commas/dollar/% signs
-      const stripMd = (s: string) => s.replace(/^\*\*|\*\*$/g, "").trim();
+      const itemStr = grab(col.item);
+      // Skip total rows
+      if (!itemStr || /^total/i.test(itemStr)) continue;
 
-      const row: MaterialRow = {
-        item: stripMd(item),
-        unitCost: toNumber(unitCost),
-        qty: toNumber(qty, 1),
-        costBefore: toNumber(costBefore),
-        discountPct: toNumber(discountPct),
-        discountAmt: toNumber(discountAmt),
-        subtotal: toNumber(stripMd(subtotal))
-      };
+      const unitCost = toNumber(grab(col.unitCost));
+      const qty = toNumber(grab(col.qty), 1);
+      const before = toNumber(grab(col.before));
+      const discPct = toNumber(grab(col.discPct));
+      const discAmt = toNumber(grab(col.discAmt));
+      const subtotal = toNumber(grab(col.subtotal));
 
-      // Skip totals or empty item rows
-      if (!row.item || /^total/i.test(row.item)) continue;
+      // Prefer deriving from editable inputs (unitCost, qty, discPct) when available
+      const derivedBefore = unitCost * qty;
+      const pct = Number.isFinite(discPct) ? discPct : (derivedBefore ? (discAmt / derivedBefore) * 100 : 0);
+      const derivedDiscAmt = derivedBefore * (pct / 100);
+      const derivedSubtotal = derivedBefore - derivedDiscAmt;
 
-      materials.push(row);
+      materials.push({
+        item: itemStr,
+        unitCost,
+        qty,
+        discountPct: isFinite(pct) ? Math.max(0, pct) : 0,
+        costBefore: derivedBefore || before,
+        discountAmt: isFinite(derivedDiscAmt) ? derivedDiscAmt : discAmt,
+        subtotal: isFinite(derivedSubtotal) ? derivedSubtotal : subtotal
+      });
       ok++;
     }
 
-    parseFeedback = ok
-      ? `Imported ${ok} item${ok === 1 ? "" : "s"} from Costing Summary.`
-      : "Found the table but no line items (totals/blank rows were skipped).";
+    parseFeedback =
+      ok > 0
+        ? `Imported ${ok} item${ok === 1 ? "" : "s"} from Costing Summary.`
+        : "Found a table but no line items (totals/blank rows were skipped).";
   }
 
   function resetAll() {
@@ -211,7 +267,7 @@
   $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
   $: grandTotal = clientSubtotal + gst;
 
-  // ---------- AI sections (JSON-only, robust) ----------
+  // ---------- AI sections (JSON-only, *detailed*) ----------
   async function aiSections(): Promise<{
     overview: string;
     scope: string[];
@@ -223,15 +279,16 @@
     labourSuggest: LabourRow[];
   }> {
     const SYSTEM = `You are an AI assistant for Australian tradies. Reply in Australian English.
-Return ONLY JSON with keys:
-- overview: string (80-120 words; friendly, client-facing; mention specifics from the brief)
-- scope: string[] (6-10 bullets, concrete tasks tailored to the trade & brief)
-- assumptions: string[]
-- exclusions: string[]
-- risks: string[]
-- timeline: string[] (3-6 milestones)
-- options: string[] (3-5 value-adding items NOT included; e.g. extended warranty, preventative maintenance, minor upgrades)
-- labourSuggest: {role,hours,rate}[] (only if clearly useful; else [])`;
+Return ONLY JSON with keys and *detailed* content:
+- overview: string (≈150–220 words; friendly, client-facing; mention specifics from the brief; explain approach, quality and compliance)
+- scope: string[] (8–12 bullets; each a full, concrete sentence tailored to the trade & brief; describe what will be done and why it matters)
+- assumptions: string[] (6–10 realistic assumptions)
+- exclusions: string[] (4–8 clear boundaries)
+- risks: string[] (4–8 items; flag unknowns and site-dependent factors)
+- timeline: string[] (4–6 milestones; each with a short helpful description)
+- options: string[] (3–6 value-adding items NOT included; e.g., preventative maintenance, minor upgrades, extended warranty)
+- labourSuggest: {role,hours,rate}[] (only if useful; else [])
+Keep content practical and specific; avoid generic fluff.`;
 
     const user =
       "Trade: " +
@@ -274,16 +331,20 @@ Return ONLY JSON with keys:
       const j = JSON.parse(text);
       return {
         overview: typeof j.overview === "string" ? j.overview : "",
-        scope: Array.isArray(j.scope) ? j.scope.slice(0, 10).map(String) : [],
+        scope: Array.isArray(j.scope) ? j.scope.slice(0, 12).map(String) : [],
         assumptions: Array.isArray(j.assumptions)
-          ? j.assumptions.map(String)
+          ? j.assumptions.slice(0, 10).map(String)
           : [],
         exclusions: Array.isArray(j.exclusions)
-          ? j.exclusions.map(String)
+          ? j.exclusions.slice(0, 8).map(String)
           : [],
-        risks: Array.isArray(j.risks) ? j.risks.map(String) : [],
-        timeline: Array.isArray(j.timeline) ? j.timeline.map(String) : [],
-        options: Array.isArray(j.options) ? j.options.map(String) : [],
+        risks: Array.isArray(j.risks) ? j.risks.slice(0, 8).map(String) : [],
+        timeline: Array.isArray(j.timeline)
+          ? j.timeline.slice(0, 6).map(String)
+          : [],
+        options: Array.isArray(j.options)
+          ? j.options.slice(0, 6).map(String)
+          : [],
         labourSuggest: Array.isArray(j.labourSuggest)
           ? j.labourSuggest.map((r: any) => ({
               role: String(r.role || ""),
@@ -317,7 +378,7 @@ Return ONLY JSON with keys:
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
-    // Build Markdown for RichAnswer
+    // Build Markdown for RichAnswer (detailed)
     let md = "";
     md += `# Job Estimate (Quote)\n\n`;
     md += `**Quote Ref:** ${quoteRef}  \n`;
@@ -326,28 +387,92 @@ Return ONLY JSON with keys:
     md += `**Project:** ${title}  \n`;
     md += `**Estimate Valid For:** ${validityDays} days\n\n`;
 
-    // Overview
+    // Overview (detailed)
     md += `## Overview\n\n`;
     if (ai.overview) {
       md += ai.overview.trim() + `\n\n`;
     } else {
-      md += `We propose to complete the requested works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate outlines the scope, indicative timeline and pricing, subject to final site verification.\n\n`;
+      md += `We propose to complete the requested works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate outlines a detailed scope, indicative timeline and pricing, subject to final site verification.\n\n`;
     }
 
-    // Scope
+    // Scope (8–12 full sentences)
     const baseTasks: Record<Trade, string[]> = {
-      General: ["Site prep & safety", "Core works per brief", "Cleanup & handover"],
-      HVAC: ["Indoor/outdoor unit placement", "Refrigerant, condensate & electrical", "Commissioning & handover"],
-      Electrical: ["Rough-in", "Fit-off & testing", "Compliance documentation"],
-      Plumbing: ["Rough-in", "Fit-off & testing", "Compliance documentation"],
-      Carpentry: ["Set-out & framing", "Install & fix-off", "Finishing & tidy"],
-      Tiling: ["Surface prep", "Tiling & grouting", "Sealing & clean"],
-      Construction: ["Set-out & temp works", "Structural & architectural works", "Completion & handover"],
-      Landscaping: ["Site prep & edging", "Planting/hardscape", "Clean & maintenance guidelines"],
-      Painting: ["Prep & masking", "Undercoat & topcoats", "Cut-in & cleanup"],
-      Other: ["Site prep", "Core works per brief", "Cleanup & handover"]
+      General: [
+        "Prepare the work area safely and confirm access details with you before starting.",
+        "Carry out the core works per the brief, coordinating any sequencing with other trades.",
+        "Keep the site tidy and minimise disruption throughout the works.",
+        "Conduct quality checks and confirm the result meets your expectations.",
+        "Provide a concise handover once complete, including basic care instructions."
+      ],
+      HVAC: [
+        "Confirm indoor/outdoor unit placement for efficient airflow, drainage and service access.",
+        "Install refrigeration pipework and condensate management to manufacturer guidelines.",
+        "Coordinate electrical requirements and test power, isolation and controls.",
+        "Pressure test, evacuate and commission the system for performance and safety.",
+        "Provide a handover covering operation, filter care and warranty notes."
+      ],
+      Electrical: [
+        "Plan cable routes and confirm protective devices, RCD coverage and labelling.",
+        "Complete rough-in with correct fixing, clearances and segregation where required.",
+        "Fit-off devices, terminate neatly and label circuits for traceability.",
+        "Test and verify to AS/NZS standards and prepare compliance documentation.",
+        "Provide a clean handover and explain device operation where needed."
+      ],
+      Plumbing: [
+        "Confirm fixture locations and set-outs against the brief and site constraints.",
+        "Complete rough-in with correct pipe selection, support and isolation points.",
+        "Fit-off fixtures, seal correctly and test for leaks and correct operation.",
+        "Comply with relevant standards and complete any required certification.",
+        "Provide a tidy handover and maintenance notes where appropriate."
+      ],
+      Carpentry: [
+        "Set out and prepare framing or fixings to suit the design and site conditions.",
+        "Install components accurately, allowing for tolerances and finishing details.",
+        "Coordinate with other trades to avoid clashes, particularly in wet areas.",
+        "Finish surfaces, alignments and hardware neatly and securely.",
+        "Leave the site clean and ready for following trades or handover."
+      ],
+      Tiling: [
+        "Prepare surfaces to achieve the right fall, adhesion and waterproofing compatibility.",
+        "Lay tiles to pattern with accurate alignment and spacing for clean lines.",
+        "Grout and seal as specified, ensuring a consistent, durable finish.",
+        "Address edges, trims and penetrations neatly with appropriate detailing.",
+        "Clean down and provide care notes for grout and seal maintenance."
+      ],
+      Construction: [
+        "Carry out set-out and any temporary works required for safe progress.",
+        "Complete structural and architectural elements per plans and standards.",
+        "Coordinate inspections and hold points for quality and compliance.",
+        "Finish surfaces and fittings neatly and prepare for handover.",
+        "Manage waste and leave the site secure and tidy."
+      ],
+      Landscaping: [
+        "Prepare the area, levels and edging for the specified planting and hardscape.",
+        "Install hardscape elements with correct falls, bedding and compaction.",
+        "Plant selection and placement per plan, with appropriate soil and irrigation.",
+        "Finish with mulch, edging and tidy boundaries.",
+        "Provide basic care and irrigation guidance on handover."
+      ],
+      Painting: [
+        "Prepare surfaces, repair defects and mask adjoining finishes for clean lines.",
+        "Apply undercoats and topcoats to manufacturer specs and even coverage.",
+        "Cut-in carefully and maintain consistent finish across surfaces.",
+        "Address touch-ups and final checks with you present where practical.",
+        "Leave the site clean and remove masking and waste."
+      ],
+      Other: [
+        "Prepare the work area safely and confirm access before starting.",
+        "Carry out the core works per the brief to an agreed finish.",
+        "Coordinate with other trades to avoid clashes and delays.",
+        "Check quality throughout and rectify issues promptly.",
+        "Provide a short handover and care notes."
+      ]
     };
-    const scopeList = ai.scope && ai.scope.length ? ai.scope : baseTasks[trade];
+    const scopeList =
+      ai.scope && ai.scope.length
+        ? ai.scope
+        : baseTasks[trade];
+
     md += `## Scope / Services\n\n`;
     md += `| # | Task Description |\n|---|------------------|\n`;
     scopeList.forEach((t, i) => {
@@ -355,7 +480,7 @@ Return ONLY JSON with keys:
     });
     md += `\n`;
 
-    // Materials (client view; no unit/markup)
+    // Materials (client view; Item, Unit Cost, Quantity, Before, Discount Amt, Subtotal)
     md += `## Materials\n\n`;
     if (materials.length) {
       md += `| Item | Unit Cost | Quantity | Cost Before Discount | Discount Amount | Subtotal |\n|------|----------:|---------:|---------------------:|---------------:|---------:|\n`;
@@ -397,40 +522,54 @@ Return ONLY JSON with keys:
       md += `\n`;
     }
 
-    // Assumptions & Exclusions
+    // Assumptions & Exclusions (detailed)
     const assumptions =
       ai.assumptions && ai.assumptions.length
         ? ai.assumptions
         : [
             "Standard working hours Mon–Fri; clear access assumed.",
-            "Work to current Australian Standards; licenses as required."
+            "Work to current Australian Standards; licenses as required.",
+            "Quoted items and quantities are based on the brief and may be adjusted at site verification.",
+            "Customer to confirm colours, finishes and final placement before works commence.",
+            "Any hidden conditions may affect scope, timing and price.",
+            "Waste removal limited to trade-related offcuts and packaging unless noted."
           ];
     const exclusions =
       ai.exclusions && ai.exclusions.length
         ? ai.exclusions
-        : ["Structural changes unless specified.", "Asbestos testing/removal."];
+        : [
+            "Structural alterations unless specified.",
+            "Asbestos testing/removal.",
+            "Painting or patching beyond small penetrations caused by our works.",
+            "Council permits or engineering unless listed."
+          ];
 
     md += `## Assumptions & Exclusions\n\n`;
     md += `**Assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
     md += `**Exclusions**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
 
-    // Additional Options (not included) — after Assumptions & Exclusions
+    // Additional Options (not included)
     if (ai.options && ai.options.length) {
       md += `## Additional Options (not included)\n\n`;
       md += ai.options.map((o) => `- ${o}`).join("\n") + `\n\n`;
     }
 
-    // Risks & Notes (optional)
+    // Risks
     if (ai.risks && ai.risks.length) {
       md += `## Risks & Notes (review)\n\n`;
       md += ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
     }
 
-    // Timeline
+    // Timeline (detailed milestones)
     const timeline =
       ai.timeline && ai.timeline.length
         ? ai.timeline
-        : ["Scheduling & prep", "Core works", "Finishing & handover"];
+        : [
+            "Scheduling & prep — confirm selections, access and set-down areas.",
+            "Core works — carry out installation and coordinate any dependencies.",
+            "Testing & tidy — verify performance, safety and finish; clean the site.",
+            "Handover — brief operation/maintenance and confirm you’re happy."
+          ];
     md += `## Timeline (indicative)\n\n`;
     md += timeline.map((t) => `- ${t}`).join("\n") + `\n\n`;
 
@@ -445,16 +584,7 @@ Return ONLY JSON with keys:
     if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
     md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
 
-    // Payment Terms + Thank you / Contact
-    md += `## Payment Terms & Acceptance\n\n`;
-    md += `**Estimate validity:** ${validityDays} days from the date of issue.  \n`;
-    md += `**Payment terms:** Deposit on acceptance; balance as agreed.  \n`;
-    md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n`;
-    md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
-    md += `Signature: __________________ Date: ________________\n\n`;
-
-    md += `## Thank You / Contact\n\n`;
-    md += `Thanks for the opportunity. If you have any questions about this quote, please reach out and we’ll help straight away.\n`;
+    // Remove “Thank You / Contact” per your request.
 
     output = md;
     loading = false;
@@ -480,12 +610,12 @@ Return ONLY JSON with keys:
 
 | Item       | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
 |------------|-----------|----------|----------------------|------------|-----------------|----------|
-| Wiring     | $20       | 2        | $40                  | 0%         | $0              | $40      |
+| Wiring     | $20       | 2        | $40                  | 10%        | $4              | $36      |
 | Cabling    | $10       | 1        | $10                  | 0%         | $0              | $10      |
-| **Total Material Cost** |           |          |                      |            |                 | **$50**  |
+| **Total Material Cost** |           |          |                      |            |                 | **$46**  |
 
-**Profit from Markup (20%)**: $10  
-**Final Total**: $60  
+**Profit from Markup (20%)**: $9.20  
+**Final Total**: $55.20
 
 Thank you for considering our services!`;
 
@@ -521,7 +651,7 @@ Thank you for considering our services!`;
         <textarea
           class="textarea textarea-bordered h-24"
           bind:value={projectBrief}
-          placeholder="Describe the job in your words. We’ll draft the overview, tailored scope, assumptions, risks and timeline."
+          placeholder="Describe the job in your words. We’ll draft a detailed overview, tailored scope, assumptions, risks and timeline."
         ></textarea>
       </label>
     </div>
@@ -534,7 +664,7 @@ Thank you for considering our services!`;
           <textarea
             class="textarea textarea-bordered h-28"
             bind:value={materialsText}
-            placeholder="Paste the Costing Summary block from the Material & Cost Calculator, then click Import now."
+            placeholder="Paste the Costing Summary table from the Material & Cost Calculator (with | columns), then click Import now."
           ></textarea>
           <div class="flex flex-wrap items-center gap-2">
             <button type="button" class="btn btn-sm btn-outline" on:click={importFromCostingSummary}>Import now</button>
@@ -551,17 +681,19 @@ Thank you for considering our services!`;
                     <th>Item</th>
                     <th class="text-right">Unit Cost</th>
                     <th class="text-right">Quantity</th>
-                    <th class="text-right">Cost Before Discount</th>
+                    <th class="text-right">Discount %</th>
+                    <th class="text-right">Cost Before</th>
                     <th class="text-right">Discount Amount</th>
                     <th class="text-right">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {#each materials as m}
+                  {#each materials as m, i}
                     <tr>
                       <td><input class="input input-bordered input-xs w-56" bind:value={m.item}></td>
-                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={m.unitCost}></td>
-                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-24 text-right" bind:value={m.qty}></td>
+                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={m.unitCost} on:input={() => recomputeMaterial(m)}></td>
+                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-24 text-right" bind:value={m.qty} on:input={() => recomputeMaterial(m)}></td>
+                      <td class="text-right"><input type="number" step="0.1" class="input input-bordered input-xs w-24 text-right" bind:value={m.discountPct} on:input={() => recomputeMaterial(m)}></td>
                       <td class="text-right">{fmt(m.costBefore)}</td>
                       <td class="text-right">{fmt(m.discountAmt)}</td>
                       <td class="text-right font-semibold">{fmt(m.subtotal)}</td>
@@ -688,7 +820,7 @@ Thank you for considering our services!`;
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body">
           <p class="text-xs opacity-70">
-            Tip: Copy the <em>Costing Summary</em> block from the
+            Tip: Copy the <em>Costing Summary</em> table from the
             <a href="/account/caption/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
           </p>
         </div>
@@ -700,7 +832,6 @@ Thank you for considering our services!`;
   {#if output.trim().length}
     <div class="card bg-base-100 border mt-2">
       <div class="card-body">
-        <!-- Removed the old “Quote Preview” heading as requested -->
         <RichAnswer text={output} />
       </div>
     </div>
