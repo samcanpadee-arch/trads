@@ -1,16 +1,23 @@
-<!-- /account/caption/review-responder (v1.1) -->
+<!-- /account/caption/review-responder (v1.2 rich preview) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
-// Minimal inputs
+
+  // Minimal inputs
   let businessName = "";
   let customerName = "";
   let platform = "Google";
   let reviewText = "";
 
   // Tone & options
-  type Tone = "Casual" | "Warm" | "Professional-lite" | "Apologetic" | "Upbeat" | "Aussie friendly";
+  type Tone =
+    | "Casual"
+    | "Warm"
+    | "Professional-lite"
+    | "Apologetic"
+    | "Upbeat"
+    | "Aussie friendly";
   let tone: Tone = "Casual";
-  let keepItShort = true;   // keep under ~700 chars if true
+  let keepItShort = true; // keep under ~700 chars if true
   let includeEmojis = false;
 
   let output = "";
@@ -31,15 +38,13 @@
     output = "";
     loading = true;
 
-    const SYSTEM =
-`You are a Customer Review Response Generator for Australian tradies. Write in Australian English with a personable, natural vibe.
+    const SYSTEM = `You are a Customer Review Response Generator for Australian tradies. Write in Australian English with a personable, natural vibe.
 Always:
 - Start with genuine thanks (use the customer's name if provided).
 - Address specifics from the pasted review (paraphrase, don't quote).
 - Match the requested tone: Casual | Warm | Professional-lite | Apologetic | Upbeat | Aussie friendly.
 - Reinforce quality, reliability and customer care without sounding stiff.
 - Invite them to reach out again, casually.
-- If issues are mentioned, acknowledge and say what was/will be done.
 - If keepItShort=true, keep it under ~700 characters.
 Infer context (e.g., trade, location, team actions) from the review itself. Don't invent names not provided.
 Return ONLY the response text (no preface, no quotes).`;
@@ -51,10 +56,11 @@ Return ONLY the response text (no preface, no quotes).`;
       `Tone: ${tone}`,
       `KeepItShort: ${keepItShort ? "Yes" : "No"}`,
       `IncludeEmojis: ${includeEmojis ? "Yes" : "No"}`
-    ].filter(Boolean).join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-    const user =
-`Here is the customer review (triple backticks):
+    const user = `Here is the customer review (triple backticks):
 
 \`\`\`
 ${reviewText.trim()}
@@ -96,14 +102,23 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
     }
   }
 
-  function copyOut() { try { navigator.clipboard.writeText(output || ""); } catch {} }
+  function copyOut() {
+    try {
+      navigator.clipboard.writeText(output || "");
+    } catch {}
+  }
   function downloadOut() {
     const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "review-response.txt"; a.click();
+    a.href = url;
+    a.download = "review-response.txt";
+    a.click();
     URL.revokeObjectURL(url);
   }
+
+  // Rich preview source: use the generated output directly.
+  $: __rich = (output || "").trim();
 </script>
 
 <svelte:head><title>Review Responder</title></svelte:head>
@@ -112,18 +127,29 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
   <header class="flex items-start justify-between">
     <div>
       <h1 class="text-2xl font-semibold">Review Responder</h1>
-      <p class="text-sm opacity-70">Paste a customer review and generate a friendly, on-brand reply with tone control — perfect for Google, Facebook, Instagram, ProductReview, Hipages and more.</p>
+      <p class="text-sm opacity-70">
+        Paste a customer review and generate a friendly, on-brand reply with
+        tone control - perfect for Google, Facebook, Instagram, ProductReview,
+        Hipages and more.
+      </p>
     </div>
     <a href="/account/caption" class="btn btn-ghost">← Back</a>
   </header>
 
-  <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={generate}>
+  <form
+    class="card bg-base-100 border border-base-300 p-4 space-y-4"
+    on:submit={generate}
+  >
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Left: review -->
       <div class="lg:col-span-2 space-y-3">
         <label class="form-control">
           <span class="label-text">Paste the customer review</span>
-          <textarea class="textarea textarea-bordered h-40" bind:value={reviewText} placeholder="Paste the review exactly as written…"></textarea>
+          <textarea
+            class="textarea textarea-bordered h-40"
+            bind:value={reviewText}
+            placeholder="Paste the review exactly as written…"
+          ></textarea>
         </label>
       </div>
 
@@ -131,12 +157,27 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       <div class="space-y-3">
         <label class="form-control">
           <span class="label-text">Business name</span>
-          <input class="input input-bordered" bind:value={businessName} placeholder="e.g. BrightBuild Renovations" />
+          <input
+            class="input input-bordered"
+            bind:value={businessName}
+            placeholder="e.g. BrightBuild Renovations"
+          />
         </label>
         <div class="grid grid-cols-2 gap-3">
-          <label class="form-control"><span class="label-text">Customer (optional)</span><input class="input input-bordered" bind:value={customerName} placeholder="e.g. Jordan" /></label>
-          <label class="form-control"><span class="label-text">Platform</span>
-            <select class="select select-bordered" bind:value={platform} aria-label="Platform">
+          <label class="form-control"
+            ><span class="label-text">Customer (optional)</span
+            ><input
+              class="input input-bordered"
+              bind:value={customerName}
+              placeholder="e.g. Jordan"
+          /></label>
+          <label class="form-control"
+            ><span class="label-text">Platform</span>
+            <select
+              class="select select-bordered"
+              bind:value={platform}
+              aria-label="Platform"
+            >
               <option>Google</option>
               <option>Facebook</option>
               <option>Instagram</option>
@@ -149,7 +190,11 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
         <label class="form-control">
           <span class="label-text">Tone</span>
-          <select class="select select-bordered" bind:value={tone} aria-label="Tone">
+          <select
+            class="select select-bordered"
+            bind:value={tone}
+            aria-label="Tone"
+          >
             <option>Casual</option>
             <option>Warm</option>
             <option>Professional-lite</option>
@@ -176,50 +221,52 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
         <span>Generate Response</span>
       </button>
       <button type="button" class="btn" on:click={useExample}>Use example</button>
-      <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-      <button type="button" class="btn btn-outline" on:click={downloadOut} disabled={!output}>Download .txt</button>
+      <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}
+        >Copy</button
+      >
+      <button
+        type="button"
+        class="btn btn-outline"
+        on:click={downloadOut}
+        disabled={!output}
+        >Download .txt</button
+      >
     </div>
 
     <div class="alert alert-info">
-      <span>Note: This is a generated draft. Please review names, job details and tone before posting publicly.</span>
+      <span
+        >Note: This is a generated draft. Please review names, job details and
+        tone before posting publicly.</span
+      >
     </div>
   </form>
 
+  <!-- Plain text fallback (keep it for safety) -->
   {#if output}
-  <div class="card bg-base-100 border border-base-300">
-    <div class="card-body">
-      <h2 class="card-title text-base">Suggested Response</h2>
-      <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+        <h2 class="card-title text-base">Suggested Response</h2>
+        <pre class="whitespace-pre-wrap text-sm">{output}</pre>
+      </div>
     </div>
-  </div>
+  {/if}
+
+  <!-- Rich preview (single reliable block) -->
+  {#if __rich.length}
+    <div class="card bg-base-100 border mt-4">
+      <div class="card-body">
+        <h3 class="card-title text-base">Formatted preview</h3>
+        <RichAnswer text={__rich} />
+        <div class="mt-2">
+          <button
+            type="button"
+            class="btn btn-outline btn-sm"
+            on:click={() => navigator.clipboard.writeText(__rich)}
+          >
+            Copy answer
+          </button>
+        </div>
+      </div>
+    </div>
   {/if}
 </section>
-
-<!-- Rich preview (non-breaking): keep old output above until verified -->
-{#if (
-  typeof answer !== "undefined" && String(answer || "").trim() ||
-  typeof output !== "undefined" && String(output || "").trim() ||
-  typeof result !== "undefined" && String(result || "").trim()
-)}
-  <div class="card bg-base-100 border mt-4">
-    <div class="card-body">
-      <h3 class="card-title text-base">Formatted answer (preview)</h3>
-      <RichAnswer content={(answer ?? output ?? result ?? "")} />
-    </div>
-  </div>
-{/if}
-
-
-<!-- Rich Answer preview (non-invasive; keeps old markdown too) -->
-{#if typeof answer === "string" && answer.trim().length}
-  <div class="mt-6">
-    <RichAnswer text={answer} />
-    <div class="mt-2 flex gap-2">
-      <button type="button"
-              class="btn btn-outline btn-sm"
-              on:click={() => navigator.clipboard.writeText(answer)}>
-        Copy answer
-      </button>
-    </div>
-  </div>
-{/if}
