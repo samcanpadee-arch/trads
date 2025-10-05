@@ -37,7 +37,7 @@
         <div class="px-4 py-6 bg-base-200 h-40 grid place-items-center text-xs opacity-70">App screenshot placeholder</div>
       </div>
       <div class="mockup-phone">
-        <div class="camera"></"></div>
+        <div class="camera"></div>
         <div class="display">
           <div class="artboard phone-1 grid place-items-center text-xs opacity-70">Mobile screenshot placeholder</div>
         </div>
