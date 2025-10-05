@@ -77,13 +77,32 @@
         <p class="opacity-80 mt-2">
           Six everyday helpers to price jobs, turn quotes into polished proposals, and handle client comms without the back-and-forth.
         </p>
-        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <span class="badge badge-outline">Material & Cost Calculator — add materials & labour, set markup, instant total</span>
-          <span class="badge badge-outline">Job Estimation Wizard — short brief → itemised quote (import materials)</span>
-          <span class="badge badge-outline">Sales Proposal Generator — persuasive doc with scope & terms</span>
-          <span class="badge badge-outline">Review Responder — on-brand replies (tone control)</span>
-          <span class="badge badge-outline">Social Post Generator — platform-ready captions (soft CTA)</span>
-          <span class="badge badge-outline">Email Template Generator — summary in → tidy client email</span>
+        <!-- mini-cards (fit cleanly on mobile) -->
+        <div class="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Material & Cost Calculator</div>
+            <div class="opacity-80">Price jobs in minutes — materials, labour & markup sorted.</div>
+          </div>
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Job Estimation Wizard</div>
+            <div class="opacity-80">Short brief → itemised, client-ready quote (imports materials).</div>
+          </div>
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Sales Proposal Generator</div>
+            <div class="opacity-80">Turn your quote into a polished, persuasive proposal.</div>
+          </div>
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Review Responder</div>
+            <div class="opacity-80">Paste any review → on-brand reply in seconds (tone control).</div>
+          </div>
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Social Post Generator</div>
+            <div class="opacity-80">Platform-smart captions in your Aussie voice (soft CTA).</div>
+          </div>
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Email Template Generator</div>
+            <div class="opacity-80">Summary in → clear, tidy client email without the faff.</div>
+          </div>
         </div>
         <div class="mt-5">
           <a href="/account/caption" class="btn btn-outline btn-sm">Try it now</a>
@@ -108,12 +127,15 @@
           <div class="chat chat-start"><div class="chat-bubble">Yes please mate.</div></div>
         </div>
         <div class="mt-4 flex flex-wrap gap-2 text-xs">
-          <span class="badge badge-ghost">Safety note</span>
-          <span class="badge badge-ghost">Site checklist</span>
-          <span class="badge badge-ghost">Client SMS</span>
-          <span class="badge badge-ghost">Method steps</span>
-          <span class="badge badge-ghost">Materials compatibility</span>
+          <span class="badge badge-ghost">Tips & How-tos</span>
+          <span class="badge badge-ghost">Safety & Compliance</span>
+          <span class="badge badge-ghost">Marketing & Sales</span>
+          <span class="badge badge-ghost">Customer Comms</span>
+          <span class="badge badge-ghost">Business Ops</span>
+          <span class="badge badge-ghost">Hiring & Training</span>
+          <span class="badge badge-ghost">Troubleshooting</span>
         </div>
+        <p class="text-xs opacity-70 mt-2">Have a yarn with it — ask anything and keep the convo going.</p>
         <div class="mt-5">
           <a href="/pricing" class="btn btn-outline btn-sm">Try it now</a>
         </div>
@@ -136,15 +158,26 @@
           <span class="badge badge-ghost">Textbooks</span>
           <span class="badge badge-ghost">Your PDFs</span>
         </div>
-        <!-- Technical sample output -->
-        <div class="mt-4 rounded-xl border bg-base-100 p-4 text-sm space-y-3">
+        <!-- Technical sample outputs (two different examples) -->
+        <div class="mt-4 rounded-xl border bg-base-100 p-4 text-sm space-y-4">
           <div>
-            <div class="font-semibold">Example output — Mitsubishi split system</div>
+            <div class="badge badge-ghost badge-sm mb-2">Example output</div>
+            <div class="font-semibold">Q (example): Mitsubishi MSZ-FS indoor/outdoor clearances and electrics?</div>
             <p class="opacity-90 mt-1">
-              Indoor MSZ-FS: 50&nbsp;mm side, 100&nbsp;mm rear, 65&nbsp;mm ceiling. Outdoor MUZ-FS: ≥400&nbsp;mm front, ≥1000&nbsp;mm above (model-specific).
+              A (example): Indoor MSZ-FS: 50&nbsp;mm side, 100&nbsp;mm rear, 65&nbsp;mm ceiling. Outdoor MUZ-FS: ≥400&nbsp;mm front, ≥1000&nbsp;mm above (model-specific).
               Max fuse 15–20&nbsp;A; min circuit ampacity 10–18&nbsp;A; copper conductors AWG14–AWG12; wiring per local code.
             </p>
-            <div class="mt-1 text-xs opacity-70 italic">References where possible: SRK-ZMP-S manual p.20; MUZ-FS installation pp.1–3, 11.</div>
+            <div class="mt-1 text-xs opacity-70 italic">References where possible: SRK-ZMP-S manual p. 20; MUZ-FS installation pp. 1–3, 11.</div>
+          </div>
+          <div class="divider my-1"></div>
+          <div>
+            <div class="badge badge-ghost badge-sm mb-2">Example output</div>
+            <div class="font-semibold">Q (example): Domestic hot water — storage vs outlet temps, and tempering?</div>
+            <p class="opacity-90 mt-1">
+              A (example): Store at ≥60&nbsp;°C to control Legionella. Temper to ≤50&nbsp;°C for domestic ablution outlets; ≤45&nbsp;°C in childcare/aged-care.
+              Use an approved tempering/TMV sized to fixture units and run length; verify valve model and local requirements.
+            </p>
+            <div class="mt-1 text-xs opacity-70 italic">References where possible: AS/NZS 3500 (hot water), valve manufacturer data.</div>
           </div>
         </div>
         <div class="mt-5">
@@ -158,10 +191,10 @@
   </div>
 </section>
 
-<!-- STORY SECTION (moved here; 3 cards narrative) -->
+<!-- STORY SECTION (moved below; 3-card narrative) -->
 <section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
   <div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold">What it looks like on a real job</h2>
+    <h2 class="text-2xl md:text-3xl font-bold">What it might look like on a real job</h2>
     <div class="mt-6 grid md:grid-cols-3 gap-6">
       <!-- Card 1 -->
       <div class="rounded-2xl border bg-base-100 p-5">
@@ -169,7 +202,7 @@
         <h3 class="mt-2 font-semibold">Meet Josh (Quote with Smart Tools)</h3>
         <p class="text-sm opacity-80 mt-1">
           Josh is a licensed sparkie running a small crew. He hates burning nights on quotes and emails.
-          He opens Material & Cost Calculator and the Estimation Wizard to price a deck, then clicks once to generate a neat, itemised quote — ready to send.
+          He opens Material & Cost Calculator and the Estimation Wizard to price a deck, then gets a neat, itemised quote ready to paste into his email or doc.
         </p>
         <div class="mt-3 aspect-[16/10] rounded-xl border bg-base-200 grid place-items-center text-xs opacity-70">Costing summary mock</div>
       </div>
@@ -194,8 +227,12 @@
           On site, Josh double-checks a clearance and electrical spec from the manuals library — a specific answer with a reference where possible.
           He finishes confident it’s done right, without trawling PDFs on his phone.
         </p>
-        <div class="mt-3 rounded-xl border bg-base-100 p-3 text-sm">
-          Example: MSZ-FS clearances and electrics returned in seconds. <span class="badge badge-ghost badge-sm">Reference where possible</span>
+        <div class="mt-3 rounded-xl border bg-base-100 p-3 text-sm space-y-1">
+          <div class="font-semibold">Q (example): MSZ-FS clearances and electrics?</div>
+          <div>
+            A (example): Indoor: 50/100/65&nbsp;mm; Outdoor: ≥400&nbsp;mm front, ≥1000&nbsp;mm above; Max fuse 15–20&nbsp;A; MCA 10–18&nbsp;A; copper AWG14–AWG12; per local code.
+            <span class="badge badge-ghost badge-sm ml-1">Reference where possible</span>
+          </div>
         </div>
       </div>
     </div>
@@ -214,29 +251,48 @@
   </div>
 </section>
 
-<!-- TESTIMONIALS (review cards; all 5 stars; manual nav) -->
+<!-- TESTIMONIALS (one card per slide, arrows, mobile-friendly) -->
 <section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
   <div class="max-w-6xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold tracking-tight">What tradies are saying</h2>
 
     <div class="carousel w-full mt-6 rounded-2xl border bg-base-100">
-      <div id="rev1" class="carousel-item w-full p-6">
-        <div class="grid md:grid-cols-3 gap-4 w-full">
-          <div class="card bg-base-100 border">
+      <!-- Slide 1 -->
+      <div id="slide1" class="carousel-item relative w-full">
+        <div class="w-full p-6">
+          <div class="card bg-base-100 border max-w-md mx-auto">
             <div class="card-body">
               <div class="mb-2 text-yellow-500">★★★★★</div>
               <p class="opacity-90">“Quoting used to chew up my nights. Now it’s sorted before dinner.”</p>
               <div class="text-xs opacity-70 mt-2">Jake • Electrician</div>
             </div>
           </div>
-          <div class="card bg-base-100 border">
+        </div>
+        <div class="absolute left-4 right-4 top-1/2 -translate-y-1/2 flex justify-between">
+          <a href="#slide3" class="btn btn-circle btn-ghost">❮</a>
+          <a href="#slide2" class="btn btn-circle btn-ghost">❯</a>
+        </div>
+      </div>
+      <!-- Slide 2 -->
+      <div id="slide2" class="carousel-item relative w-full">
+        <div class="w-full p-6">
+          <div class="card bg-base-100 border max-w-md mx-auto">
             <div class="card-body">
               <div class="mb-2 text-yellow-500">★★★★★</div>
               <p class="opacity-90">“The proposal looked pro. Client signed the next day.”</p>
               <div class="text-xs opacity-70 mt-2">Mel • Plumber</div>
             </div>
           </div>
-          <div class="card bg-base-100 border">
+        </div>
+        <div class="absolute left-4 right-4 top-1/2 -translate-y-1/2 flex justify-between">
+          <a href="#slide1" class="btn btn-circle btn-ghost">❮</a>
+          <a href="#slide3" class="btn btn-circle btn-ghost">❯</a>
+        </div>
+      </div>
+      <!-- Slide 3 -->
+      <div id="slide3" class="carousel-item relative w-full">
+        <div class="w-full p-6">
+          <div class="card bg-base-100 border max-w-md mx-auto">
             <div class="card-body">
               <div class="mb-2 text-yellow-500">★★★★★</div>
               <p class="opacity-90">“On-site answers from manuals — game changer.”</p>
@@ -244,44 +300,16 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div id="rev2" class="carousel-item w-full p-6">
-        <div class="grid md:grid-cols-3 gap-4 w-full">
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <div class="mb-2 text-yellow-500">★★★★★</div>
-              <p class="opacity-90">“Stops me second-guessing specs. Faster, better jobs.”</p>
-              <div class="text-xs opacity-70 mt-2">Sam • Carpenter</div>
-            </div>
-          </div>
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <div class="mb-2 text-yellow-500">★★★★★</div>
-              <p class="opacity-90">“Review replies in seconds — no more putting it off.”</p>
-              <div class="text-xs opacity-70 mt-2">Kim • Painter</div>
-            </div>
-          </div>
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <div class="mb-2 text-yellow-500">★★★★★</div>
-              <p class="opacity-90">“Proposals that actually win work.”</p>
-              <div class="text-xs opacity-70 mt-2">Leo • Plumber</div>
-            </div>
-          </div>
+        <div class="absolute left-4 right-4 top-1/2 -translate-y-1/2 flex justify-between">
+          <a href="#slide2" class="btn btn-circle btn-ghost">❮</a>
+          <a href="#slide1" class="btn btn-circle btn-ghost">❯</a>
         </div>
       </div>
-    </div>
-
-    <!-- manual nav only -->
-    <div class="flex gap-2 justify-center mt-3 text-sm opacity-70">
-      <a href="#rev1" class="btn btn-xs">1</a>
-      <a href="#rev2" class="btn btn-xs">2</a>
     </div>
   </div>
 </section>
 
-<!-- PRICING TEASER (link to /pricing only) -->
+<!-- PRICING TEASER -->
 <section class="px-4 md:px-6 lg:px-10 py-10 bg-base-200">
   <div class="max-w-6xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Pricing</h2>
