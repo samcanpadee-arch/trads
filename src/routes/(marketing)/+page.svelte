@@ -1,18 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   const year = new Date().getFullYear();
-
-  // simple auto-rotate for testimonials
-  let slide = 0;
-  let slides = ['#rev1', '#rev2', '#rev3'];
-  onMount(() => {
-    const id = setInterval(() => {
-      slide = (slide + 1) % slides.length;
-      const el = document.querySelector<HTMLAnchorElement>(`.rev-nav a[href="${slides[slide]}"]`);
-      el?.click();
-    }, 4000);
-    return () => clearInterval(id);
-  });
 </script>
 
 <svelte:head>
@@ -25,9 +12,8 @@
   <meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
-<!-- HERO -->
+<!-- HERO (keep) -->
 <section class="relative overflow-hidden px-4 md:px-6 lg:px-10 pt-10 pb-14">
-  <!-- glow bg -->
   <div class="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[480px] w-[800px] rounded-full blur-3xl opacity-30"
        style="background: radial-gradient(40% 40% at 50% 50%, hsl(var(--p)) 0%, transparent 70%);"></div>
 
@@ -46,7 +32,6 @@
       <p class="mt-3 text-xs opacity-70">Free tools included. Trials for paid features. No lock-in.</p>
     </div>
 
-    <!-- visual -->
     <div class="grid gap-4">
       <div class="mockup-window border bg-base-100">
         <div class="px-4 py-6 bg-base-200 h-40 grid place-items-center text-xs opacity-70">App screenshot placeholder</div>
@@ -61,270 +46,353 @@
   </div>
 </section>
 
-<!-- TRADES MARQUEE -->
-<section class="bg-base-200 py-3">
-  <div class="overflow-hidden">
-    <div class="whitespace-nowrap animate-[scroll_22s_linear_infinite] text-sm opacity-80">
-      <span class="mx-6">Electricians</span>
-      <span class="mx-6">Plumbers</span>
-      <span class="mx-6">HVAC</span>
-      <span class="mx-6">Carpenters</span>
-      <span class="mx-6">Roofers</span>
-      <span class="mx-6">Tilers</span>
-      <span class="mx-6">Painters</span>
-      <span class="mx-6">Landscapers</span>
-      <span class="mx-6">Appliance Repair</span>
-      <span class="mx-6">Civil</span>
-      <span class="mx-6">Handyman</span>
-      <span class="mx-6">Apprentices & Teams</span>
-    </div>
-  </div>
-</section>
-<style>
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-</style>
-
-<!-- STORY SCROLLER (SHOW, DON'T TELL) -->
-<section class="px-4 md:px-6 lg:px-10 py-12">
-  <div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">How tradies actually use it</h2>
-    <div class="mt-6 overflow-x-auto snap-x snap-mandatory flex gap-4 pb-4">
-      <!-- Josh -->
-      <article class="min-w-[88%] md:min-w-[48%] lg:min-w-[42%] snap-center rounded-2xl border bg-base-100 p-5">
-        <header class="flex items-center gap-2">
-          <span class="badge badge-primary">Josh • Electrician</span>
-        </header>
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <!-- Tools visual -->
-          <div class="rounded-xl border bg-base-200 p-4">
-            <div class="text-xs opacity-70">Smart Tools</div>
-            <div class="mt-2 text-sm font-semibold">Quote a deck in minutes</div>
-            <div class="mt-2 text-xs opacity-80">Clean costing summary → ready to send.</div>
-          </div>
-          <!-- Chat visual -->
-          <div class="rounded-xl border bg-base-100 p-4">
-            <div class="text-xs opacity-70">Smart Chat</div>
-            <div class="chat chat-start mt-2"><div class="chat-bubble">Coastal deck — fixings?</div></div>
-            <div class="chat chat-end"><div class="chat-bubble">Go stainless or hot-dip gal. Water-based acrylic sealer. Want a client note?</div></div>
-          </div>
-        </div>
-        <!-- Assistant -->
-        <div class="rounded-xl border bg-base-100 p-4 mt-4">
-          <div class="text-xs opacity-70">Smart Assistant</div>
-          <div class="mt-2 text-sm font-semibold">Torque spec for M12 anchors</div>
-          <div class="mt-1 text-xs opacity-80">Ask once → get the number in seconds. <span class="badge badge-ghost badge-sm">Reference where possible</span></div>
-        </div>
-        <footer class="mt-3 text-xs opacity-70">Result: job won, no late-night admin.</footer>
-      </article>
-
-      <!-- Sarah -->
-      <article class="min-w-[88%] md:min-w-[48%] lg:min-w-[42%] snap-center rounded-2xl border bg-base-100 p-5">
-        <header class="flex items-center gap-2">
-          <span class="badge badge-secondary">Sarah • Plumber</span>
-        </header>
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <div class="rounded-xl border bg-base-200 p-4">
-            <div class="text-xs opacity-70">Smart Tools</div>
-            <div class="mt-2 text-sm font-semibold">Bathroom reno → proposal</div>
-            <div class="mt-1 text-xs opacity-80">Overview, scope, exclusions, timeline, costs.</div>
-          </div>
-          <div class="rounded-xl border bg-base-100 p-4">
-            <div class="text-xs opacity-70">Smart Chat</div>
-            <div class="chat chat-start mt-2"><div class="chat-bubble">Need a polite 8am access SMS</div></div>
-            <div class="chat chat-end"><div class="chat-bubble">“Hey Jake, quick reminder we’re onsite 8am tomorrow. Gate access ok? Cheers.”</div></div>
-          </div>
-        </div>
-        <div class="rounded-xl border bg-base-100 p-4 mt-4">
-          <div class="text-xs opacity-70">Smart Assistant</div>
-          <div class="mt-2 text-sm font-semibold">Check AU/NZ water-pressure tables</div>
-          <div class="mt-1 text-xs opacity-80">On site → quick confirmation. <span class="badge badge-ghost badge-sm">Reference where possible</span></div>
-        </div>
-        <footer class="mt-3 text-xs opacity-70">Result: deal closed faster, apprentice mentored.</footer>
-      </article>
-
-      <!-- Tony -->
-      <article class="min-w-[88%] md:min-w-[48%] lg:min-w-[42%] snap-center rounded-2xl border bg-base-100 p-5">
-        <header class="flex items-center gap-2">
-          <span class="badge badge-accent">Tony • HVAC</span>
-        </header>
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <div class="rounded-xl border bg-base-200 p-4">
-            <div class="text-xs opacity-70">Smart Tools</div>
-            <div class="mt-2 text-sm font-semibold">Fast price + client email</div>
-            <div class="mt-1 text-xs opacity-80">No spreadsheet dramas.</div>
-          </div>
-          <div class="rounded-xl border bg-base-100 p-4">
-            <div class="text-xs opacity-70">Smart Chat</div>
-            <div class="chat chat-start mt-2"><div class="chat-bubble">FB caption for service packages?</div></div>
-            <div class="chat chat-end"><div class="chat-bubble">3 short caption ideas with a soft CTA.</div></div>
-          </div>
-        </div>
-        <div class="rounded-xl border bg-base-100 p-4 mt-4">
-          <div class="text-xs opacity-70">Smart Assistant</div>
-          <div class="mt-2 text-sm font-semibold">Outdoor unit clearances (model-specific)</div>
-          <div class="mt-1 text-xs opacity-80">Answer first, source when possible. <span class="badge badge-ghost badge-sm">Reference where possible</span></div>
-        </div>
-        <footer class="mt-3 text-xs opacity-70">Result: fewer callbacks, smoother day.</footer>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- TOOL TILES (tight, not listy) -->
+<!-- VALUE BAND (keep w/ small polish) -->
 <section class="px-4 md:px-6 lg:px-10 py-8 bg-base-200">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
+    <div>
+      <h3 class="text-xl font-bold">Work smarter, not longer</h3>
+      <p class="opacity-80 mt-2">Cut the busywork. Quote and communicate without the late nights.</p>
+    </div>
+    <div>
+      <h3 class="text-xl font-bold">Win more jobs</h3>
+      <p class="opacity-80 mt-2">Professional proposals and faster replies help you stand out and close with confidence.</p>
+    </div>
+    <div>
+      <h3 class="text-xl font-bold">Do better work</h3>
+      <p class="opacity-80 mt-2">Check manuals and guides when it counts. Fewer mistakes. Happier clients.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ONE JOB, THREE MOMENTS (simple stepper, clear story) -->
+<section class="px-4 md:px-6 lg:px-10 py-12 bg-base-100">
   <div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Your everyday toolkit</h2>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Material & Cost Calculator</h3><p class="text-sm opacity-80">Price jobs fast with markup.</p></div></div>
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Job Estimation Wizard</h3><p class="text-sm opacity-80">Brief in → quote out.</p></div></div>
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Sales Proposal Generator</h3><p class="text-sm opacity-80">Pro docs that win work.</p></div></div>
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Review Responder</h3><p class="text-sm opacity-80">On-brand replies in seconds.</p></div></div>
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Social Post Generator</h3><p class="text-sm opacity-80">Aussie-friendly captions.</p></div></div>
-      <div class="card bg-base-100 border"><div class="card-body"><h3 class="font-semibold">Email Template Generator</h3><p class="text-sm opacity-80">Tidy client emails.</p></div></div>
-    </div>
-    <div class="mt-6">
-      <a href="/account/caption" class="btn btn-outline">Get Started Free</a>
+    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">One job. Three moments.</h2>
+    <div class="mt-6 grid md:grid-cols-3 gap-6">
+      <div class="rounded-2xl border bg-base-100 p-5">
+        <div class="text-5xl font-extrabold text-primary/80">1</div>
+        <h3 class="mt-2 font-semibold">Price</h3>
+        <p class="text-sm opacity-80 mt-1">Use Smart Tools to turn materials and a short brief into a clean costing summary.</p>
+        <div class="mt-3 aspect-[16/10] rounded-xl border bg-base-200 grid place-items-center text-xs opacity-70">
+          Costing summary mock
+        </div>
+      </div>
+      <div class="rounded-2xl border bg-base-100 p-5">
+        <div class="text-5xl font-extrabold text-primary/80">2</div>
+        <h3 class="mt-2 font-semibold">Communicate</h3>
+        <p class="text-sm opacity-80 mt-1">Smart Chat drafts client messages, notes, and tips in plain English.</p>
+        <div class="mt-3 rounded-xl border bg-base-100 p-3">
+          <div class="chat chat-start"><div class="chat-bubble">Reschedule slab pour? Storm on Friday.</div></div>
+          <div class="chat chat-end"><div class="chat-bubble">Delay in heavy rain. I’ll draft a friendly client update.</div></div>
+        </div>
+      </div>
+      <div class="rounded-2xl border bg-base-100 p-5">
+        <div class="text-5xl font-extrabold text-primary/80">3</div>
+        <h3 class="mt-2 font-semibold">Confirm</h3>
+        <p class="text-sm opacity-80 mt-1">Smart Assistant checks manuals and guides so you can proceed with confidence.</p>
+        <div class="mt-3 rounded-xl border bg-base-100 p-3 text-sm">
+          Quick answer, with a <span class="badge badge-ghost badge-sm">reference where possible</span>.
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- CHAT + ASSISTANT MOCKS -->
-<section class="px-4 md:px-6 lg:px-10 py-12">
-  <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-start">
-    <!-- Chat -->
-    <div class="rounded-2xl border bg-base-100 p-5">
-      <h3 class="text-xl font-bold">Smart Chat</h3>
-      <p class="opacity-80 mt-1 text-sm">Advice, tips and quick guidance in plain English.</p>
-      <div class="mt-4">
-        <div class="chat chat-start"><div class="chat-bubble">Storm on Friday — postpone slab pour?</div></div>
-        <div class="chat chat-end"><div class="chat-bubble">Delay if heavy rain expected. Re-check compaction/moisture. I can draft a client SMS.</div></div>
-        <div class="chat chat-start"><div class="chat-bubble">Do it — SMS please</div></div>
-        <div class="chat chat-end"><div class="chat-bubble">“Quick update: rain forecast Friday. We’ll shift the slab pour to Monday to ensure quality. Thanks for understanding.”</div></div>
+<!-- EVERYTHING IN ONE SPOT (alternating sections you liked) -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-bold">Everything you need, all in one spot</h2>
+    <p class="mt-2 opacity-80 max-w-3xl">From first quote to final review, every part of your trade day gets easier.</p>
+
+    <!-- Smart Tools (text left, image right) -->
+    <div class="mt-8 grid md:grid-cols-2 gap-8 items-start">
+      <div>
+        <h3 class="text-xl font-bold">Smart Tools</h3>
+        <p class="opacity-80 mt-2">Six everyday helpers for quoting, proposals and comms.</p>
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <span class="badge badge-outline">Material & Cost Calculator</span>
+          <span class="badge badge-outline">Job Estimation Wizard</span>
+          <span class="badge badge-outline">Sales Proposal Generator</span>
+          <span class="badge badge-outline">Review Responder</span>
+          <span class="badge badge-outline">Social Post Generator</span>
+          <span class="badge badge-outline">Email Template Generator</span>
+        </div>
+        <div class="mt-5">
+          <a href="/account/caption" class="btn btn-outline btn-sm">Try it now</a>
+        </div>
       </div>
-      <div class="mt-4"><a href="/pricing" class="btn btn-outline btn-sm">Try it now</a></div>
+      <div class="w-full aspect-[16/10] rounded-2xl border bg-base-200 grid place-items-center text-xs opacity-70">
+        Tools panel mock
+      </div>
     </div>
 
-    <!-- Assistant -->
-    <div class="rounded-2xl border bg-base-100 p-5">
-      <h3 class="text-xl font-bold">Smart Assistant</h3>
-      <p class="opacity-80 mt-1 text-sm">Search thousands of docs so you don’t have to.</p>
-      <div class="mt-3 flex flex-wrap gap-2 text-xs">
-        <span class="badge badge-ghost">AU/NZ codes</span>
-        <span class="badge badge-ghost">Manufacturer manuals</span>
-        <span class="badge badge-ghost">Spec sheets</span>
-        <span class="badge badge-ghost">Install guides</span>
-        <span class="badge badge-ghost">SDS</span>
-        <span class="badge badge-ghost">Textbooks</span>
-        <span class="badge badge-ghost">Your PDFs</span>
+    <!-- Smart Chat (image left, text right) -->
+    <div class="mt-12 grid md:grid-cols-2 gap-8 items-start">
+      <div class="order-2 md:order-1 w-full aspect-[16/10] rounded-2xl border bg-base-200 grid place-items-center text-xs opacity-70">
+        Chat transcript mock
       </div>
-      <div class="mt-4 rounded-xl border bg-base-200 p-4">
-        <div class="text-sm font-semibold">Q: Minimum clearance for gas HWS flue near a window?</div>
-        <div class="mt-2 text-sm">A: Maintain the manufacturer’s minimum horizontal/vertical distances. Model-specific values apply. <span class="badge badge-ghost badge-sm">Reference where possible</span></div>
+      <div class="order-1 md:order-2">
+        <h3 class="text-xl font-bold">Smart Chat</h3>
+        <p class="opacity-80 mt-2">Advice, safety notes, and clear client messages — fast.</p>
+        <div class="mt-4 rounded-xl border bg-base-100 p-4">
+          <div class="chat chat-start"><div class="chat-bubble">Storm Friday — postpone slab pour?</div></div>
+          <div class="chat chat-end"><div class="chat-bubble">Yes if heavy rain. Re-check compaction/moisture. I can draft a client SMS.</div></div>
+          <div class="chat chat-start"><div class="chat-bubble">Do it — friendly tone.</div></div>
+          <div class="chat chat-end"><div class="chat-bubble">“Quick update: rain Friday. We’ll pour Monday to ensure quality. Thanks for understanding.”</div></div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2 text-xs">
+          <span class="badge badge-ghost">Safety note</span>
+          <span class="badge badge-ghost">Site checklist</span>
+          <span class="badge badge-ghost">Client SMS</span>
+          <span class="badge badge-ghost">Method steps</span>
+          <span class="badge badge-ghost">Materials compatibility</span>
+        </div>
+        <div class="mt-5">
+          <a href="/pricing" class="btn btn-outline btn-sm">Try it now</a>
+        </div>
       </div>
-      <div class="mt-4"><a href="/pricing" class="btn btn-primary btn-sm">Try it now</a></div>
+    </div>
+
+    <!-- Smart Assistant (text left, image right) -->
+    <div class="mt-12 grid md:grid-cols-2 gap-8 items-start">
+      <div>
+        <h3 class="text-xl font-bold">Smart Assistant</h3>
+        <p class="opacity-80 mt-2">
+          Your on-site brain: a growing library of thousands of AU/NZ codes, manufacturer manuals, spec sheets, install guides, SDS, textbooks — plus your PDFs.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+          <span class="badge badge-ghost">AU/NZ codes</span>
+          <span class="badge badge-ghost">Manufacturer manuals</span>
+          <span class="badge badge-ghost">Spec sheets</span>
+          <span class="badge badge-ghost">Install guides</span>
+          <span class="badge badge-ghost">SDS</span>
+          <span class="badge badge-ghost">Textbooks</span>
+          <span class="badge badge-ghost">Your PDFs</span>
+        </div>
+        <!-- Technical sample outputs -->
+        <div class="mt-4 rounded-xl border bg-base-100 p-4 text-sm space-y-3">
+          <div>
+            <div class="font-semibold">Example — Mitsubishi split system clearances</div>
+            <p class="opacity-90 mt-1">
+              MSZ-FS indoor: 50&nbsp;mm side, 100&nbsp;mm rear, 65&nbsp;mm ceiling. MUZ-FS outdoor: ≥400&nbsp;mm front, ≥1000&nbsp;mm above (model-specific).
+            </p>
+            <div class="mt-1 text-xs opacity-70 italic">References where possible: SRK-ZMP-S manual p.20; MUZ-FS install instructions pp.1–3, 11.</div>
+          </div>
+          <div>
+            <div class="font-semibold">Example — Outdoor socket RCD</div>
+            <p class="opacity-90 mt-1">
+              30&nbsp;mA Type&nbsp;A RCD with max disconnection time per AS/NZS clause. Verify circuit length and fault loop impedance.
+            </p>
+            <div class="mt-1 text-xs opacity-70 italic">Reference where possible: AS/NZS&nbsp;3000:2018 relevant clause.</div>
+          </div>
+          <div>
+            <div class="font-semibold">Example — HWS copper line sizing</div>
+            <p class="opacity-90 mt-1">
+              15&nbsp;mm typical for domestic runs; confirm fixture units and length against pressure/flow tables.
+            </p>
+            <div class="mt-1 text-xs opacity-70 italic">Reference where possible: Manufacturer spec / AU/NZ plumbing standard.</div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <a href="/pricing" class="btn btn-primary btn-sm">Try it now</a>
+        </div>
+      </div>
+      <div class="w-full aspect-[16/10] rounded-2xl border bg-base-200 grid place-items-center text-xs opacity-70">
+        Assistant answer mock
+      </div>
     </div>
   </div>
 </section>
 
-<!-- REVIEWS (auto-rotating carousel) -->
+<!-- PERSONA STORY (single, clean) -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-bold">Josh, sparkie — from quote to sign-off</h2>
+    <div class="mt-4 grid md:grid-cols-3 gap-6 text-sm">
+      <div class="rounded-xl border bg-base-100 p-4">
+        <div class="font-semibold">Quote</div>
+        <p class="opacity-80 mt-1">Smart Tools build a clean costing summary in minutes.</p>
+      </div>
+      <div class="rounded-xl border bg-base-100 p-4">
+        <div class="font-semibold">Communicate</div>
+        <p class="opacity-80 mt-1">Smart Chat drafts a clear follow-up and reminder SMS.</p>
+      </div>
+      <div class="rounded-xl border bg-base-100 p-4">
+        <div class="font-semibold">Confirm</div>
+        <p class="opacity-80 mt-1">Smart Assistant checks a spec so the work’s done right.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUR MISSION (your original copy, brought back) -->
 <section class="px-4 md:px-6 lg:px-10 py-10 bg-base-200">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-bold">Built with tradies in mind</h2>
+    <p class="mt-2 opacity-80 max-w-4xl">
+      We’re a bunch of tech heads and tradie mates who built an AI that speaks your language.
+      Born from a sparkie’s workshop and a few pub chats, our mission is simple: make your day smoother and your jobs sharper.
+      Whether you’re up on a roof or down in a trench, we’ve got your back.
+    </p>
+  </div>
+</section>
+
+<!-- TESTIMONIALS (review cards, manual nav only) -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
   <div class="max-w-6xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold tracking-tight">What tradies are saying</h2>
 
     <div class="carousel w-full mt-6 rounded-2xl border bg-base-100">
-      <div id="rev1" class="carousel-item w-full p-8">
-        <div class="max-w-3xl mx-auto">
-          <div class="rating rating-sm mb-3">
-            <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
+      <div id="rev1" class="carousel-item w-full p-6">
+        <div class="grid md:grid-cols-3 gap-4 w-full">
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“Quoting used to chew up my nights. Now it’s sorted before dinner.”</p>
+              <div class="text-xs opacity-70 mt-2">Jake • Electrician</div>
+            </div>
           </div>
-          <p class="text-lg leading-relaxed">“Quoting used to chew up my nights. Now it’s sorted before dinner.” — Jake, Electrician</p>
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“The proposal looked pro. Client signed the next day.”</p>
+              <div class="text-xs opacity-70 mt-2">Mel • Plumber</div>
+            </div>
+          </div>
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“On-site answers from manuals — game changer.”</p>
+              <div class="text-xs opacity-70 mt-2">Ari • HVAC</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="rev2" class="carousel-item w-full p-8">
-        <div class="max-w-3xl mx-auto">
-          <div class="rating rating-sm mb-3">
-            <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
+
+      <div id="rev2" class="carousel-item w-full p-6">
+        <div class="grid md:grid-cols-3 gap-4 w-full">
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“Stops me second-guessing specs. Faster, better jobs.”</p>
+              <div class="text-xs opacity-70 mt-2">Sam • Carpenter</div>
+            </div>
           </div>
-          <p class="text-lg leading-relaxed">“The proposal looked pro. Client signed the next day.” — Mel, Plumber</p>
-        </div>
-      </div>
-      <div id="rev3" class="carousel-item w-full p-8">
-        <div class="max-w-3xl mx-auto">
-          <div class="rating rating-sm mb-3">
-            <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
-            <input type="radio" class="mask mask-star-2 bg-orange-400" />
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“Review replies in seconds — no more putting it off.”</p>
+              <div class="text-xs opacity-70 mt-2">Kim • Painter</div>
+            </div>
           </div>
-          <p class="text-lg leading-relaxed">“On-site answers from manuals — game changer.” — Ari, HVAC</p>
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="rating rating-sm mb-2">
+                <input type="radio" class="mask mask-star-2 bg-orange-400" checked />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" class="mask mask-star-2 bg-orange-400" />
+              </div>
+              <p class="opacity-90">“Proposals that actually win work.”</p>
+              <div class="text-xs opacity-70 mt-2">Leo • Plumber</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="rev-nav flex gap-2 justify-center mt-3 text-sm opacity-70">
-      <a href="#rev1" class="link">1</a>
-      <a href="#rev2" class="link">2</a>
-      <a href="#rev3" class="link">3</a>
+
+    <!-- manual nav only -->
+    <div class="flex gap-2 justify-center mt-3 text-sm opacity-70">
+      <a href="#rev1" class="btn btn-xs">1</a>
+      <a href="#rev2" class="btn btn-xs">2</a>
     </div>
   </div>
 </section>
 
-<!-- PRICING TEASER (aligned to /pricing) -->
-<section class="px-4 md:px-6 lg:px-10 py-10">
+<!-- PRICING TEASER (no new cards; link to /pricing for consistency) -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-200">
   <div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Simple pricing</h2>
-    <p class="mt-2 opacity-80">Free tools forever. Add Chat or the Assistant when you’re ready.</p>
-
-    <div class="mt-6 grid md:grid-cols-3 gap-4">
-      <div class="card bg-base-100 border">
-        <div class="card-body">
-          <h3 class="card-title">Free</h3>
-          <p class="opacity-80 text-sm">All six tools</p>
-          <a class="btn btn-outline btn-sm mt-4" href="/account/caption">Get Started Free</a>
-        </div>
-      </div>
-      <div class="card bg-base-100 border">
-        <div class="card-body">
-          <h3 class="card-title">Chat</h3>
-          <p class="opacity-80 text-sm">Advice & tips in plain English</p>
-          <a class="btn btn-outline btn-sm mt-4" href="/pricing">Try it now</a>
-        </div>
-      </div>
-      <div class="card bg-base-100 border">
-        <div class="card-body">
-          <h3 class="card-title">Assistant</h3>
-          <p class="opacity-80 text-sm">Search manuals & guides (refs where possible)</p>
-          <a class="btn btn-primary btn-sm mt-4" href="/pricing">Try it now</a>
-        </div>
-      </div>
-    </div>
-
+    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Pricing</h2>
+    <p class="mt-2 opacity-80">See plans and full details on our pricing page.</p>
     <div class="mt-6">
-      <a href="/pricing" class="link link-primary">View full pricing →</a>
+      <a href="/pricing" class="btn btn-primary">View Pricing</a>
     </div>
   </div>
 </section>
 
-<!-- FINAL CTA -->
-<section class="px-4 md:px-6 lg:px-10 pb-12">
-  <div class="max-w-6xl mx-auto text-center rounded-2xl border bg-base-100 p-8">
+<!-- FAQ (restored) -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-bold">FAQs</h2>
+    <div class="mt-4 join join-vertical w-full">
+      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
+        <input type="checkbox" />
+        <div class="collapse-title text-base md:text-lg font-medium">How does the AI understand my questions?</div>
+        <div class="collapse-content text-sm opacity-90">It’s tuned for trade language and job types, so you can talk like a tradie and still get clear, useful answers.</div>
+      </div>
+      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
+        <input type="checkbox" />
+        <div class="collapse-title text-base md:text-lg font-medium">Do you protect my data and privacy?</div>
+        <div class="collapse-content text-sm opacity-90">Yes. Your inputs stay private. We don’t sell your data. Where possible, answers include references so you can see what it used.</div>
+      </div>
+      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
+        <input type="checkbox" />
+        <div class="collapse-title text-base md:text-lg font-medium">Can I use it on multiple devices?</div>
+        <div class="collapse-content text-sm opacity-90">Yes. Use it on phone, tablet or laptop. Everything stays in sync.</div>
+      </div>
+      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
+        <input type="checkbox" />
+        <div class="collapse-title text-base md:text-lg font-medium">Can I cancel anytime?</div>
+        <div class="collapse-content text-sm opacity-90">Always. No contracts. Use the free tools whenever you like.</div>
+      </div>
+      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
+        <input type="checkbox" />
+        <div class="collapse-title text-base md:text-lg font-medium">Do answers include citations?</div>
+        <div class="collapse-content text-sm opacity-90">Where possible, yes — we include a reference so you can check the source.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA (full-bleed, no border, no ©) -->
+<section class="px-4 md:px-6 lg:px-10 py-12">
+  <div class="max-w-6xl mx-auto text-center">
     <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Ready to get your time back?</h2>
     <p class="opacity-80 mt-2">Start with the free tools. Add Chat or the Assistant when you’re ready.</p>
     <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
       <a href="/account/caption" class="btn btn-primary">Get Started Free</a>
       <a href="/pricing" class="btn btn-outline">View Pricing</a>
     </div>
-    <p class="text-xs opacity-60 mt-6">&copy; {year} Tradie Assistant</p>
   </div>
 </section>
