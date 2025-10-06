@@ -23,3 +23,14 @@
 <div class="text-l text-slate-800 mt-4 mb-2">
   Have an account? <a class="underline" href="/login/sign_in">Sign in</a>.
 </div>
+
+<style>
+  /* Hide GitHub / social auth buttons or links by href includes */
+  a[href*="github"], button[href*="github"], a[href*="/auth/github"], button[data-provider="github"] {
+    display: none !important;
+  }
+  /* Common icon wrappers labelled GitHub */
+  [aria-label*="GitHub" i], [data-provider*="github" i] {
+    display: none !important;
+  }
+</style>
