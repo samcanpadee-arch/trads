@@ -28,12 +28,12 @@ export let data;
         <a class="btn btn-ghost normal-case text-xl" href="/">Tradie Assistant</a>
       </div>
 
-      <!-- Desktop menu (matches earlier formatting using DaisyUI menu) -->
+      <!-- Desktop nav (match earlier: <li class="md:mx-2"><a ...> -->
       <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1 gap-1">
-          <li><a href="/blog" sveltekit:prefetch>Blog</a></li>
-          <li><a href="/pricing" sveltekit:prefetch>Pricing</a></li>
-          <li><a href="/contact_us" sveltekit:prefetch>Contact</a></li>
+        <ul class="menu menu-horizontal px-1">
+          <li class="md:mx-2"><a href="/blog" sveltekit:prefetch>Blog</a></li>
+          <li class="md:mx-2"><a href="/pricing" sveltekit:prefetch>Pricing</a></li>
+          <li class="md:mx-2"><a href="/contact_us" sveltekit:prefetch>Contact</a></li>
         </ul>
       </div>
 
@@ -49,28 +49,33 @@ export let data;
     <slot />
   </main>
 
-  <!-- FOOTER (two columns: Explore + About, no buttons) -->
+  <!-- FOOTER: two columns (Explore + About) side-by-side on desktop -->
   <footer class="bg-base-200 mt-10">
-    <div class="footer max-w-6xl mx-auto px-4 md:px-6 lg:px-10 py-10 text-base-content">
-      <nav>
-        <h6 class="footer-title">Explore</h6>
-        <a class="link link-hover" href="/blog" sveltekit:prefetch>Blog</a>
-        <a class="link link-hover" href="/pricing" sveltekit:prefetch>Pricing</a>
-        <a class="link link-hover" href="/contact_us" sveltekit:prefetch>Contact</a>
-      </nav>
+    <div class="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 py-10">
+      <div class="grid gap-10 md:grid-cols-2">
+        <!-- Left: Explore -->
+        <nav>
+          <h6 class="footer-title">Explore</h6>
+          <ul class="mt-2 space-y-2">
+            <li><a class="link link-hover" href="/blog" sveltekit:prefetch>Blog</a></li>
+            <li><a class="link link-hover" href="/pricing" sveltekit:prefetch>Pricing</a></li>
+            <li><a class="link link-hover" href="/contact_us" sveltekit:prefetch>Contact</a></li>
+          </ul>
+        </nav>
 
-      <div>
-        <h6 class="text-2xl font-bold">Tradie Assistant</h6>
-        <p class="opacity-80 mt-2 max-w-prose">
-          Tradie Assistant is your go-to AI-powered tool, designed to streamline everyday tasks for tradies.
-          From generating instant job estimates to crafting custom client communications, our app helps you save time, reduce costs,
-          and improve your service quality. Experience a smarter way to manage your trade work, join Tradie Assistant today and transform your business!
-        </p>
+        <!-- Right: Brand overview -->
+        <div>
+          <h6 class="text-2xl font-bold">Tradie Assistant</h6>
+          <p class="opacity-80 mt-2 max-w-prose">
+            Tradie Assistant is your go-to AI-powered tool, designed to streamline everyday tasks for tradies.
+            From generating instant job estimates to crafting custom client communications, our app helps you save time,
+            reduce costs, and improve your service quality. Experience a smarter way to manage your trade work —
+            join Tradie Assistant today and transform your business!
+          </p>
+        </div>
       </div>
-    </div>
 
-    <div class="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 pb-8">
-      <div class="divider my-4"></div>
+      <div class="divider my-6"></div>
       <div class="text-xs opacity-70">© 2025 Tradie Assistant</div>
     </div>
   </footer>
