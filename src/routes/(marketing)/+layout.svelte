@@ -15,15 +15,15 @@
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1 hidden sm:flex font-bold text-lg">
-      <li class="md:mx-4">
+      <li class="hidden md:mx-4">
         <a
           href="https://github.com/CriticalMoments/CMSaasStarter"
-          class="border border-primary">★ us on Github</a
+          class="hidden border border-primary">★ us on Github</a
         >
       </li>
       <li class="md:mx-2"><a href="/blog">Blog</a></li>
       <li class="md:mx-2"><a href="/pricing">Pricing</a></li>
-      <li class="md:mx-2"><a href="/account">Account</a></li>
+      <li class="md:mx-2"><a href="/account">Open App</a></li>
       <li class="md:mx-0">
         <a href="/search" aria-label="Search">
           <svg
@@ -64,12 +64,12 @@
       >
         <li><a href="/blog">Blog</a></li>
         <li><a href="/pricing">Pricing</a></li>
-        <li><a href="/account">Account</a></li>
-        <li><a href="/search">Search</a></li>
+        <li><a href="/account">Open App</a></li>
+        <li><a class="hidden" href="/search">Search</a></li>
         <li>
           <a
             href="https://github.com/CriticalMoments/CMSaasStarter"
-            class="border border-primary">★ us on Github</a
+            class="hidden border border-primary">★ us on Github</a
           >
         </li>
       </ul>
@@ -95,7 +95,7 @@
       <a class="link link-hover my-1" href="/blog">Blog</a>
       <a class="link link-hover my-1" href="/contact_us">Contact Us</a>
       <a
-        class="link link-hover my-1"
+        class="hidden hidden link link-hover my-1"
         href="https://github.com/CriticalMoments/CMSaasStarter">Github</a
       >
     </nav>
