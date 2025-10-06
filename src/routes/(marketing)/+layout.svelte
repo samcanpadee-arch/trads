@@ -8,6 +8,7 @@ export let data;
   <!-- HEADER / NAVBAR -->
   <header class="border-b bg-base-100">
     <nav class="navbar max-w-6xl mx-auto px-4 md:px-6 lg:px-10">
+      <!-- Left: burger + brand -->
       <div class="navbar-start">
         <!-- Mobile menu -->
         <div class="dropdown">
@@ -21,6 +22,7 @@ export let data;
             <li><a href="/blog" sveltekit:prefetch>Blog</a></li>
             <li><a href="/pricing" sveltekit:prefetch>Pricing</a></li>
             <li><a href="/contact_us" sveltekit:prefetch>Contact</a></li>
+            <li><a href="/account">Open App</a></li>
           </ul>
         </div>
 
@@ -28,16 +30,16 @@ export let data;
         <a class="btn btn-ghost normal-case text-xl" href="/">Tradie Assistant</a>
       </div>
 
-      <!-- Desktop nav (match earlier: <li class="md:mx-2"><a ...> -->
+      <!-- Center: desktop nav (exact spacing + alignment) -->
       <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
-          <li class="md:mx-2"><a href="/blog" sveltekit:prefetch>Blog</a></li>
-          <li class="md:mx-2"><a href="/pricing" sveltekit:prefetch>Pricing</a></li>
-          <li class="md:mx-2"><a href="/contact_us" sveltekit:prefetch>Contact</a></li>
+        <ul class="menu menu-horizontal items-center text-sm px-0 gap-0">
+          <li class="md:mx-2"><a href="/blog" sveltekit:prefetch class="px-0">Blog</a></li>
+          <li class="md:mx-2"><a href="/pricing" sveltekit:prefetch class="px-0">Pricing</a></li>
+          <li class="md:mx-2"><a href="/contact_us" sveltekit:prefetch class="px-0">Contact</a></li>
         </ul>
       </div>
 
-      <!-- Primary CTA -->
+      <!-- Right: primary CTA -->
       <div class="navbar-end">
         <a href="/account" class="btn btn-primary">Open App</a>
       </div>
@@ -49,7 +51,7 @@ export let data;
     <slot />
   </main>
 
-  <!-- FOOTER: two columns (Explore + About) side-by-side on desktop -->
+  <!-- FOOTER: two columns (Explore + About) side-by-side -->
   <footer class="bg-base-200 mt-10">
     <div class="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 py-10">
       <div class="grid gap-10 md:grid-cols-2">
@@ -60,6 +62,7 @@ export let data;
             <li><a class="link link-hover" href="/blog" sveltekit:prefetch>Blog</a></li>
             <li><a class="link link-hover" href="/pricing" sveltekit:prefetch>Pricing</a></li>
             <li><a class="link link-hover" href="/contact_us" sveltekit:prefetch>Contact</a></li>
+            <li><a class="link link-hover" href="/account">Open App</a></li>
           </ul>
         </nav>
 
