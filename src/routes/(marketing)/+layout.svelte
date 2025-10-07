@@ -52,34 +52,34 @@ export let data;
   </main>
 
   <!-- FOOTER: two columns (Explore + About) side-by-side -->
-  <footer class="bg-base-200 mt-10">
-    <div class="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 py-10">
-      <div class="grid gap-10 md:grid-cols-2">
-        <!-- Left: Explore -->
-        <nav>
-    <a class="link link-hover my-1" href="/blog">Blog</a>
-    <a class="link link-hover my-1" href="/pricing">Pricing</a>
-    <a class="link link-hover my-1" href="/contact_us">Contact</a>
-    <a class="link link-hover my-1" href="/account">Open App</a>
-    <a class="link link-hover my-1" href="/legal/terms">Terms</a>
-    <a class="link link-hover my-1" href="/legal/privacy">Privacy</a>
-  </nav>
-
-        <!-- Right: Brand overview -->
-        <div>
-          <h6 class="text-2xl font-bold">Tradie Assistant</h6>
-          <p class="opacity-80 mt-2 max-w-prose">
-            Tradie Assistant is your go-to AI-powered tool, designed to streamline everyday tasks for tradies.
-            From generating instant job estimates to crafting custom client communications, our app helps you save time,
-            reduce costs, and improve your service quality. Experience a smarter way to manage your trade work —
-            join Tradie Assistant today and transform your business!
-          </p>
-        </div>
-      </div>
-
-      <div class="divider my-6"></div>
-      <div class="text-xs opacity-70">© 2025 Tradie Assistant</div>
+  <footer class="footer bg-base-200 text-base-content p-10 mt-16">
+  <div class="container mx-auto grid grid-cols-1 sm:grid-cols-2 gap-8">
+    <div>
+      <span class="footer-title opacity-80">Explore</span>
+      <nav>
+        <ul class="space-y-1">
+          <li><a class="link link-hover" href="/blog">Blog</a></li>
+          <li><a class="link link-hover" href="/pricing">Pricing</a></li>
+          <li><a class="link link-hover" href="/contact_us">Contact</a></li>
+          <li><a class="link link-hover" href="/account">Open App</a></li>
+          <li><a class="link link-hover" href="/legal/terms">Terms</a></li>
+          <li><a class="link link-hover" href="/legal/privacy">Privacy</a></li>
+        </ul>
+      </nav>
     </div>
-  </footer>
+
+    <div>
+      <span class="footer-title opacity-80">Tradie Assistant</span>
+      <p class="max-w-md text-sm opacity-80">
+        Tradie Assistant is your go-to AI-powered tool, designed to streamline everyday tasks for tradies.
+        From generating instant job estimates to crafting custom client communications, our app helps you
+        save time, reduce costs, and improve your service quality. Experience a smarter way to manage your
+        trade work - join Tradie Assistant today and transform your business!
+      </p>
+      <p class="text-xs opacity-60 mt-3">&copy; 2025 Tradie Assistant</p>
+    </div>
+  </div>
+</footer>
+
 
 </div>

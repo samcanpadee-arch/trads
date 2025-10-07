@@ -111,7 +111,7 @@
 
     <h2>14) Indemnity</h2>
     <p>
-      You agree to indemnify and hold harmless <strong>Ridley Commerce Pty Ltd</strong> from any claims, damages, or expenses arising from your misuse of the Service or violation of these Terms.
+      You agree to indemnify and hold harmless <strong>Tradie Assistant</strong> from any claims, damages, or expenses arising from your misuse of the Service or violation of these Terms.
     </p>
     <h2>15) Suspension &amp; termination</h2>
     <p>
