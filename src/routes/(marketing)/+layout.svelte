@@ -57,14 +57,13 @@ export let data;
       <div class="grid gap-10 md:grid-cols-2">
         <!-- Left: Explore -->
         <nav>
-          <h6 class="footer-title">Explore</h6>
-          <ul class="mt-2 space-y-2">
-            <li><a class="link link-hover" href="/blog" sveltekit:prefetch>Blog</a></li>
-            <li><a class="link link-hover" href="/pricing" sveltekit:prefetch>Pricing</a></li>
-            <li><a class="link link-hover" href="/contact_us" sveltekit:prefetch>Contact</a></li>
-            <li><a class="link link-hover" href="/account">Open App</a></li>
-          </ul>
-        </nav>
+    <a class="link link-hover my-1" href="/blog">Blog</a>
+    <a class="link link-hover my-1" href="/pricing">Pricing</a>
+    <a class="link link-hover my-1" href="/contact_us">Contact</a>
+    <a class="link link-hover my-1" href="/account">Open App</a>
+    <a class="link link-hover my-1" href="/legal/terms">Terms</a>
+    <a class="link link-hover my-1" href="/legal/privacy">Privacy</a>
+  </nav>
 
         <!-- Right: Brand overview -->
         <div>
