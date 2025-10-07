@@ -36,7 +36,7 @@
 </svelte:head>
 
 
-<div class="max-w-md mx-auto px-4 py-10">
+<div class="w-full max-w-lg md:max-w-xl mx-auto px-4 py-10">
   <Auth
     supabaseClient={data.supabase}
     view="sign_in"
