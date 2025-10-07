@@ -35,14 +35,14 @@
   <title>Sign in</title>
 </svelte:head>
 
-<!-- Minimal container with just the auth form -->
+
 <div class="max-w-md mx-auto px-4 py-10">
   <Auth
     supabaseClient={data.supabase}
     view="sign_in"
     redirectTo={`${data.url}/auth/callback`}
     showLinks={false}
-    providers={[]}           <!-- no GitHub/social -->
+    providers={[]}           
     socialLayout="horizontal"
     appearance={sharedAppearance}
     additionalData={undefined}
