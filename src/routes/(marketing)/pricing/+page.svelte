@@ -76,9 +76,11 @@
         </div>
 
         <ul class="mt-4 text-sm space-y-1">
-          <li>✅ Access basic tools</li>
-          <li>✅ Community support</li>
-        </ul>
+<li>✅ 6 Smart Tools: calculator, estimator, proposal, reviews, captions, emails</li>
+<li>✅ Works on phone, tablet, desktop</li>
+<li>✅ Save &amp; reuse outputs</li>
+<li>✅ Email support</li>
+</ul>
 
         <div class="mt-auto pt-6">
           <a class="btn btn-outline w-full" href="/account">Get started</a>
@@ -106,10 +108,12 @@
         </div>
 
         <ul class="mt-4 text-sm space-y-1">
-          <li>✅ Unlimited Tools (quotes, proposals, socials)</li>
-          <li>✅ AI Chat for job notes & emails</li>
-          <li>✅ Single user, cancel anytime</li>
-        </ul>
+<li>✅ Everything in Free</li>
+<li>✅ Smart Chat for advice, drafts, tips</li>
+<li>✅ Longer chats &amp; better session memory</li>
+<li>✅ Priority email support</li>
+<li>✅ 14-day free trial</li>
+</ul>
 
         <div class="mt-auto pt-6">
           <a class="btn btn-primary w-full" href={hrefStandard()}>Get started</a>
@@ -137,10 +141,14 @@
         </div>
 
         <ul class="mt-4 text-sm space-y-1">
-          <li>✅ AI Assistant answers from your manuals, quotes & emails</li>
-          <li>✅ Upload & search your own docs</li>
-          <li>✅ Best for tradies who live in their paperwork</li>
-        </ul>
+<li>✅ Everything in Standard</li>
+<li>✅ Smart Assistant with manuals/standards (references where possible)</li>
+<li>✅ Upload your PDFs &amp; notes (private by default)</li>
+<li>✅ Access shared manuals library</li>
+<li>✅ Higher usage limits</li>
+<li>✅ Priority support</li>
+<li>✅ 14-day free trial</li>
+</ul>
 
         <div class="mt-auto pt-6">
           <a class="btn btn-primary w-full" href={hrefPro()}>Get started</a>
@@ -164,13 +172,18 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>Proposal / Quote generators</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Social post generator</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>General AI Chat</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>AI Assistant (library-powered)</td><td>—</td><td>—</td><td>✅</td></tr>
-        <tr><td>Upload &amp; search your own docs</td><td>—</td><td>—</td><td>✅</td></tr>
-        <tr><td>Email support</td><td>✅</td><td>✅</td><td>✅</td></tr>
-      </tbody>
+<tr><td>6 Smart Tools (calculator, estimator, proposal, reviews, captions, emails)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>Smart Chat (advice and drafting)</td><td>—</td><td>✅</td><td>✅</td></tr>
+<tr><td>Smart Assistant (manual/standards search)</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td>Upload your docs (private by default)</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td>Access shared manual library (sanitised, read-only)</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td>Mobile friendly (phone, tablet, desktop)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>Email support</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>Priority support</td><td>—</td><td>✅</td><td>✅</td></tr>
+<tr><td>14-day free trial (paid plans)</td><td>—</td><td>✅</td><td>✅</td></tr>
+<tr><td>Billing via Stripe (secure; cancel anytime)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>GST invoices available</td><td>✅</td><td>✅</td><td>✅</td></tr>
+</tbody>
     </table>
   </div>
 </section>
