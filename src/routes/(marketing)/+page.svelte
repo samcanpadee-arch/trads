@@ -325,11 +325,66 @@
   <div class="max-w-4xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold">FAQs</h2>
     <div class="mt-4 join join-vertical w-full">
-      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
-        <input type="checkbox" />
-        <div class="collapse-title text-base md:text-lg font-medium">How does the AI understand my questions?</div>
-        <div class="collapse-content text-sm opacity-90">It’s tuned for trade language and job types, so you can talk like a tradie and still get clear, useful answers.</div>
-      </div>
+      
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">How do you look after my data and privacy?</div>
+      <div class="collapse-content"><p>We treat your info like it’s locked in the ute. Your account sits in our secure setup, and we don’t read your chats, generated outputs, or files unless you explicitly share something with support. When we call OpenAI to generate answers, request/response data may be retained by OpenAI for up to 30 days for abuse/safety checks, then deleted unless required by law. API data isn’t used to train OpenAI’s models by default. See our Privacy and Terms for details.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">What happens to manuals or files I upload?</div>
+      <div class="collapse-content"><p>By default, uploads stay private to your account. We index them so the Assistant can pull short, relevant snippets and include those in the prompt to get you a targeted answer. If you tick “Share this upload to help other tradies (no personal data)”, you’re giving us permission to add a sanitised copy into a shared, read-only library so others can benefit from common manuals/standards. OpenAI may retain API logs for up to 30 days for security/abuse monitoring; that retention is on their side and isn’t used for training by default.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">Can I cancel my subscription at any time?</div>
+      <div class="collapse-content"><p>Too easy. Go Account → Billing → Manage billing to open your secure Stripe portal. Cancel any time; your plan stays active until the end of the current period (no pro-rata refunds). We don’t store card details — Stripe handles payments and is PCI DSS Level 1 compliant.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">Can I use Tradie Assistant on multiple devices?</div>
+      <div class="collapse-content"><p>Yep. It’s a web app — use it on your phone on site, laptop in the shed, or tablet in the ute. Same login, same workspace.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">How accurate are the answers?</div>
+      <div class="collapse-content"><p>AI is brilliant at speed and wording, but it’s not a licensed tradie. For anything safety-critical or standards-driven, check the cited page and use your judgement. To lift accuracy, include model numbers, clear photos (if applicable), and relevant manual pages.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">How often do you update the app?</div>
+      <div class="collapse-content"><p>We ship small tweaks most weeks and bigger improvements regularly. Keep an eye on the Blog for notable changes.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">Do you offer a free plan or trial?</div>
+      <div class="collapse-content"><p>Yes. You can use the Smart Tools on a free account. To try Smart Chat and Smart Assistant, start a 14-day free trial — cancel any time from Billing. See the Pricing page for details.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">Do I need to be tech-savvy?</div>
+      <div class="collapse-content"><p>Nope. It’s built for tradies: step-by-step screens, plain language, and job-ready outputs. Type what you need, pick a tool, done.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">How is this different to ChatGPT?</div>
+      <div class="collapse-content"><p>Tradie Assistant is built for trades — much easier for quoting and client comms, privacy-focused, and backed by a large library of manuals, standards, and guides so you can verify answers. And it’s better value for the jobs you do every day.</p></div>
+    </div>
+
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-base font-medium">Need help?</div>
+      <div class="collapse-content"><p>Hit <a class="link" href="/contact_us">Contact</a> or email <a class="link" href="mailto:support@tradieassistant.app">support@tradieassistant.app</a> — we’ll get you sorted.</p></div>
+    </div></div>
       <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
         <input type="checkbox" />
         <div class="collapse-title text-base md:text-lg font-medium">Do you protect my data and privacy?</div>
