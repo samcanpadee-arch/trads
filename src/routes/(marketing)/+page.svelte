@@ -384,26 +384,7 @@
       <input type="checkbox" />
       <div class="collapse-title text-base font-medium">Need help?</div>
       <div class="collapse-content"><p>Hit <a class="link" href="/contact_us">Contact</a> or email <a class="link" href="mailto:support@tradieassistant.app">support@tradieassistant.app</a> — we’ll get you sorted.</p></div>
-    </div></div>
-      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
-        <input type="checkbox" />
-        <div class="collapse-title text-base md:text-lg font-medium">Do you protect my data and privacy?</div>
-        <div class="collapse-content text-sm opacity-90">Yes. Your inputs stay private. We don’t sell your data. Where possible, answers include a reference so you can see what it used.</div>
-      </div>
-      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
-        <input type="checkbox" />
-        <div class="collapse-title text-base md:text-lg font-medium">Can I use it on multiple devices?</div>
-        <div class="collapse-content text-sm opacity-90">Yes. Phone, tablet or laptop — everything stays in sync.</div>
-      </div>
-      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
-        <input type="checkbox" />
-        <div class="collapse-title text-base md:text-lg font-medium">Can I cancel anytime?</div>
-        <div class="collapse-content text-sm opacity-90">Always. No contracts. Use the free tools whenever you like.</div>
-      </div>
-      <div class="collapse collapse-arrow join-item border border-base-300 bg-base-100">
-        <input type="checkbox" />
-        <div class="collapse-title text-base md:text-lg font-medium">Do answers include citations?</div>
-        <div class="collapse-content text-sm opacity-90">Where possible, yes — we include a reference so you can check the source.</div>
+    </div>
       </div>
     </div>
   </div>
