@@ -324,8 +324,8 @@
 <section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
   <div class="max-w-4xl mx-auto">
     <h2 class="text-2xl md:text-3xl font-bold">FAQs</h2>
-    <div class="mt-4 join join-vertical w-full">
-      <div class="collapse collapse-arrow bg-base-200">
+    <div class="mt-4 join join-vertical w-full" space-y-3 md:space-y-4">
+   <div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">How do you look after my data and privacy?</div>
   <div class="collapse-content">
@@ -338,50 +338,50 @@
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">What happens to manuals or files I upload?</div>
   <div class="collapse-content">
     <p>
       By default, uploads stay private to your account. We index them so the Assistant can pull short, relevant snippets and include those
-      in the prompt to get you a targeted answer. If you tick “Share this upload to help other tradies (no personal data)”, you’re giving us
+      in the prompt to get you a targeted answer. If you tick “Share this upload to help other tradies”, you’re giving us
       permission to add a sanitised copy into a shared, read-only library so others can benefit from common manuals/standards.
       OpenAI may retain API logs for up to 30 days for security/abuse monitoring; that retention is on their side and isn’t used for training by default.
     </p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">Can I cancel my subscription at any time?</div>
   <div class="collapse-content">
     <p>
       Too easy. Go <strong>Account → Billing → Manage billing</strong> to open your secure Stripe portal. Cancel any time; your plan stays active
-      until the end of the current period (no pro-rata refunds). We don’t store card details — Stripe handles payments and is PCI DSS Level 1 compliant.
+      until the end of the current period. We don’t store card details - Stripe handles payments and is PCI DSS Level 1 compliant.
     </p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">Can I use Tradie Assistant on multiple devices?</div>
   <div class="collapse-content">
-    <p>Yep. It’s a web app — use it on your phone on site, laptop in the shed, or tablet in the ute. Same login, same workspace.</p>
+    <p>Yep. It’s a web app - use it on your phone on site, laptop in the shed, or tablet in the ute. Same login, same workspace.</p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">How accurate are the answers?</div>
   <div class="collapse-content">
     <p>
       AI is brilliant at speed and wording, but it’s not a licensed tradie. For anything safety-critical or standards-driven, check the cited page
-      and use your judgement. To lift accuracy, include model numbers, clear photos (if applicable), and relevant manual pages.
+      and use your judgement. 
     </p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">How often do you update the app?</div>
   <div class="collapse-content">
@@ -389,18 +389,18 @@
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">Do you offer a free plan or trial?</div>
   <div class="collapse-content">
     <p>
-      Yes. You can use the Smart Tools on a free account. To try Smart Chat and Smart Assistant, start a 14-day free trial — cancel any time
+      Yes. You can use the Smart Tools on a free account. To try Smart Chat and Smart Assistant, start a 14-day free trial - cancel any time
       from Billing. See the <a class="link" href="/pricing">Pricing</a> page for details.
     </p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">Do I need to be tech-savvy?</div>
   <div class="collapse-content">
@@ -408,18 +408,18 @@
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">How is this different to ChatGPT?</div>
   <div class="collapse-content">
     <p>
-      Tradie Assistant is built for trades — much easier for quoting and client comms, privacy-focused, and backed by a large library of manuals,
-      standards, and guides so you can verify answers. And it’s better value for the jobs you do every day.
+      Tradie Assistant is built for trades — much easier to use, privacy-focused, and backed by a large library of manuals,
+      Australian standards, and guides so you can verify answers. And it’s better value for the jobs you do every day.
     </p>
   </div>
 </div>
 
-<div class="collapse collapse-arrow bg-base-200">
+<div class="collapse collapse-arrow bg-base-200 my-3 md:my-4">
   <input type="checkbox" />
   <div class="collapse-title text-base font-medium">Need help?</div>
   <div class="collapse-content">
@@ -429,6 +429,7 @@
     </p>
   </div>
 </div>
+
 
     </div>
   </div>
