@@ -4,7 +4,7 @@
 
 <svelte:head>
   <title>Terms of Service — Tradie Assistant</title>
-  <meta name="description" content="Terms of Service for Tradie Assistant. Subscription, acceptable use, AI outputs, Smart Assistant document handling, liability and contact details." />
+  <meta name="description" content="Terms of Service for Tradie Assistant (TAI). Subscription, acceptable use, AI outputs, Smart Assistant document handling, liability and contact details." />
   <meta name="robots" content="index,follow" />
 </svelte:head>
 
@@ -17,14 +17,14 @@
   <div class="prose prose-slate max-w-none">
     <h2>1) About these Terms</h2>
     <p>
-      These Terms govern your access to and use of Tradie Assistant (“we”, “us”, “our”) — including our website and app features:
-      Smart Tools, Smart Chat, and Smart Assistant. By using the Service, you agree to these Terms and our
-      <a class="link" href="/legal/privacy">Privacy Policy</a>. If you’re using Tradie Assistant on behalf of a business, you confirm you have authority to bind the business.
+      These Terms govern your access to and use of Tradie Assistant (“TAI”, “we”, “us”, “our”) — including our website and app features:
+      Smart Tools, Smart Chat, and Smart Assistant. By using TAI, you agree to these Terms and our
+      <a class="link" href="/legal/privacy">Privacy Policy</a>. If you’re using TAI on behalf of a business, you confirm you have authority to bind the business.
     </p>
 
     <h2>2) Key definitions</h2>
     <ul>
-      <li><strong>Service:</strong> the Tradie Assistant website and app.</li>
+      <li><strong>Service / TAI:</strong> the Tradie Assistant website and app.</li>
       <li><strong>Smart Tools:</strong> our six focused tools (Material &amp; Cost Calculator, Job Estimation Wizard, Sales Proposal Generator, Review Responder, Social Post Generator, Email Template Generator).</li>
       <li><strong>Smart Chat:</strong> AI chat for general guidance and drafting.</li>
       <li><strong>Smart Assistant:</strong> answers that can cite from manuals/guides/standards, including documents you upload.</li>
@@ -55,11 +55,11 @@
       <li>Don’t resell, sublicense, or misrepresent our Service without permission.</li>
     </ul>
 
-    <h2>6) AI outputs &amp; professional responsibility</h2>
-    <p><strong>AI Disclaimer.</strong> Tradie Assistant uses artificial intelligence to generate content and provide information. Outputs can be incorrect or incomplete.</p>
+    <h2>6) AI outputs &amp; professional responsibility (important)</h2>
+    <p><strong>AI Disclaimer.</strong> TAI uses artificial intelligence to generate content and provide information. Outputs can be incorrect or incomplete.</p>
     <ul>
       <li>Outputs are for informational purposes and productivity support — not a substitute for professional advice (including legal, financial, compliance, medical, or psychological).</li>
-      <li>We do not guarantee that Tradie Assistant will be error-free, uninterrupted, or that AI outputs will always be accurate.</li>
+      <li>We do not guarantee that TAI will be error-free, uninterrupted, or that AI outputs will always be accurate.</li>
       <li>You must verify outputs before relying on them in real-world situations and remain responsible for compliance with applicable codes and standards.</li>
     </ul>
 
@@ -90,7 +90,7 @@
     <h2>11) Intellectual property &amp; feedback</h2>
     <p>
       We own all rights in the Service and our brand. You own your content and Documents.
-      If you give us feedback or suggestions, you grant us a royalty-free licence to use them to improve the Service.
+      If you give us feedback or suggestions, you grant us a royalty-free licence to use them to improve TAI.
     </p>
 
     <h2>12) Warranties &amp; disclaimers; Australian Consumer Law</h2>
@@ -102,16 +102,16 @@
     <h2>13) Limitation of liability</h2>
     <p><strong>To the fullest extent permitted by law:</strong></p>
     <ul>
-      <li>We are not liable for any damages resulting from the use or inability to use Tradie Assistant.</li>
-      <li>We do not guarantee that Tradie Assistant will be error-free, uninterrupted, or that AI outputs will always be accurate.</li>
-      <li>Your sole remedy for dissatisfaction with the Service is to stop using the Service.</li>
+      <li>We are not liable for any damages resulting from the use or inability to use TAI.</li>
+      <li>We do not guarantee that TAI will be error-free, uninterrupted, or that AI outputs will always be accurate.</li>
+      <li>Your sole remedy for dissatisfaction with TAI is to stop using the Service.</li>
       <li><strong>Liability cap:</strong> for paid users, our total liability is capped at the fees you paid to us for the Service in the 12 months before the claim arose; for free-tier users, AUD&nbsp;100.</li>
       <li>No indirect, special, incidental, punitive, or consequential loss.</li>
     </ul>
 
     <h2>14) Indemnity</h2>
     <p>
-      You agree to indemnify and hold harmless <strong>Tradie Assistant</strong> from any claims, damages, or expenses arising from your misuse of the Service or violation of these Terms.
+      You agree to indemnify and hold harmless <strong>Ridley Commerce Pty Ltd</strong> from any claims, damages, or expenses arising from your misuse of TAI or violation of these Terms.
     </p>
     <h2>15) Suspension &amp; termination</h2>
     <p>
