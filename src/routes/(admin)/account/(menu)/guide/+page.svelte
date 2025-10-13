@@ -5,7 +5,7 @@
 <div class="max-w-5xl mx-auto p-4 md:p-6">
   <!-- Title + intro -->
   <header class="mb-6 md:mb-8">
-    <h1 class="text-2xl md:text-3xl font-semibold">Get the Best Out of Trads</h1>
+    <h1 class="text-2xl md:text-3xl font-semibold">Get the Best Out of Tradie Assistant</h1>
     <p class="text-base-content/70 mt-2">
       Three parts working together: <strong>Smart Tools</strong> for numbers and tidy docs,
       <strong>Smart Chat</strong> for everyday messages, and <strong>Smart Assistant</strong> for technical answers.
