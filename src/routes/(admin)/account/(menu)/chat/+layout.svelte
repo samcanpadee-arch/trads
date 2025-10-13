@@ -6,8 +6,8 @@
   <section class="max-w-3xl mx-auto px-4 py-10">
     <div class="alert alert-info">
       <span>
-        <strong>Chat is a Standard-plan feature.</strong>
-        Upgrade to unlock AI Chat (included in Standard and Pro).
+        <strong>Smart Chat is a Standard-plan feature.</strong>
+        Upgrade to unlock Smart Chat (included in Standard and Pro subscriptions).
       </span>
     </div>
     <div class="mt-4 flex gap-3">

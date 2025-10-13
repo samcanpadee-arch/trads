@@ -6,8 +6,8 @@
   <section class="max-w-3xl mx-auto px-4 pt-6">
     <div class="alert alert-info">
       <span>
-        <strong>Assistant is a Pro-plan feature.</strong>
-        Upgrade to unlock the AI Assistant with your manuals, standards and past jobs.
+        <strong>Smart Assistant is a Pro-plan feature.</strong>
+        Upgrade to unlock the Smart Assistant to get specific and technical help with manuals, guides, standards, and more. 
       </span>
     </div>
     <div class="mt-4 flex gap-3">
