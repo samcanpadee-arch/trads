@@ -92,8 +92,8 @@ function toggleBtn(active: boolean) {
           <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
-              <p class="font-medium">Save, reuse &amp; share templates</p>
-              <p class="text-gray-500">Build once, reuse on every job or hand-off to your crew.</p>
+              <p class="font-medium">Ready-to-send outputs every time</p>
+              <p class="text-gray-500">Copy or download polished quotes, emails and socials in seconds.</p>
             </div>
           </li>
           <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
@@ -112,7 +112,7 @@ function toggleBtn(active: boolean) {
     </div>
 
     <!-- Standard -->
-    <div class="card card-bordered shadow-lg h-full border-primary">
+    <div class="card card-bordered shadow-lg h-full">
       <div class="card-body flex flex-col">
         <div class="min-h-24">
           <div class="flex items-center justify-between">
@@ -136,25 +136,25 @@ function toggleBtn(active: boolean) {
         </div>
 
         <ul class="mt-6 space-y-3 text-sm">
-          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
-              <p class="font-medium">Everything in Free, plus more</p>
-              <p class="text-gray-500">Keep all six tools and unlock AI powered workflows.</p>
+              <p class="font-medium">Everything in Free, plus Smart Chat</p>
+              <p class="text-gray-500">Keep all six tools and unlock our AI chat for instant trade answers.</p>
             </div>
           </li>
-          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
               <p class="font-medium">Smart Chat on call</p>
-              <p class="text-gray-500">Ask for advice, draft quotes or polish emails with instant answers.</p>
+              <p class="text-gray-500">Ask for advice, draft quotes or polish emails with fast or best responses tuned for trade jobs.</p>
             </div>
           </li>
-          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
-              <p class="font-medium">Longer chats that remember the job</p>
-              <p class="text-gray-500">Stay in context across site visits, follow-ups and revisions.</p>
+              <p class="font-medium">Deep dives without losing momentum</p>
+              <p class="text-gray-500">Ask follow-up questions and refine quotes, emails and scopes in one back-and-forth.</p>
             </div>
           </li>
         </ul>
@@ -194,21 +194,21 @@ function toggleBtn(active: boolean) {
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
               <p class="font-medium">Everything in Standard</p>
-              <p class="text-gray-500">All tools and Smart Chat, with even more AI horsepower.</p>
+              <p class="text-gray-500">All six tools and Smart Chat, plus Assistant upgrades for bigger jobs.</p>
             </div>
           </li>
           <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
-              <p class="font-medium">Smart Assistant on your manuals</p>
-              <p class="text-gray-500">AI trained on your standards, compliance docs and job history.</p>
+              <p class="font-medium">Smart Assistant with manuals &amp; guides</p>
+              <p class="text-gray-500">Tap into thousands of standards, manuals and user guides built into the library.</p>
             </div>
           </li>
           <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
             <span aria-hidden="true" class="mt-1 text-lg">✅</span>
             <div>
-              <p class="font-medium">Priority tradie support</p>
-              <p class="text-gray-500">Jump the queue with help from specialists who know the trades.</p>
+              <p class="font-medium">Bring your own PDFs &amp; notes</p>
+              <p class="text-gray-500">Upload project docs so the Assistant can reference your private material alongside our library.</p>
             </div>
           </li>
         </ul>
@@ -254,15 +254,9 @@ function toggleBtn(active: boolean) {
           <td>✅</td>
         </tr>
         <tr>
-          <td>Smart Assistant (AI trained on your manuals)</td>
+          <td>Smart Assistant (manual library + your uploads)</td>
           <td>—</td>
           <td>—</td>
-          <td>✅</td>
-        </tr>
-        <tr>
-          <td>Save, reuse &amp; share templates</td>
-          <td>✅</td>
-          <td>✅</td>
           <td>✅</td>
         </tr>
         <tr>
@@ -279,12 +273,6 @@ function toggleBtn(active: boolean) {
         </tr>
         <tr>
           <td>14-day free trial</td>
-          <td>—</td>
-          <td>✅</td>
-          <td>✅</td>
-        </tr>
-        <tr>
-          <td>Priority support</td>
           <td>—</td>
           <td>✅</td>
           <td>✅</td>
