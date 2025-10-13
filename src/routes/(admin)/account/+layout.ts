@@ -72,13 +72,7 @@ export const _hasFullProfile = (
   if (!profile) {
     return false
   }
-  if (!profile.full_name) {
-    return false
-  }
-  if (!profile.company_name) {
-    return false
-  }
-  if (!profile.website) {
+  if (!profile.full_name || profile.full_name.trim().length === 0) {
     return false
   }
 

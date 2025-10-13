@@ -231,9 +231,14 @@ export const actions = {
     }
 
     const formData = await request.formData()
-    const fullName = formData.get("fullName") as string
-    const companyName = formData.get("companyName") as string
-    const website = formData.get("website") as string
+    const fullNameEntry = formData.get("fullName")
+    const companyNameEntry = formData.get("companyName")
+    const websiteEntry = formData.get("website")
+
+    const fullName = typeof fullNameEntry === "string" ? fullNameEntry.trim() : ""
+    const companyName =
+      typeof companyNameEntry === "string" ? companyNameEntry.trim() : ""
+    const website = typeof websiteEntry === "string" ? websiteEntry.trim() : ""
 
     let validationError
     const fieldMaxTextLength = 50
@@ -245,19 +250,11 @@ export const actions = {
       validationError = `Name must be less than ${fieldMaxTextLength} characters`
       errorFields.push("fullName")
     }
-    if (!companyName) {
-      validationError =
-        "Company name is required. If this is a hobby project or personal app, please put your name."
-      errorFields.push("companyName")
-    } else if (companyName.length > fieldMaxTextLength) {
+    if (companyName && companyName.length > fieldMaxTextLength) {
       validationError = `Company name must be less than ${fieldMaxTextLength} characters`
       errorFields.push("companyName")
     }
-    if (!website) {
-      validationError =
-        "Company website is required. An app store URL is a good alternative if you don't have a website."
-      errorFields.push("website")
-    } else if (website.length > fieldMaxTextLength) {
+    if (website && website.length > fieldMaxTextLength) {
       validationError = `Company website must be less than ${fieldMaxTextLength} characters`
       errorFields.push("website")
     }
@@ -271,6 +268,9 @@ export const actions = {
       })
     }
 
+    const normalizedCompanyName = companyName.length > 0 ? companyName : null
+    const normalizedWebsite = website.length > 0 ? website : null
+
     // To check if created or updated, check if priorProfile exists
     const { data: priorProfile, error: priorProfileError } = await supabase
       .from("profiles")
@@ -283,8 +283,8 @@ export const actions = {
       .upsert({
         id: user.id,
         full_name: fullName,
-        company_name: companyName,
-        website: website,
+        company_name: normalizedCompanyName,
+        website: normalizedWebsite,
         updated_at: new Date(),
         unsubscribed: priorProfile?.unsubscribed ?? false,
       })
@@ -304,9 +304,19 @@ export const actions = {
     const newProfile =
       priorProfile?.updated_at === null && priorProfileError === null
     if (newProfile) {
+      const adminEmailLines = [
+        `Profile created by ${session.user.email}`,
+        `Full name: ${fullName}`,
+      ]
+      if (normalizedCompanyName) {
+        adminEmailLines.push(`Company name: ${normalizedCompanyName}`)
+      }
+      if (normalizedWebsite) {
+        adminEmailLines.push(`Website: ${normalizedWebsite}`)
+      }
       await sendAdminEmail({
         subject: "Profile Created",
-        body: `Profile created by ${session.user.email}\nFull name: ${fullName}\nCompany name: ${companyName}\nWebsite: ${website}`,
+        body: adminEmailLines.join("\n"),
       })
 
       // Send welcome email

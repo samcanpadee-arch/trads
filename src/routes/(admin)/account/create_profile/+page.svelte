@@ -9,8 +9,6 @@
 
   interface Profile {
     full_name?: string
-    company_name?: string
-    website?: string
   }
 
   interface Props {
@@ -24,8 +22,7 @@
 
   let loading = $state(false)
   let fullName: string = profile?.full_name ?? ""
-  let companyName: string = profile?.company_name ?? ""
-  let website: string = profile?.website ?? ""
+  const REQUIRED_NAME_HELP_TEXT = "Name is required"
 
   const fieldError = (liveForm: FormAccountUpdateResult, name: string) => {
     let errors = liveForm?.errorFields ?? []
@@ -51,7 +48,10 @@
 >
   <div class="flex flex-col w-64 lg:w-80">
     <div>
-      <h1 class="text-2xl font-bold mb-6">Create Profile</h1>
+      <h1 class="text-2xl font-bold mb-2">Create Profile</h1>
+      <p class="text-base-content/80 mb-6">
+        You&apos;re almost there—add your name so we can personalise your workspace.
+      </p>
       <form
         class="form-widget"
         method="POST"
@@ -59,8 +59,9 @@
         use:enhance={handleSubmit}
       >
         <div class="mt-4">
-          <label for="fullName">
-            <span class="text-l text-center">Your Name</span>
+          <label for="fullName" class="flex items-center gap-1 justify-between">
+            <span class="text-l text-left">Your Name</span>
+            <span class="text-xs font-semibold uppercase text-error">Required</span>
           </label>
           <input
             id="fullName"
@@ -72,41 +73,15 @@
               : ''} mt-1 input input-bordered w-full max-w-xs"
             value={form?.fullName ?? fullName}
             maxlength="50"
+            required
+            aria-describedby="fullName-help"
           />
-        </div>
-
-        <div class="mt-4">
-          <label for="companyName">
-            <span class="text-l text-center">Company Name</span>
-          </label>
-          <input
-            id="companyName"
-            name="companyName"
-            type="text"
-            placeholder="Company name"
-            class="{fieldError(form, 'companyName')
-              ? 'input-error'
-              : ''} mt-1 input input-bordered w-full max-w-xs"
-            value={form?.companyName ?? companyName}
-            maxlength="50"
-          />
-        </div>
-
-        <div class="mt-4">
-          <label for="website">
-            <span class="text-l text-center">Company Website</span>
-          </label>
-          <input
-            id="website"
-            name="website"
-            type="text"
-            placeholder="Company website"
-            class="{fieldError(form, 'website')
-              ? 'input-error'
-              : ''} mt-1 input input-bordered w-full max-w-xs"
-            value={form?.website ?? website}
-            maxlength="50"
-          />
+          <p
+            id="fullName-help"
+            class="mt-2 text-sm {fieldError(form, 'fullName') ? 'text-error' : 'text-base-content/70'}"
+          >
+            {fieldError(form, "fullName") ? REQUIRED_NAME_HELP_TEXT : "We use this to personalise your experience."}
+          </p>
         </div>
 
         {#if form?.errorMessage}
