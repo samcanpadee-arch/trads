@@ -3,18 +3,26 @@
 
   // --- selectable lists (restored & expanded) ---
   const trades = [
-  "Electrical","Plumbing","HVAC","General Construction","Carpentry",
-  "Roofing","Tiling","Painting","Landscaping","Other"
-];
+    "Electrical",
+    "Plumbing",
+    "HVAC",
+    "General Construction",
+    "Carpentry",
+    "Roofing",
+    "Tiling",
+    "Painting",
+    "Landscaping",
+    "Other"
+  ];
 
   const focuses = [
-  { value: "general", label: "General help" },
-  { value: "diagnosis", label: "Diagnosis & fault codes" },
-  { value: "install", label: "Installation & commissioning" },
-  { value: "compliance", label: "Compliance, standards & codes" },
-  { value: "maintenance", label: "Maintenance & servicing" },
-  { value: "specs", label: "Parts & specifications" }
-];
+    { value: "general", label: "General help" },
+    { value: "diagnosis", label: "Diagnosis & fault codes" },
+    { value: "install", label: "Installation & commissioning" },
+    { value: "compliance", label: "Compliance, standards & codes" },
+    { value: "maintenance", label: "Maintenance & servicing" },
+    { value: "specs", label: "Parts & specifications" }
+  ];
 
   // --- form state ---
   let trade = "";
@@ -70,7 +78,12 @@
   }
 
   function fillExample() {
-    message = "What clearances and breaker size are required for a wall-mount split AC? Include page references.";
+    trade = "HVAC";
+    brandModel = "Daikin FTXM50";
+    focus = "install";
+    share = false;
+    message =
+      "Need the install clearances and breaker size for a wall-mount split AC in a double brick home. Point me to the pages if you can.";
   }
 
   async function copyAnswer() {
@@ -85,32 +98,35 @@
 </script>
 
 <!-- Header -->
-<header class="mb-6 space-y-2 max-w-4xl mx-auto">
+<header class="mb-6 max-w-4xl mx-auto px-4 space-y-3">
   <h1 class="text-3xl font-bold tracking-tight">Smart Assistant</h1>
-  <p class="text-base opacity-80">
-    Ask the tradie-trained AI anything about installs, servicing, wiring rules or product quirks and get clear answers fast. Toss in manuals, notes or site details and we’ll point you to the right page when we can.
+  <p class="text-base leading-relaxed opacity-80 break-words">
+    Fire off the curly install, compliance or fault-finding questions and the Assistant will pull answers from our stacked manuals
+    library plus the latest regs. Need to sanity-check a job? Feed it the setup and it’ll keep you moving without the run-around.
   </p>
 </header>
 
-<form class="card bg-base-100 border w-full max-w-4xl mx-auto" on:submit|preventDefault={onAsk}>
-  <div class="card-body space-y-6">
-    <div class="rounded-lg bg-base-200/70 p-4 text-sm text-base-content/80">
+<form class="card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm" on:submit|preventDefault={onAsk}>
+  <div class="card-body space-y-8 p-6 sm:p-8">
+    <div class="rounded-lg bg-base-200/70 p-4 text-sm leading-relaxed text-base-content/80 break-words">
       <p class="font-medium text-base-content">Add colour for sharper answers</p>
-      <p>
-        Fill in the optional fields if you can&mdash;things like the trade, brand or standards help the Assistant zoom in quicker. If you just drop the details in your question, that still works a treat.
+      <p class="mt-1">
+        The more you tell us up front, the tighter the response. Pick your trade, name the brand or drop the standards if you can
+        so the Assistant locks onto the right manual faster, but no stress&mdash;you can always type the details straight into your
+        question.
       </p>
     </div>
 
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <!-- Trade -->
-      <div class="form-control">
+      <div class="form-control gap-2">
         <label for="trade" class="label">
           <span class="label-text">Trade (optional)</span>
         </label>
         <select
           id="trade"
           name="trade"
-          class="select select-bordered w-full text-base"
+          class="select select-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
           bind:value={trade}
         >
           <option value="">— Select trade (optional) —</option>
@@ -121,14 +137,14 @@
       </div>
 
       <!-- Brand / Model (single field) -->
-      <div class="form-control">
+      <div class="form-control gap-2">
         <label for="brandModel" class="label">
           <span class="label-text">Brand / Model or Standard (optional)</span>
         </label>
         <input
           id="brandModel"
           type="text"
-          class="input input-bordered w-full text-base"
+          class="input input-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
           placeholder='e.g., "Mitsubishi Heavy SRK63" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
@@ -141,14 +157,14 @@
     </div>
 
     <!-- Focus (optional hint) -->
-    <div class="form-control max-w-md">
+    <div class="form-control max-w-md gap-2">
       <label for="focus" class="label">
         <span class="label-text">Focus (optional)</span>
       </label>
       <select
         id="focus"
         name="focus"
-        class="select select-bordered w-full text-base"
+        class="select select-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
         bind:value={focus}
       >
         {#each focuses as f}
@@ -158,9 +174,9 @@
     </div>
 
     <!-- Files -->
-    <div class="form-control">
+    <div class="form-control gap-3 break-words">
       <label for="files" class="label">
-        <span class="label-text">Attach manuals or notes (PDF)</span>
+        <span class="label-text">Bring your own docs (PDF, optional)</span>
       </label>
 
       <!-- Share with community consent -->
@@ -169,41 +185,41 @@
           <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm" bind:checked={share} />
           <span class="label-text text-sm">Share this upload to help other tradies (no files with personal data).</span>
         </label>
-        <p class="text-xs opacity-70 mt-1">
+        <p class="text-xs opacity-70 mt-1 break-words">
           If unticked, the file is used for this answer only and not added to the shared library.
         </p>
       </div>
 
       <input
         id="files"
-        class="file-input file-input-bordered w-full max-w-2xl text-base"
+        class="file-input file-input-bordered w-full max-w-2xl text-[1.05rem] sm:text-base"
         type="file"
         multiple
         accept=".pdf,.txt,.md"
         on:change={handleFileChange}
       />
       <label class="label">
-        <span class="label-text-alt opacity-70">
-          Max 4 MB per file. We’ll reference your files and cite them where relevant.
+        <span class="label-text-alt opacity-70 break-words">
+          Only upload when you need something outside our shared library of thousands of manuals&mdash;but it’s handy if you’re chasing a specific clause or project doc. Max 4 MB per file.
         </span>
       </label>
     </div>
 
     <!-- Question -->
-    <div class="form-control">
+    <div class="form-control gap-2">
       <label for="message" class="label">
         <span class="label-text">Question</span>
       </label>
       <textarea
         id="message"
-        class="textarea textarea-bordered w-full text-base"
+        class="textarea textarea-bordered w-full min-h-[10rem] text-[1.05rem] sm:text-base leading-relaxed"
         rows="4"
-        placeholder="Explain the job or fault. Include the symptoms, site setup, standards you’re following and anything you’ve already tried."
+        placeholder="Walk through the job like you would on site: trade, equipment, site conditions, Aussie standards in play, what you’ve tried and the answer you’re chasing."
         bind:value={message}
       ></textarea>
     </div>
 
-    <div class="flex items-center justify-end gap-2">
+    <div class="flex flex-wrap items-center gap-3 sm:justify-end">
       <button
         type="button"
         class="btn btn-outline btn-sm"
