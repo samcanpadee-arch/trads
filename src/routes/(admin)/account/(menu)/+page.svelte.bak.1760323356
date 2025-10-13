@@ -60,7 +60,7 @@
   <!-- Hub -->
   <div class="flex items-center justify-between">
     <h2 class="text-base font-semibold">Your hub</h2>
-    <p class="text-xs opacity-70">Everything you need in one place — your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to quote faster, talk clearer, and fix problems on the spot.</p>
+    <p class="text-xs opacity-70">Everything you need in one place — quick, simple, and built for Aussie tradies.</p>
   </div>
 
   <!-- Existing tiles in a grid -->
@@ -68,24 +68,24 @@
     <!-- Chat -->
     <a href="/account/chat" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
-        <h2 class="card-title">Smart Chat</h2>
-        <p class="text-sm opacity-70">Ask anything — write client messages, safety notes, checklists, or quick explainers. Great for clear communication and everyday advice.</p>
+        <h2 class="card-title">Chat</h2>
+        <p class="text-sm opacity-70">Ask anything — jobs, clients, pricing, safety, or business help.</p>
       </div>
     </a>
 
     <!-- AI Assistant -->
     <a href="/account/assistant" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
-        <h2 class="card-title">Smart Assistant</h2>
-        <p class="text-sm opacity-70">The technical brain of your Trads setup — check codes, standards, manuals, and spec sheets. Upload a manual or just ask a question — we’ll reference trusted sources where possible.</p>
+        <h2 class="card-title">AI Assistant</h2>
+        <p class="text-sm opacity-70">Agent-style help for multi-step tasks (coming soon).</p>
       </div>
     </a>
 
     <!-- Tools -->
     <a href="/account/caption" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
-        <h2 class="card-title">Smart Tools</h2>
-        <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>
+        <h2 class="card-title">Tools</h2>
+        <p class="text-sm opacity-70">Smart, trade-ready helpers to draft, estimate, and create client-ready docs.</p>
       </div>
     </a>
   </div>
@@ -95,7 +95,7 @@
     <div class="card-body flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-1">
         <h3 class="text-base font-semibold">Need a hand?</h3>
-        <p class="text-sm opacity-80">Something not working or need a tip? We’re here to help.</p>
+        <p class="text-sm opacity-80">Got a question or something not working right? We’re here to help.</p>
       </div>
       <a
         href="/contact_us"
@@ -109,7 +109,7 @@
 
   <!-- Footer note -->
   <p class="text-xs opacity-60">
-    Remember — AI’s here to save you time, not replace your know-how. Always review before sending to a client.
+    AI can draft and speed things up, but it doesn’t replace your judgement — please review and tweak before sending.
   </p>
 </section>
 
