@@ -65,7 +65,7 @@
     </ul>
     <div class="mt-6 flex gap-3">
       <a href="/" class="btn btn-outline">Back to Home</a>
-      <a href="/account/caption" class="btn btn-primary">Get Started Free</a>
+      <a href="/account/tools" class="btn btn-primary">Get Started Free</a>
     </div>
     <p class="text-xs opacity-60 mt-6">&copy; {year} Tradie Assistant</p>
   </div>

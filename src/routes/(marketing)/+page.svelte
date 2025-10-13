@@ -28,7 +28,7 @@
         Less admin. More tools time. Easy as.
       </p>
       <div class="mt-6">
-        <a href="/account/caption" class="btn btn-primary">Get Started Free</a>
+        <a href="/account/tools" class="btn btn-primary">Get Started Free</a>
       </div>
     </div>
 
@@ -105,7 +105,7 @@
           </div>
         </div>
         <div class="mt-5">
-          <a href="/account/caption" class="btn btn-outline btn-sm">Try it now</a>
+          <a href="/account/tools" class="btn btn-outline btn-sm">Try it now</a>
         </div>
       </div>
       <div class="w-full aspect-[16/10] rounded-2xl border bg-base-200 grid place-items-center text-xs opacity-70">
@@ -441,7 +441,7 @@
     <h2 class="text-2xl md:text-3xl font-bold tracking-tight">Ready to get your time back?</h2>
     <p class="opacity-80 mt-2">Start with the free tools. Add Chat or the Assistant when you’re ready.</p>
     <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="/account/caption" class="btn btn-primary">Get Started Free</a>
+      <a href="/account/tools" class="btn btn-primary">Get Started Free</a>
       <a href="/pricing" class="btn btn-outline">View Pricing</a>
     </div>
   </div>
