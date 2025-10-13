@@ -1,241 +1,407 @@
 <script lang="ts">
-  // Simple section index for mobile jump menu
+  // --- NAV PILLS ---
   const sections = [
-    { id: "smart-tools", label: "Smart Tools" },
-    { id: "smart-chat", label: "Smart Chat" },
-    { id: "smart-assistant", label: "Smart Assistant" },
-    { id: "tips", label: "Tips & Prompts" },
-    { id: "faq", label: "Troubleshooting & FAQ" },
+    { id: "quick-wins", label: "Quick Wins" },
+    { id: "troubleshoot", label: "Troubleshoot" },
+    { id: "safety-codes", label: "Safety & Codes" },
+    { id: "comms", label: "Client Comms" },
+    { id: "team", label: "Team & Training" },
+    { id: "quote-support", label: "Quote Support (Words Only)" },
+    { id: "tips", label: "Tips" }
+  ];
+
+  // --- PROMPT CHIP STATE ---
+  let copiedKey: string | null = null;
+  let copyTimer: any = null;
+  function copyPrompt(key: string, text: string) {
+    navigator.clipboard?.writeText(text);
+    copiedKey = key;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copiedKey = null), 1500);
+  }
+
+  // helper for on:change nav on mobile
+  function jumpTo(id: string) {
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Simple chip renderer data
+  type Chip = { key: string; text: string };
+  const quickWins = {
+    calmCustomer: [
+      { key: "calm-1", text: "Customer cranky about dust in hallway. Keep it calm, say we’ll clean today, offer small discount. Short text." },
+      { key: "calm-2", text: "They say we were late. Apologise once, no excuses. Offer new time window. Keep it friendly." }
+    ] as Chip[],
+    safetyOnePager: [
+      { key: "saf-1", text: "New labourer tomorrow. Simple safety checklist: PPE, ladders, lifting, site sign-in. One page." },
+      { key: "saf-2", text: "Toolbox talk for Monday: wet weather hazards. Dot points only." }
+    ] as Chip[],
+    explainTech: [
+      { key: "tech-1", text: "Explain 'provisional sum' in plain English for a quote email. Two lines max." },
+      { key: "tech-2", text: "Why we’re using low-VOC paint. Two lines. Friendly tone." }
+    ] as Chip[],
+    ruleFast: [
+      { key: "rule-1", text: "AS/NZS 3000 — what’s the rule for RCDs in a kitchen reno? Keep it short." },
+      { key: "rule-2", text: "What clearance do I need in front of a domestic switchboard?" }
+    ] as Chip[]
+  };
+
+  const hvacChips: Chip[] = [
+    { key: "hvac-1", text: "Daikin split throwing F97. What do I check first? Keep it safe." },
+    { key: "hvac-2", text: "Panasonic CS-Z50VKR wall bracket — what torque for M8 bolts?" },
+    { key: "hvac-3", text: "Explain to a client why coil clean is needed. Two lines, plain English." }
+  ];
+  const plumbingChips: Chip[] = [
+    { key: "plum-1", text: "Hot water unit tripping. Give me a safe order to test. Quick list." },
+    { key: "plum-2", text: "Toilet fills slowly after flush. Likely causes? Give two first." },
+    { key: "plum-3", text: "Text to customer: we need to replace isolating valve, small extra cost. Keep it polite." }
+  ];
+  const electricalChips: Chip[] = [
+    { key: "elec-1", text: "3-phase continuity test — safe steps in order. Short." },
+    { key: "elec-2", text: "Downlights with insulation — what does the standard say? Keep it simple." },
+    { key: "elec-3", text: "How to tell client we need an extra RCD — plain English, two lines." }
+  ];
+  const paintingChips: Chip[] = [
+    { key: "paint-1", text: "Wall is chalky. How do I prep so paint sticks? Steps only." },
+    { key: "paint-2", text: "Exterior, windy day — spray or roll? Quick pros/cons." },
+    { key: "paint-3", text: "Message to strata: we need scaffold for 2 days, why + access times." }
+  ];
+
+  const safetyChips: Chip[] = [
+    { key: "sc-1", text: "AS/NZS 3000 — quick summary of the rule for switchboard clearances in a house." },
+    { key: "sc-2", text: "From an SDS: what PPE for Sika 11FC? Short list." },
+    { key: "sc-3", text: "I’m in VIC — what’s the basic rule on smoke alarms for a reno? Keep it simple." },
+    { key: "sc-4", text: "Using the Rinnai B26 manual I uploaded, what’s the gas pressure range?" }
+  ];
+
+  const commsChips: Chip[] = [
+    { key: "cc-1", text: "Running 20 mins late. Send a quick text that’s polite and honest." },
+    { key: "cc-2", text: "We found rotten frame behind the shower — explain scope change, extra day, new cost, get OK." },
+    { key: "cc-3", text: "Payment reminder for Invoice 1043, overdue a week. Friendly but firm." },
+    { key: "cc-4", text: "Booking confirm for Friday 8–12 window. Ask about parking." },
+    { key: "cc-5", text: "Leave-behind message after job: thanks + care tips + call us if issues." }
+  ];
+
+  const teamChips: Chip[] = [
+    { key: "t-1", text: "Apprentice starts Monday. Simple checklist: PPE, sign-in, lifting, ladders, tidy site. One page." },
+    { key: "t-2", text: "Write a short SMS to remind them: steel caps, hi-vis, water bottle." },
+    { key: "t-3", text: "Pressure test a line — steps + pass/fail numbers. One page." },
+    { key: "t-4", text: "Lock-out/tag-out basics for a small site. Short bullet list." }
+  ];
+
+  const quoteSupportChips: Chip[] = [
+    { key: "qs-1", text: "Explain the difference between a quote and an estimate in plain English." },
+    { key: "qs-2", text: "Two-line warranty note for a paint job (workmanship + manufacturer)." },
+    { key: "qs-3", text: "Short list of assumptions I should include for a bathroom repaint." },
+    { key: "qs-4", text: "Email to send with the attached quote: friendly tone, clear next steps." }
   ];
 </script>
 
 <div class="max-w-5xl mx-auto p-4 md:p-6">
-  <!-- Hero -->
+  <!-- HERO -->
   <div class="mb-6 md:mb-8">
-    <h1 class="text-2xl md:text-3xl font-semibold">Getting the Most Out of Trads</h1>
+    <h1 class="text-2xl md:text-3xl font-semibold">Get Results Faster</h1>
     <p class="text-base-content/70 mt-2">
-      Three smart helpers built for Aussie tradies — price jobs, talk to clients, and find answers faster.
-      This guide shows what each one does and how to get the best results.
+      Ask in normal words. Get a tight answer. Use <strong>Smart Chat</strong> for messages and how-tos, and <strong>Smart Assistant</strong> for standards, manuals, and technical checks.
+      Smart Tools for pricing live at <a class="link" href="/account/caption">/account/caption</a>.
     </p>
     <div class="flex flex-wrap gap-2 mt-4">
       <a href="/account/chat" class="btn btn-primary">Open Smart Chat</a>
       <a href="/account/assistant" class="btn btn-secondary">Open Smart Assistant</a>
-      <a href="/account/tools" class="btn">Open Smart Tools</a>
+      <a href="/account/caption" class="btn btn-outline">Open Smart Tools</a>
     </div>
   </div>
 
-  <!-- Mobile TOC -->
-  <div class="md:hidden mb-4">
-    <label class="form-control w-full">
-      <div class="label"><span class="label-text">Jump to section</span></div>
-      <select class="select select-bordered"
-        on:change={(e:any)=>{ const id = e.target.value; id && document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }}>
-        <option value="">Choose…</option>
-        {#each sections as s}<option value={s.id}>{s.label}</option>{/each}
-      </select>
-    </label>
-  </div>
-
-  <!-- Desktop TOC -->
-  <div class="hidden md:flex gap-2 flex-wrap mb-4">
+  <!-- NAV PILLS -->
+  <div class="flex flex-wrap gap-2 mb-4">
     {#each sections as s}
-      <a href={"#"+s.id} class="btn btn-sm">{s.label}</a>
+      <span
+        class="badge badge-ghost cursor-pointer text-sm px-3 py-3 whitespace-nowrap"
+        role="button"
+        on:click={() => jumpTo(s.id)}
+      >{s.label}</span>
     {/each}
   </div>
 
-  <!-- Smart Tools (free) -->
-  <section id="smart-tools" class="scroll-mt-24">
+  <!-- QUICK WINS -->
+  <section id="quick-wins" class="scroll-mt-24">
     <div class="card bg-base-100 border">
       <div class="card-body">
-        <h2 class="card-title">Smart Tools (Free)</h2>
-        <p class="text-base-content/70">
-          Six handy tools to help you price jobs, polish quotes, and handle client comms — no fancy setup needed.
-          Quick wins to save time on paperwork.
-        </p>
+        <h2 class="card-title">Quick Wins</h2>
+        <p class="text-base-content/70">Copy a chip, paste it in the right tool, and go.</p>
 
-        <div class="grid md:grid-cols-3 gap-4 mt-4">
-          <!-- Material & Cost Calculator -->
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <!-- Calm a cranky customer (Chat) -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">Material &amp; Cost Calculator</h3>
-              <p class="text-sm text-base-content/70">
-                Price jobs in minutes — materials, labour &amp; markup sorted.
-              </p>
-              <ul class="list-disc ml-5 text-sm mt-2">
-                <li>Enter quantities, rates, and markup.</li>
-                <li>Generate a clean <em>Costing Summary</em> to paste into quotes.</li>
-              </ul>
-              <p class="text-sm mt-2"><span class="opacity-70">Example:</span> “10m² plasterboard, 4L paint, 2 days labour @ $80/h.”</p>
+              <div class="flex items-center gap-2">
+                <span class="badge badge-primary">Smart Chat</span>
+                <h3 class="font-semibold">Calm a cranky customer</h3>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                {#each quickWins.calmCustomer as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-outline"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <div class="grid md:grid-cols-2 gap-3 mt-4">
+                <div class="card bg-base-200">
+                  <div class="card-body p-3">
+                    <div class="text-xs opacity-70 mb-1">Before</div>
+                    <p class="text-sm">“We were late cause traffic. Sorry.”</p>
+                  </div>
+                </div>
+                <div class="card bg-base-200">
+                  <div class="card-body p-3">
+                    <div class="text-xs opacity-70 mb-1">After</div>
+                    <p class="text-sm">“Hey {`{name}`}, sorry we ran late earlier. We’ll clean up today and knock a bit off the bill to make it right.”</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Job Estimation Wizard -->
+          <!-- Safety one-pager (Chat) -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">Job Estimation Wizard</h3>
-              <p class="text-sm text-base-content/70">
-                Turn a short brief (and optional Costing Summary) into a client-ready quote.
-              </p>
-              <ul class="list-disc ml-5 text-sm mt-2">
-                <li>Outputs: Overview, Scope, Assumptions, Exclusions, Cost Summary.</li>
-              </ul>
+              <div class="flex items-center gap-2">
+                <span class="badge badge-primary">Smart Chat</span>
+                <h3 class="font-semibold">Safety one-pager for the boys</h3>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                {#each quickWins.safetyOnePager as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-outline"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
             </div>
           </div>
 
-          <!-- Comms Generators -->
+          <!-- Explain the tech (Chat) -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">Communication Helpers</h3>
-              <p class="text-sm text-base-content/70">
-                Proposals, Review replies, Emails, and Social posts — tidy and on-brand.
-              </p>
-              <ul class="list-disc ml-5 text-sm mt-2">
-                <li><strong>Sales Proposal</strong> — persuasive proposals from your quote.</li>
-                <li><strong>Review Responder</strong> — reply to Google/Facebook reviews.</li>
-                <li><strong>Email &amp; Social</strong> — short, clear client comms.</li>
-              </ul>
+              <div class="flex items-center gap-2">
+                <span class="badge badge-primary">Smart Chat</span>
+                <h3 class="font-semibold">Explain the tech to a client</h3>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                {#each quickWins.explainTech as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-outline"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="mt-4">
-          <a href="/account/tools" class="btn">Open Smart Tools</a>
+          <!-- Find the rule fast (Assistant) -->
+          <div class="card bg-base-100 border">
+            <div class="card-body">
+              <div class="flex items-center gap-2">
+                <span class="badge badge-secondary">Smart Assistant</span>
+                <h3 class="font-semibold">Find the rule fast</h3>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                {#each quickWins.ruleFast as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-outline"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <p class="text-xs opacity-70 mt-2">Assistant uses a shared AU/NZ library. Uploads are optional.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Smart Chat -->
-  <section id="smart-chat" class="mt-8 scroll-mt-24">
+  <!-- TROUBLESHOOT -->
+  <section id="troubleshoot" class="mt-8 scroll-mt-24">
     <div class="card bg-base-100 border">
       <div class="card-body">
-        <h2 class="card-title">Smart Chat</h2>
-        <p class="text-base-content/70">
-          Ask anything, anytime. Advice, checklists, tips — all in your Aussie voice. No file uploads here.
-        </p>
+        <h2 class="card-title">Troubleshoot</h2>
+        <p class="text-base-content/70">Ask like you talk. Assistant can answer without uploads; attach a PDF if you want it tied to your exact manual.</p>
 
         <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <!-- HVAC -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">How it works</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li>Open <strong>Smart Chat</strong> and type your question.</li>
-                <li>Choose a <strong>Model</strong>:
-                  <ul class="list-disc ml-5 mt-1">
-                    <li><strong>Fast</strong> — quickest replies for short answers.</li>
-                    <li><strong>Better</strong> — slower, more detailed and complete.</li>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-secondary">Smart Assistant</span>
+                <h3 class="font-semibold">HVAC</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {#each hvacChips as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-ghost"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <div class="card bg-base-200 mt-3">
+                <div class="card-body p-3 text-sm">
+                  <span class="opacity-70 text-xs">Example output</span>
+                  <ul class="list-disc ml-5">
+                    <li>Isolate power. Check filters/coil blockage.</li>
+                    <li>Confirm fan spins freely; listen for bearing noise.</li>
+                    <li>Check outdoor airflow + clearances.</li>
                   </ul>
-                </li>
-                <li>Press <kbd>Enter</kbd> or <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> to send.</li>
-              </ul>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Plumbing -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">What to ask</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li>“Safety induction checklist for a new apprentice.”</li>
-                <li>“Client says wall is damp behind vanity — likely causes?”</li>
-                <li>“Polite wording for an invoice follow-up.”</li>
-                <li>“Marketing ideas for winter gutter cleaning in Melbourne.”</li>
-                <li>“How to explain prep &amp; patching to a client in plain English.”</li>
-              </ul>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-secondary">Smart Assistant</span>
+                <h3 class="font-semibold">Plumbing</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {#each plumbingChips as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-ghost"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <div class="card bg-base-200 mt-3">
+                <div class="card-body p-3 text-sm">
+                  <span class="opacity-70 text-xs">Example output</span>
+                  <ul class="list-disc ml-5">
+                    <li>Turn off power/gas. Check PRV + valve operation.</li>
+                    <li>Test element/thermostat with a meter.</li>
+                    <li>Document readings before replacing parts.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <!-- Electrical -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">Pro tips</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li>Be specific: job type, suburb, materials, timeframes.</li>
-                <li>Add your tone: “friendly but professional”, “short and clear”.</li>
-                <li>One goal per message (e.g., a checklist <em>or</em> a client SMS).</li>
-                <li>Use follow-ups — it remembers the chat context.</li>
-              </ul>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-secondary">Smart Assistant</span>
+                <h3 class="font-semibold">Electrical</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {#each electricalChips as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-ghost"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <div class="card bg-base-200 mt-3">
+                <div class="card-body p-3 text-sm">
+                  <span class="opacity-70 text-xs">Example output</span>
+                  <ul class="list-disc ml-5">
+                    <li>Isolate. Lock out. Verify no power.</li>
+                    <li>Test continuity phase-to-phase, then to earth.</li>
+                    <li>Record values; re-energise only after pass.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Painting -->
           <div class="card bg-base-100 border">
             <div class="card-body">
-              <h3 class="font-semibold">Good to know</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li>No file uploads here — use <strong>Smart Assistant</strong> for manuals/codes.</li>
-                <li>It won’t quote exact prices — use <strong>Smart Tools</strong> for costing.</li>
-                <li>For anything technical or standards-based, jump to Assistant.</li>
-              </ul>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-secondary">Smart Assistant</span>
+                <h3 class="font-semibold">Painting</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {#each paintingChips as c}
+                  <button
+                    class="btn btn-xs normal-case rounded-full btn-ghost"
+                    on:click={() => copyPrompt(c.key, c.text)}
+                  >
+                    {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+                  </button>
+                {/each}
+              </div>
+              <div class="card bg-base-200 mt-3">
+                <div class="card-body p-3 text-sm">
+                  <span class="opacity-70 text-xs">Example output</span>
+                  <ul class="list-disc ml-5">
+                    <li>Scrub, rinse, allow to dry; apply sealer for chalky surfaces.</li>
+                    <li>Mask properly; avoid spray in high wind.</li>
+                    <li>Explain scaffold need to strata for safety/compliance.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="mt-4">
-          <a href="/account/chat" class="btn btn-primary">Open Smart Chat</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Smart Assistant -->
-  <section id="smart-assistant" class="mt-8 scroll-mt-24">
+  <!-- SAFETY & CODES -->
+  <section id="safety-codes" class="mt-8 scroll-mt-24">
     <div class="card bg-base-100 border">
       <div class="card-body">
-        <h2 class="card-title">Smart Assistant</h2>
+        <h2 class="card-title">Safety & Codes</h2>
         <p class="text-base-content/70">
-          Your on-site brain — thousands of AU/NZ codes, manufacturer manuals, spec sheets, install guides, SDS, textbooks — plus your PDFs.
-          Upload a manual, ask a question, and we’ll cite the page we used.
+          Use <strong>Smart Assistant</strong> for standards, manuals, SDS and install guides. It can answer from our shared AU/NZ library. Uploads are optional—use them if you want answers tied to your exact document.
         </p>
 
-        <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <h3 class="font-semibold">Fields &amp; options</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li><strong>Trade (optional)</strong> — pick your trade for better context.</li>
-                <li><strong>Brand / Model or Standard</strong> — e.g., “Panasonic CS-Z50VKR” or “AS/NZS 3000”.</li>
-                <li><strong>Focus</strong> — <em>General help</em> or <em>Attach manuals/notes</em>.</li>
-                <li><strong>Upload PDF/TXT</strong> — up to 4&nbsp;MB per file.</li>
-                <li><strong>Share this upload</strong> — help other tradies (no personal data).</li>
-                <li><strong>Question</strong> — describe the issue clearly (symptoms, environment, constraints).</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <h3 class="font-semibold">Example questions</h3>
-              <ul class="list-disc ml-5 text-sm">
-                <li>“AS/NZS 3000: clearance needed for domestic switchboards?”</li>
-                <li>“Torque setting for M8 bolts on this Daikin bracket?”</li>
-                <li>“From this SDS, what PPE is required for the adhesive?”</li>
-                <li>“Compare Rinnai B26 vs B20 flow rates.”</li>
-                <li>“In my uploaded manual, what does error code F97 mean?”</li>
-              </ul>
-            </div>
-          </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          {#each safetyChips as c}
+            <button
+              class="btn btn-xs normal-case rounded-full btn-outline"
+              on:click={() => copyPrompt(c.key, c.text)}
+            >
+              {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+            </button>
+          {/each}
         </div>
 
         <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <h3 class="font-semibold">Example workflow</h3>
-              <ol class="list-decimal ml-5 text-sm">
-                <li>Upload the <em>Rinnai B26 manual (PDF)</em>.</li>
-                <li>Ask: “What’s the required gas pressure range?”</li>
-                <li>Assistant replies with a cited answer, e.g. “See page 12 of Rinnai_B26_Manual.pdf”.</li>
-              </ol>
+          <div class="card bg-base-200">
+            <div class="card-body p-3">
+              <div class="text-xs opacity-70 mb-1">When to upload</div>
+              <ul class="list-disc ml-5 text-sm">
+                <li>Exact model or brand requirements.</li>
+                <li>Site-specific instructions you want referenced.</li>
+                <li>Older manuals that differ from current ones.</li>
+              </ul>
             </div>
           </div>
-
-          <div class="card bg-base-100 border">
-            <div class="card-body">
-              <h3 class="font-semibold">Pro tips</h3>
+          <div class="card bg-base-200">
+            <div class="card-body p-3">
+              <div class="text-xs opacity-70 mb-1">What to expect</div>
               <ul class="list-disc ml-5 text-sm">
-                <li>Use exact model numbers for best results.</li>
-                <li>Attach manuals first, then ask the question.</li>
-                <li>Tick “Share” only if you want to contribute to the shared library.</li>
-                <li>We cite page numbers so you can verify info yourself.</li>
+                <li>Referenced sources where possible (page numbers may not always show).</li>
+                <li>Short summary first; ask for more detail if you need it.</li>
+                <li>Confirm critical safety steps before starting work.</li>
               </ul>
             </div>
           </div>
@@ -248,93 +414,125 @@
     </div>
   </section>
 
-  <!-- Tips & Prompts -->
-  <section id="tips" class="mt-8 scroll-mt-24">
+  <!-- CLIENT COMMS -->
+  <section id="comms" class="mt-8 scroll-mt-24">
     <div class="card bg-base-100 border">
       <div class="card-body">
-        <h2 class="card-title">Quick Tips &amp; Prompts</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <h3 class="font-semibold mb-2">Best practices</h3>
-            <ul class="list-disc ml-5 text-sm">
-              <li>Be specific — job, brand/model, sizes, constraints.</li>
-              <li>Ask one clear question at a time.</li>
-              <li>Mention tone if you want a style (“friendly, short”).</li>
-              <li>Review AI answers and confirm when safety’s involved.</li>
-              <li>Save good prompts so you can reuse them.</li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">Cheat sheet prompts</h3>
-            <ul class="list-disc ml-5 text-sm">
-              <li>“Write a safety induction checklist for a plumbing apprentice.”</li>
-              <li>“Daikin F97 error — likely cause and fix?”</li>
-              <li>“Text client to confirm Friday job time, polite and friendly.”</li>
-              <li>“Summarise this costing for a bathroom reno, client-friendly.”</li>
-              <li>“What does clause 3.9.3 in AS/NZS 3000 refer to?”</li>
-            </ul>
-          </div>
+        <h2 class="card-title">Client Comms (everyday words)</h2>
+        <p class="text-base-content/70">Use <strong>Smart Chat</strong> for quick, clear messages, checklists, and explainers.</p>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          {#each commsChips as c}
+            <button
+              class="btn btn-xs normal-case rounded-full btn-outline"
+              on:click={() => copyPrompt(c.key, c.text)}
+            >
+              {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+            </button>
+          {/each}
         </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="mt-8 scroll-mt-24">
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title">Troubleshooting &amp; FAQ</h2>
-
-        <div class="join join-vertical w-full mt-2">
-          <div class="collapse collapse-arrow join-item border">
-            <input type="checkbox" />
-            <div class="collapse-title text-base font-medium">Nothing shows in the preview?</div>
-            <div class="collapse-content text-sm">
-              <p>Check your internet and click Generate again. If it persists, reload the page.</p>
-            </div>
-          </div>
-
-          <div class="collapse collapse-arrow join-item border">
-            <input type="checkbox" />
-            <div class="collapse-title text-base font-medium">Output too long or too short?</div>
-            <div class="collapse-content text-sm">
-              <p>Ask: “Summarise in 5 bullet points” or “Expand the scope section with 3 more items.”</p>
-            </div>
-          </div>
-
-          <div class="collapse collapse-arrow join-item border">
-            <input type="checkbox" />
-            <div class="collapse-title text-base font-medium">Wrong manual/model in the answer?</div>
-            <div class="collapse-content text-sm">
-              <p>Re-enter the exact model or upload the specific manual first, then ask again.</p>
-            </div>
-          </div>
-
-          <div class="collapse collapse-arrow join-item border">
-            <input type="checkbox" />
-            <div class="collapse-title text-base font-medium">PDF won’t upload?</div>
-            <div class="collapse-content text-sm">
-              <p>Supported types are PDF/TXT. Max 4&nbsp;MB per file — split or compress large files.</p>
-            </div>
-          </div>
-
-          <div class="collapse collapse-arrow join-item border">
-            <input type="checkbox" />
-            <div class="collapse-title text-base font-medium">Do you include GST in totals?</div>
-            <div class="collapse-content text-sm">
-              <p>The calculator can include/exclude GST. Confirm on each quote and note it clearly.</p>
-            </div>
-          </div>
+        <div class="grid md:grid-cols-2 gap-3 mt-4">
+          <div class="card bg-base-200"><div class="card-body p-3">
+            <div class="text-xs opacity-70 mb-1">Before</div>
+            <p class="text-sm">“Invoice overdue. Pay now.”</p>
+          </div></div>
+          <div class="card bg-base-200"><div class="card-body p-3">
+            <div class="text-xs opacity-70 mb-1">After</div>
+            <p class="text-sm">“Hi {`{name}`}, quick reminder about Invoice #1043 from last week. Can you sort it today? Sing out if you need anything.”</p>
+          </div></div>
         </div>
 
         <div class="mt-4">
-          <div class="flex flex-wrap gap-2">
-            <a href="/account/chat" class="btn btn-primary">Open Smart Chat</a>
-            <a href="/account/assistant" class="btn btn-secondary">Open Smart Assistant</a>
-            <a href="/account/tools" class="btn">Open Smart Tools</a>
-          </div>
+          <a href="/account/chat" class="btn btn-primary">Open Smart Chat</a>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- TEAM & TRAINING -->
+  <section id="team" class="mt-8 scroll-mt-24">
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title">Team & Training</h2>
+        <p class="text-base-content/70">Keep it simple and printable. Smart Chat can generate one-pagers and SMS reminders.</p>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          {#each teamChips as c}
+            <button
+              class="btn btn-xs normal-case rounded-full btn-outline"
+              on:click={() => copyPrompt(c.key, c.text)}
+            >
+              {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+            </button>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUOTE SUPPORT (WORDS ONLY) -->
+  <section id="quote-support" class="mt-8 scroll-mt-24">
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title">Quote Support (words only)</h2>
+        <p class="text-base-content/70">
+          This is wording help only — <strong>no pricing</strong>. For numbers, use Smart Tools at <a class="link" href="/account/caption">/account/caption</a>.
+        </p>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          {#each quoteSupportChips as c}
+            <button
+              class="btn btn-xs normal-case rounded-full btn-outline"
+              on:click={() => copyPrompt(c.key, c.text)}
+            >
+              {#if copiedKey === c.key}✓ Copied{:else}Copy prompt{/if}
+            </button>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIPS -->
+  <section id="tips" class="mt-8 scroll-mt-24">
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title">Tips that actually help</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <ul class="list-disc ml-5 text-sm">
+              <li>Say the format you want: “text message,” “two lines,” “bullet list.”</li>
+              <li>Add details that matter: suburb, size, model/standard, time window.</li>
+              <li>One job per prompt. Ask again for a different thing.</li>
+            </ul>
+          </div>
+          <div>
+            <ul class="list-disc ml-5 text-sm">
+              <li><strong>Chat</strong> = messages, lists, advice.</li>
+              <li><strong>Assistant</strong> = standards, manuals, SDS, install guides.</li>
+              <li>If it’s too long: say “shorter.” If too formal: say “more casual.”</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-4">
+          <a href="/account/chat" class="btn btn-primary">Open Smart Chat</a>
+          <a href="/account/assistant" class="btn btn-secondary">Open Smart Assistant</a>
+          <a href="/account/caption" class="btn btn-outline">Open Smart Tools</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOBILE NAV SELECT -->
+  <div class="md:hidden mt-8">
+    <label class="form-control w-full">
+      <div class="label"><span class="label-text">Jump to section</span></div>
+      <select class="select select-bordered" on:change={(e: any) => jumpTo(e.target.value)}>
+        <option value="">Choose…</option>
+        {#each sections as s}<option value={s.id}>{s.label}</option>{/each}
+      </select>
+    </label>
+  </div>
 </div>
