@@ -35,8 +35,8 @@
     <a href="/account/guide" class="btn btn-outline">Tools Guide</a>
   </div>
         <p class="text-sm opacity-80">
-          Your AI on the tools — from site to spreadsheets. Ask for anything: job wording, pricing ideas,
-          client comms, or “how do I fix this?” You’ll get clear, tradie-friendly help in minutes.
+          Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas,
+          client comms, or “how do I fix this?” You’ll get clear, friendly help in seconds.
         </p>
         <!-- Chat CTA removed (reserved for Pro in future) -->
       </div>
@@ -60,7 +60,7 @@
   <!-- Hub -->
   <div class="flex items-center justify-between">
     <h2 class="text-base font-semibold">Your hub</h2>
-    <p class="text-xs opacity-70">Everything you need in one place — your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to quote faster, talk clearer, and fix problems on the spot.</p>
+    <p class="text-xs opacity-70">Everything you need in one place - your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to win work, talk clearer, and fix problems on the spot.</p>
   </div>
 
   <!-- Existing tiles in a grid -->
@@ -69,7 +69,7 @@
     <a href="/account/chat" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
         <h2 class="card-title">Smart Chat</h2>
-        <p class="text-sm opacity-70">Ask anything — write client messages, safety notes, checklists, or quick explainers. Great for clear communication and everyday advice.</p>
+        <p class="text-sm opacity-70">Ask anything - write client messages, safety notes, checklists, or quick explainers. Great for clear communication and everyday advice.</p>
       </div>
     </a>
 
@@ -77,7 +77,7 @@
     <a href="/account/assistant" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
         <h2 class="card-title">Smart Assistant</h2>
-        <p class="text-sm opacity-70">The technical brain of your Trads setup — check codes, standards, manuals, and spec sheets. Upload a manual or just ask a question — we’ll reference trusted sources where possible.</p>
+        <p class="text-sm opacity-70">The technical brain of your setup — check codes, standards, guides, how-tos, manuals, and spec sheets. Upload a manual or just ask a question — we’ll reference trusted sources where possible.</p>
       </div>
     </a>
 
@@ -85,7 +85,7 @@
     <a href="/account/caption" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
         <h2 class="card-title">Smart Tools</h2>
-        <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>
+        <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client marketing docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>
       </div>
     </a>
   </div>

@@ -74,12 +74,12 @@
 </script>
 
 <svelte:head>
-  <title>Chat</title>
+  <title>Smart Chat</title>
 </svelte:head>
 
 <div class="flex flex-col h-full">
   <div class="mb-3 flex items-center gap-3">
-    <h1 class="text-2xl font-bold">Chat</h1>
+    <h1 class="text-2xl font-bold">Smart Chat</h1>
 
     <div class="ml-auto flex items-center gap-2">
       <label class="text-sm opacity-80">Model</label>

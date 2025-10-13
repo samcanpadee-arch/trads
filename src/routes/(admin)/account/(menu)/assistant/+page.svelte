@@ -86,8 +86,8 @@
 
 <!-- Header -->
 <header class="mb-4">
-  <h1 class="text-xl font-semibold">Assistant</h1>
-  <p class="opacity-70 text-sm">Attach manuals or ask general questions. We’ll cite pages when using documents.</p>
+  <h1 class="text-xl font-semibold">Smart Assistant</h1>
+  <p class="opacity-70 text-sm">Get specific detailed answers for rules, standards, troubleshooting and specs. Attach files or ask general questions. We’ll cite pages where possible.</p>
 </header>
 
 <form class="card bg-base-100 border" on:submit|preventDefault={onAsk}>
@@ -141,14 +141,14 @@
     <!-- Files -->
     <div class="form-control">
       <label for="files" class="label">
-        <span class="label-text">Attach manuals or notes (PDF/TXT)</span>
+        <span class="label-text">Attach manuals or notes (PDF)</span>
       </label>
 
       <!-- Share with community consent -->
       <div class="form-control mt-2">
         <label class="label cursor-pointer gap-2">
           <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm" bind:checked={share} />
-          <span class="label-text text-sm">Share this upload to help other tradies (no personal data).</span>
+          <span class="label-text text-sm">Share this upload to help other tradies (no files with personal data).</span>
         </label>
         <p class="text-xs opacity-70 mt-1">
           If unticked, the file is used for this answer only and not added to the shared library.
