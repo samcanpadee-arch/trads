@@ -9,7 +9,9 @@
   let message = $state('');
   let error = $state('');
 
-  async function handleSubmit() {
+  async function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+
     const supabase = data?.supabase;
     const redirectTo = data?.url ? `${data.url}/auth/callback` : undefined;
 
@@ -75,7 +77,7 @@
 </svelte:head>
 
 <div class="w-full max-w-lg md:max-w-xl mx-auto px-4 py-10">
-  <form class="space-y-6" method="post" onsubmit|preventDefault={handleSubmit}>
+  <form class="space-y-6" method="post" onsubmit={handleSubmit}>
     <div class="space-y-4">
       <div class="form-control">
         <label class="label" for="email">
