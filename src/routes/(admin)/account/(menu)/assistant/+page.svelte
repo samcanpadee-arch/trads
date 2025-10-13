@@ -85,20 +85,34 @@
 </script>
 
 <!-- Header -->
-<header class="mb-4">
-  <h1 class="text-xl font-semibold">Smart Assistant</h1>
-  <p class="opacity-70 text-sm">Get specific detailed answers for rules, standards, troubleshooting and specs. Attach files or ask general questions. We’ll cite pages where possible.</p>
+<header class="mb-6 space-y-2 max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold tracking-tight">Smart Assistant</h1>
+  <p class="text-base opacity-80">
+    Ask the tradie-trained AI anything about installs, servicing, wiring rules or product quirks and get clear answers fast. Toss in manuals, notes or site details and we’ll point you to the right page when we can.
+  </p>
 </header>
 
-<form class="card bg-base-100 border" on:submit|preventDefault={onAsk}>
-  <div class="card-body space-y-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<form class="card bg-base-100 border w-full max-w-4xl mx-auto" on:submit|preventDefault={onAsk}>
+  <div class="card-body space-y-6">
+    <div class="rounded-lg bg-base-200/70 p-4 text-sm text-base-content/80">
+      <p class="font-medium text-base-content">Add colour for sharper answers</p>
+      <p>
+        Fill in the optional fields if you can&mdash;things like the trade, brand or standards help the Assistant zoom in quicker. If you just drop the details in your question, that still works a treat.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <!-- Trade -->
       <div class="form-control">
         <label for="trade" class="label">
           <span class="label-text">Trade (optional)</span>
         </label>
-        <select id="trade" name="trade" class="select select-bordered w-full" bind:value={trade}>
+        <select
+          id="trade"
+          name="trade"
+          class="select select-bordered w-full text-base"
+          bind:value={trade}
+        >
           <option value="">— Select trade (optional) —</option>
           {#each trades as t}
             <option value={t}>{t}</option>
@@ -114,8 +128,8 @@
         <input
           id="brandModel"
           type="text"
-          class="input input-bordered w-full"
-          placeholder='e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000"'
+          class="input input-bordered w-full text-base"
+          placeholder='e.g., "Mitsubishi Heavy SRK63" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
         <label class="label">
@@ -127,11 +141,16 @@
     </div>
 
     <!-- Focus (optional hint) -->
-    <div class="form-control">
+    <div class="form-control max-w-md">
       <label for="focus" class="label">
         <span class="label-text">Focus (optional)</span>
       </label>
-      <select id="focus" name="focus" class="select select-bordered w-full max-w-md" bind:value={focus}>
+      <select
+        id="focus"
+        name="focus"
+        class="select select-bordered w-full text-base"
+        bind:value={focus}
+      >
         {#each focuses as f}
           <option value={f.value}>{f.label}</option>
         {/each}
@@ -157,7 +176,7 @@
 
       <input
         id="files"
-        class="file-input file-input-bordered w-full max-w-xl"
+        class="file-input file-input-bordered w-full max-w-2xl text-base"
         type="file"
         multiple
         accept=".pdf,.txt,.md"
@@ -177,9 +196,9 @@
       </label>
       <textarea
         id="message"
-        class="textarea textarea-bordered w-full"
+        class="textarea textarea-bordered w-full text-base"
         rows="4"
-        placeholder="Describe the issue or question. Include context like symptoms, environment, regulations, constraints, etc."
+        placeholder="Explain the job or fault. Include the symptoms, site setup, standards you’re following and anything you’ve already tried."
         bind:value={message}
       ></textarea>
     </div>
