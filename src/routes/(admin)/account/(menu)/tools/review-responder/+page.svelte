@@ -1,4 +1,4 @@
-<!-- /account/caption/review-responder (v1.3 — rich-only, no download, no markdown) -->
+<!-- /account/tools/review-responder (v1.3 — rich-only, no download, no markdown) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -124,7 +124,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
         Hipages and more.
       </p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
   <form

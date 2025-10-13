@@ -1,4 +1,4 @@
-<!-- /account/caption/proposal — Long-form Sales Proposal Generator (no client name input) -->
+<!-- /account/tools/proposal — Long-form Sales Proposal Generator (no client name input) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -98,7 +98,7 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
       <h1 class="text-2xl font-semibold">Sales Proposal Generator</h1>
       <p class="text-sm opacity-70">Generate a detailed, long-form proposal document that sells your value. Pair this with the Job Estimation Wizard for pricing.</p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
   <form class="card bg-base-100 border border-base-300 p-6 space-y-6" on:submit={generate}>

@@ -1,4 +1,4 @@
-<!-- /account/caption -->
+<!-- /account/tools -->
 <svelte:head>
   <title>Smart Tools</title>
 </svelte:head>
@@ -16,7 +16,7 @@
     <!-- Material & Cost Calculator -->
     <a
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
-      href="/account/caption/material-cost"
+      href="/account/tools/material-cost"
       aria-label="Open Material & Cost Calculator"
      
     >
@@ -40,7 +40,7 @@
     <!-- Proposal Builder -->
     <a
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
-      href="/account/caption/proposal"
+      href="/account/tools/proposal"
       aria-label="Open Sales Proposal Generator"
      
     >
@@ -63,7 +63,7 @@
   <!-- Job Estimation Wizard -->
     <a
       class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30"
-      href="/account/caption/job-estimation"
+      href="/account/tools/job-estimation"
       aria-label="Open Job Estimation Wizard"
      
     >
@@ -84,7 +84,7 @@
       </div>
     </a>
     <!-- Review Responder card -->
-  <a href="/account/caption/review-responder" aria-label="Open Review Responder" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+  <a href="/account/tools/review-responder" aria-label="Open Review Responder" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
     <div class="card-body gap-2">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -97,7 +97,7 @@
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
-  <a href="/account/caption/social-post" aria-label="Open Social Media Post Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+  <a href="/account/tools/social-post" aria-label="Open Social Media Post Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
     <div class="card-body gap-2">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -110,7 +110,7 @@
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
-<a href="/account/caption/email-template" aria-label="Open Email Template Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
+<a href="/account/tools/email-template" aria-label="Open Email Template Generator" class="card bg-base-100 border border-base-300 hover:shadow-lg transition focus:outline-none focus:ring focus:ring-primary/30">
     <div class="card-body gap-2">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">

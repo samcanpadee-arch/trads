@@ -1,4 +1,4 @@
-<!-- /account/caption/job-estimation (v3.2 — detailed sections, robust import, editable discounts) -->
+<!-- /account/tools/job-estimation (v3.2 — detailed sections, robust import, editable discounts) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -646,7 +646,7 @@ Thank you for considering our services!`;
         Type a short brief, optionally import materials from the Cost Calculator, and generate a client-ready quote.
       </p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
   <!-- Quick mode -->
@@ -829,7 +829,7 @@ Thank you for considering our services!`;
         <div class="card-body">
           <p class="text-xs opacity-70">
             Tip: Copy the <em>Costing Summary</em> table from the
-            <a href="/account/caption/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
+            <a href="/account/tools/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
           </p>
         </div>
       </div>

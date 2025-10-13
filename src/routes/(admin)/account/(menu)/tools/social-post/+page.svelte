@@ -1,4 +1,4 @@
-<!-- /account/caption/social-post (v1.2 single rich preview + collapsible extras) -->
+<!-- /account/tools/social-post (v1.2 single rich preview + collapsible extras) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -177,7 +177,7 @@ Return ONLY strict JSON:
         platform-savvy, Aussie-friendly tone — ends with a soft CTA.
       </p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
   <form

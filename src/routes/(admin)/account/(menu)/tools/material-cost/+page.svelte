@@ -1,4 +1,4 @@
-<!-- /account/caption/material-cost (v1.3 — clean RichAnswer only, no extra headings, strips currency line) -->
+<!-- /account/tools/material-cost (v1.3 — clean RichAnswer only, no extra headings, strips currency line) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -90,7 +90,7 @@
 <svelte:head><title>Material & Cost Calculator</title></svelte:head>
 
 <header class="flex justify-end mb-4">
-  <a href="/account/caption" class="btn btn-ghost">← Back</a>
+  <a href="/account/tools" class="btn btn-ghost">← Back</a>
 </header>
 
 <div class="max-w-5xl mx-auto p-4 space-y-6">

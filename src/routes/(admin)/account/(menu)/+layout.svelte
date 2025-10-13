@@ -129,7 +129,7 @@
       </li>
       <li>
         <a
-          href="/account/caption"
+          href="/account/tools"
           aria-label="Tools"
           class="flex items-center gap-2"
         >

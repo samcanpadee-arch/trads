@@ -82,7 +82,7 @@
     </a>
 
     <!-- Tools -->
-    <a href="/account/caption" class="card bg-base-100 border hover:shadow">
+    <a href="/account/tools" class="card bg-base-100 border hover:shadow">
       <div class="card-body">
         <h2 class="card-title">Smart Tools</h2>
         <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client marketing docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>

@@ -1,4 +1,4 @@
-<!-- /account/caption/email-template (v1.4 — simplified UI: single required brief, clean spacing) -->
+<!-- /account/tools/email-template (v1.4 — simplified UI: single required brief, clean spacing) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
 
@@ -123,7 +123,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
         Give us a quick summary and we’ll draft a tidy client-ready email.
       </p>
     </div>
-    <a href="/account/caption" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
   <form class="card bg-base-100 border border-base-300 p-6 space-y-6" on:submit={generate}>
