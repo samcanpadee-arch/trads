@@ -77,14 +77,32 @@ function toggleBtn(active: boolean) {
           <div class="text-3xl font-bold">
             A$0.00 <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
           </div>
-          <div class="text-xs mt-1 text-gray-500">No credit card required</div>
+          <div class="text-xs mt-1 text-gray-500">Forever free. No credit card.</div>
+          <div class="text-xs text-gray-500">Unlimited use. Upgrade anytime.</div>
         </div>
 
-        <!-- Top 3 bullets only -->
-        <ul class="mt-4 text-sm space-y-1">
-          <li>✅ 6 Smart Tools (calculator, estimator, proposal)</li>
-          <li>✅ Save &amp; reuse outputs</li>
-          <li>✅ Mobile friendly</li>
+        <ul class="mt-6 space-y-3 text-sm">
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">6 smart trade tools included</p>
+              <p class="text-gray-500">Quotes, proposals, reviews, captions, calculators &amp; more.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Save, reuse &amp; share templates</p>
+              <p class="text-gray-500">Build once, reuse on every job or hand-off to your crew.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Mobile ready for site visits</p>
+              <p class="text-gray-500">Works beautifully on phone, tablet and desktop.</p>
+            </div>
+          </li>
         </ul>
 
         <div class="mt-auto pt-6">
@@ -114,13 +132,31 @@ function toggleBtn(active: boolean) {
             <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
           </div>
           <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
+          <div class="text-xs text-gray-500">Unlimited use. Cancel anytime.</div>
         </div>
 
-        <!-- Top 3 bullets only -->
-        <ul class="mt-4 text-sm space-y-1">
-          <li>✅ Everything in Free</li>
-          <li>✅ Smart Chat (advice &amp; drafts)</li>
-          <li>✅ Longer chats &amp; better session memory</li>
+        <ul class="mt-6 space-y-3 text-sm">
+          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Everything in Free, plus more</p>
+              <p class="text-gray-500">Keep all six tools and unlock AI powered workflows.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Smart Chat on call</p>
+              <p class="text-gray-500">Ask for advice, draft quotes or polish emails with instant answers.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Longer chats that remember the job</p>
+              <p class="text-gray-500">Stay in context across site visits, follow-ups and revisions.</p>
+            </div>
+          </li>
         </ul>
 
         <div class="mt-auto pt-6">
@@ -150,13 +186,31 @@ function toggleBtn(active: boolean) {
             <span class="text-base font-normal text-gray-400">/ {billingInterval}</span>
           </div>
           <div class="text-xs mt-1 text-gray-500">14-day free trial</div>
+          <div class="text-xs text-gray-500">Unlimited use. Cancel anytime.</div>
         </div>
 
-        <!-- Top 3 bullets only -->
-        <ul class="mt-4 text-sm space-y-1">
-          <li>✅ Everything in Standard</li>
-          <li>✅ Smart Assistant (manuals/standards)</li>
-          <li>✅ Upload your PDFs &amp; notes</li>
+        <ul class="mt-6 space-y-3 text-sm">
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Everything in Standard</p>
+              <p class="text-gray-500">All tools and Smart Chat, with even more AI horsepower.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Smart Assistant on your manuals</p>
+              <p class="text-gray-500">AI trained on your standards, compliance docs and job history.</p>
+            </div>
+          </li>
+          <li class="flex gap-3 rounded-lg border border-base-200 bg-base-100/60 p-3 shadow-sm">
+            <span aria-hidden="true" class="mt-1 text-lg">✅</span>
+            <div>
+              <p class="font-medium">Priority tradie support</p>
+              <p class="text-gray-500">Jump the queue with help from specialists who know the trades.</p>
+            </div>
+          </li>
         </ul>
 
         <div class="mt-auto pt-6">
@@ -171,27 +225,76 @@ function toggleBtn(active: boolean) {
 <section class="max-w-6xl mx-auto px-4 pb-12">
   <h2 class="text-2xl font-semibold mb-4 text-center">What’s included</h2>
   <div class="overflow-x-auto">
-    <table class="table w-full">
+    <table class="table table-zebra w-full md:table-fixed">
       <thead>
-        <tr>
-          <th>Feature</th>
-          <th>Free</th>
-          <th>Standard</th>
-          <th>Pro</th>
+        <tr class="text-base">
+          <th class="bg-base-200">Feature</th>
+          <th class="bg-base-200 text-center">Free</th>
+          <th class="bg-base-200 text-center">Standard</th>
+          <th class="bg-base-200 text-center">Pro</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>6 Smart Tools (calculator, estimator, proposal, reviews, captions, emails)</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Smart Chat (advice &amp; drafting)</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Smart Assistant (manual/standards search)</td><td>—</td><td>—</td><td>✅</td></tr>
-        <tr><td>Upload your docs (private by default)</td><td>—</td><td>—</td><td>✅</td></tr>
-        <tr><td>Access shared manual library (sanitised, read-only)</td><td>—</td><td>—</td><td>✅</td></tr>
-        <tr><td>Mobile friendly (phone, tablet, desktop)</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Email support</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Priority support</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>14-day free trial (paid plans)</td><td>—</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Billing via Stripe (secure; cancel anytime)</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>GST invoices available</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      <tbody class="[&>tr>td:nth-child(n+2)]:text-center">
+        <tr>
+          <td>Unlimited usage</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>6 Smart Tools (quotes, proposals, calculators, reviews, captions, emails)</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Smart Chat (AI answers &amp; drafting)</td>
+          <td>—</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Smart Assistant (AI trained on your manuals)</td>
+          <td>—</td>
+          <td>—</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Save, reuse &amp; share templates</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Works on mobile, tablet &amp; desktop</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Self-serve upgrades, downgrades &amp; cancellations</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>14-day free trial</td>
+          <td>—</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>Priority support</td>
+          <td>—</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>GST invoices &amp; Stripe billing</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+        </tr>
       </tbody>
     </table>
   </div>
