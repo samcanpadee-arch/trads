@@ -58,9 +58,9 @@
   </div>
 
   <!-- Hub -->
-  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  <div class="space-y-2 sm:max-w-2xl">
     <h2 class="text-base font-semibold">Your hub</h2>
-    <p class="text-sm opacity-70 sm:max-w-md sm:text-right">
+    <p class="text-sm opacity-70">
       Everything you need in one place - your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to win work,
       talk clearer, and fix problems on the spot.
     </p>

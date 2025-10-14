@@ -174,38 +174,32 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
       <!-- Right column: brand & tone -->
       <div class="space-y-6">
-        <div class="form-control gap-3">
-          <label class="label">
-            <span class="label-text">Email signature / contact details (optional)</span>
-          </label>
+        <label class="form-control gap-3">
+          <span class="label-text">Email signature / contact details (optional)</span>
           <input
             class="input input-bordered w-full"
             bind:value={contact}
             placeholder="e.g. 0400 123 456 · hello@bright.au · bright.au/book"
           />
-        </div>
+        </label>
 
-        <div class="form-control gap-3">
-          <label class="label">
-            <span class="label-text">Business name (optional)</span>
-          </label>
+        <label class="form-control gap-3">
+          <span class="label-text">Business name (optional)</span>
           <input
             class="input input-bordered w-full"
             bind:value={businessName}
             placeholder="e.g. BrightSpark Electrical"
           />
-        </div>
+        </label>
 
-        <div class="form-control gap-3">
-          <label class="label">
-            <span class="label-text">Tone</span>
-          </label>
+        <label class="form-control gap-3">
+          <span class="label-text">Tone</span>
           <select class="select select-bordered w-full" bind:value={tone} aria-label="Tone">
             <option>Professional</option>
             <option>Friendly</option>
             <option>Casual Aussie</option>
           </select>
-        </div>
+        </label>
 
         <label class="label cursor-pointer justify-start gap-3">
           <input type="checkbox" class="checkbox" bind:checked={keepItShort} />
