@@ -106,8 +106,11 @@
   </p>
 </header>
 
-<form class="card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm" on:submit|preventDefault={onAsk}>
-  <div class="card-body space-y-8 p-6 sm:p-8">
+<form
+  class="assistant-form card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm px-3 sm:px-0"
+  on:submit|preventDefault={onAsk}
+>
+  <div class="card-body space-y-8 p-5 sm:p-8">
     <div class="rounded-lg bg-base-200/70 p-4 text-sm leading-relaxed text-base-content/80 break-words">
       <p class="font-medium text-base-content">Add colour for sharper answers</p>
       <p class="mt-1">
@@ -126,7 +129,7 @@
         <select
           id="trade"
           name="trade"
-          class="select select-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
+          class="select select-bordered w-full min-h-[3.25rem]"
           bind:value={trade}
         >
           <option value="">— Select trade (optional) —</option>
@@ -144,7 +147,7 @@
         <input
           id="brandModel"
           type="text"
-          class="input input-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
+          class="input input-bordered w-full min-h-[3.25rem]"
           placeholder='e.g., "Mitsubishi Heavy SRK63" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
@@ -164,7 +167,7 @@
       <select
         id="focus"
         name="focus"
-        class="select select-bordered w-full min-h-[3rem] text-[1.05rem] sm:text-base"
+        class="select select-bordered w-full min-h-[3.25rem]"
         bind:value={focus}
       >
         {#each focuses as f}
@@ -192,17 +195,18 @@
 
       <input
         id="files"
-        class="file-input file-input-bordered w-full max-w-2xl text-[1.05rem] sm:text-base"
+        class="file-input file-input-bordered w-full max-w-2xl"
         type="file"
         multiple
         accept=".pdf,.txt,.md"
         on:change={handleFileChange}
       />
-      <label class="label">
-        <span class="label-text-alt opacity-70 break-words">
-          Only upload when you need something outside our shared library of thousands of manuals&mdash;but it’s handy if you’re chasing a specific clause or project doc. Max 4 MB per file.
-        </span>
-      </label>
+      <div class="text-xs sm:text-sm opacity-70 leading-relaxed space-y-1 break-words">
+        <p>
+          Only upload when you need something outside our shared library of thousands of manuals&mdash;it’s still gold if you’re chasing a specific clause or project doc.
+        </p>
+        <p>Max 4 MB per file.</p>
+      </div>
     </div>
 
     <!-- Question -->
@@ -212,7 +216,7 @@
       </label>
       <textarea
         id="message"
-        class="textarea textarea-bordered w-full min-h-[10rem] text-[1.05rem] sm:text-base leading-relaxed"
+        class="textarea textarea-bordered w-full min-h-[10rem] leading-relaxed"
         rows="4"
         placeholder="Walk through the job like you would on site: trade, equipment, site conditions, Aussie standards in play, what you’ve tried and the answer you’re chasing."
         bind:value={message}
@@ -266,3 +270,32 @@
     <!-- /Answer -->
   </div>
 </form>
+
+<style>
+  :global(.assistant-form .card-body) {
+    overflow-wrap: anywhere;
+  }
+
+  :global(.assistant-form select),
+  :global(.assistant-form select option),
+  :global(.assistant-form input[type="text"]),
+  :global(.assistant-form textarea),
+  :global(.assistant-form .file-input) {
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  @media (min-width: 640px) {
+    :global(.assistant-form select),
+    :global(.assistant-form select option),
+    :global(.assistant-form input[type="text"]),
+    :global(.assistant-form textarea),
+    :global(.assistant-form .file-input) {
+      font-size: 1rem;
+    }
+  }
+
+  :global(.assistant-form .file-input::file-selector-button) {
+    font-size: inherit;
+  }
+</style>
