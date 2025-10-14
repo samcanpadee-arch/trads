@@ -78,10 +78,17 @@
 </svelte:head>
 
 <div class="flex flex-col h-full">
-  <div class="mb-3 flex items-center gap-3">
-    <h1 class="text-2xl font-bold">Smart Chat</h1>
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+    <div class="space-y-2">
+      <h1 class="text-3xl font-bold tracking-tight">Smart Chat</h1>
+      <p class="text-base leading-relaxed text-base-content/80 text-pretty">
+        Need to bounce a quick idea off someone who speaks tradie? Fire it into Smart Chat and you’ll get fast, plain-English
+        answers without waiting on hold. It remembers the convo, keeps things on the tools, and shouts out next steps like a
+        switched-on mate in the ute.
+      </p>
+    </div>
 
-    <div class="ml-auto flex items-center gap-2">
+    <div class="sm:ml-auto flex items-center gap-2">
       <label class="text-sm opacity-80">Model</label>
       <select class="select select-bordered select-sm" bind:value={model} disabled={streaming}>
         {#each models as m}

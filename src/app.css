@@ -39,8 +39,8 @@
   --radius-box: 0.5rem;
 
   /* base sizes */
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
+  --size-selector: 0.55rem;
+  --size-field: 0.6rem;
 
   /* border size */
   --border: 1px;
@@ -71,12 +71,16 @@
 
 @layer base {
   :is(select.select, .select, .input, .textarea, .file-input) {
-    font-size: 1rem;
+    font-size: 1.05rem;
     line-height: 1.5;
   }
 
-  :is(select.select, .select) option {
+  :is(.select-sm, .input-sm, .textarea-sm) {
     font-size: 1rem;
+  }
+
+  :is(select.select, .select) option {
+    font-size: 1.05rem;
   }
 
   @media (max-width: 640px) {
@@ -91,6 +95,18 @@
     :is(select.select, .select) option {
       font-size: 1.05rem;
       line-height: 1.55;
+    }
+
+    :is(.select-sm, .input-sm, .textarea-sm) {
+      font-size: 1.05rem;
+      min-height: 2.75rem;
+      padding-block: 0.55rem;
+    }
+
+    :is(.btn-sm, .btn-xs) {
+      font-size: 0.95rem;
+      min-height: 2.4rem;
+      padding-inline: 1rem;
     }
   }
 }

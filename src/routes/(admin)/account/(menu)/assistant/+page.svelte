@@ -185,9 +185,11 @@
         <div class="form-control">
           <label class="label cursor-pointer flex-wrap items-start gap-3">
             <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm mt-1" bind:checked={share} />
-            <span class="label-text flex-1 text-sm leading-snug break-words">Share this upload to help other tradies (no files with personal data).</span>
+            <span class="label-text flex-1 text-base sm:text-sm leading-snug text-pretty break-words">
+              Share this upload to help other tradies (no files with personal data).
+            </span>
           </label>
-          <p class="text-xs sm:text-sm opacity-70 leading-snug break-words">
+          <p class="text-sm sm:text-xs opacity-70 leading-snug text-pretty break-words">
             If unticked, the file is used for this answer only and not added to the shared library.
           </p>
         </div>

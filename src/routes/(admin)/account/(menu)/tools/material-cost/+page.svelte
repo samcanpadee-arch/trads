@@ -94,9 +94,16 @@
 </header>
 
 <div class="max-w-5xl mx-auto p-4 space-y-6">
-  <div class="flex items-center justify-between gap-3">
-    <h1 class="text-2xl font-bold">Material &amp; Cost Calculator</h1>
-    <div class="flex items-center gap-3">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="space-y-2">
+      <h1 class="text-3xl font-bold tracking-tight">Material &amp; Cost Calculator</h1>
+      <p class="text-base leading-relaxed text-base-content/80 text-pretty">
+        Stack up every nut, bolt and roll of cable in one place, then let the calculator spit out clean totals with markup baked
+        in. It’s built for aussie job sheets, so you can eyeball the margin, tweak discounts and hand a polished summary to the
+        client without faffing around in spreadsheets.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
       <div class="form-control">
         <label class="label"><span class="label-text">Markup % (profit)</span></label>
         <input
