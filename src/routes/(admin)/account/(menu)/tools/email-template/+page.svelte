@@ -153,11 +153,11 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       <!-- Left column: core meta -->
       <div class="space-y-6 lg:col-span-2">
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <label class="form-control gap-3">
+          <label class="form-control block gap-3">
             <span class="label-text">Client name (optional)</span>
             <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan" />
           </label>
-          <label class="form-control gap-3">
+          <label class="form-control block gap-3">
             <span class="label-text">Purpose</span>
             <select class="select select-bordered w-full" bind:value={purpose} aria-label="Purpose">
               <option>Job summary (after completion)</option>
@@ -174,36 +174,44 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
       <!-- Right column: brand & tone -->
       <div class="space-y-6">
-        <label class="form-control gap-3">
-          <span class="label-text">Email signature / contact details (optional)</span>
+        <div class="form-control gap-3">
+          <label class="label">
+            <span class="label-text">Email signature / contact details (optional)</span>
+          </label>
           <input
             class="input input-bordered w-full"
             bind:value={contact}
             placeholder="e.g. 0400 123 456 · hello@bright.au · bright.au/book"
           />
-        </label>
+        </div>
 
-        <label class="form-control gap-3">
-          <span class="label-text">Business name (optional)</span>
+        <div class="form-control gap-3">
+          <label class="label">
+            <span class="label-text">Business name (optional)</span>
+          </label>
           <input
             class="input input-bordered w-full"
             bind:value={businessName}
             placeholder="e.g. BrightSpark Electrical"
           />
-        </label>
+        </div>
 
-        <label class="form-control gap-3">
-          <span class="label-text">Tone</span>
+        <div class="form-control gap-3">
+          <label class="label">
+            <span class="label-text">Tone</span>
+          </label>
           <select class="select select-bordered w-full" bind:value={tone} aria-label="Tone">
             <option>Professional</option>
             <option>Friendly</option>
             <option>Casual Aussie</option>
           </select>
-        </label>
+        </div>
 
         <label class="label cursor-pointer justify-start gap-3">
           <input type="checkbox" class="checkbox" bind:checked={keepItShort} />
-          <span class="label-text">Keep it concise (~150–220 words)</span>
+          <span class="label-text text-xs leading-relaxed text-base-content/70 sm:text-sm"
+            >Keep it concise (~150–220 words)</span
+          >
         </label>
       </div>
     </div>
