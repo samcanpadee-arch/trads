@@ -120,7 +120,9 @@ Return only the email body text (no preface, no quotes, no markdown).`;
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Email Template Generator</h1>
       <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Give us a quick summary and we’ll draft a tidy client-ready email.
+        Drop in the guts of the job and we’ll craft a clear, confident email that
+        sounds like your crew — perfect for progress updates, payment nudges, and
+        post-job wrap ups.
       </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>

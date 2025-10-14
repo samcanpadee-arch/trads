@@ -96,7 +96,11 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Sales Proposal Generator</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">Generate a detailed, long-form proposal document that sells your value. Pair this with the Job Estimation Wizard for pricing.</p>
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
+        Turn a scrappy project brief into a polished, big-wow proposal that shows
+        why your crew is the safe pair of hands. Pair it with the Job Estimation
+        Wizard to lock in the numbers.
+      </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>

@@ -119,9 +119,9 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Review Responder</h1>
       <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Paste a customer review and generate a friendly, on-brand reply with
-        tone control — perfect for Google, Facebook, Instagram, ProductReview,
-        Hipages and more.
+        Drop in any customer feedback and we’ll spin up a personable, Aussie-toned
+        reply that backs your workmanship and keeps the convo rolling on Google,
+        socials, ProductReview, Hipages and more.
       </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>

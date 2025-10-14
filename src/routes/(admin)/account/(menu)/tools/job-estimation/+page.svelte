@@ -643,7 +643,8 @@ Thank you for considering our services!`;
     <div>
       <h1 class="text-2xl font-semibold">Job Estimation Wizard</h1>
       <p class="text-sm opacity-70">
-        Type a short brief, optionally import materials from the Cost Calculator, and generate a client-ready quote.
+        Fire in the job details, pull materials straight from the Cost Calculator,
+        and get a sharp, client-ready estimate that proves you’ve done the maths.
       </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost">← Back</a>
