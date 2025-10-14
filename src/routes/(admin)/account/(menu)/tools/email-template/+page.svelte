@@ -144,17 +144,15 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       {#if __briefInvalid}
         <span class="mt-1 text-xs text-error">Please enter a quick brief.</span>
       {/if}
-      <label class="label">
-        <span class="label-text-alt opacity-70">
-          Tip: If you prefer bullet points, put each point on a new line — we’ll format it nicely.
-        </span>
-      </label>
+      <p class="break-words text-xs leading-relaxed text-base-content/70 sm:text-sm">
+        Tip: If you prefer bullet points, put each point on a new line — we’ll format it nicely.
+      </p>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left column: core meta -->
-      <div class="space-y-5 lg:col-span-2">
-        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div class="space-y-6 lg:col-span-2">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <label class="form-control gap-3">
             <span class="label-text">Client name (optional)</span>
             <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan" />
@@ -175,7 +173,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
 
       <!-- Right column: brand & tone -->
-      <div class="space-y-5">
+      <div class="space-y-6">
         <label class="form-control gap-3">
           <span class="label-text">Email signature / contact details (optional)</span>
           <input
@@ -217,10 +215,6 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </button>
       <button type="button" class="btn" on:click={useExample}>Use example</button>
       <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-    </div>
-
-    <div class="alert alert-info">
-      <span>Draft only — please review names, dates, and amounts before sending.</span>
     </div>
   </form>
 
