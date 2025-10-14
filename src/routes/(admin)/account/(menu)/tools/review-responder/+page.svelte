@@ -128,13 +128,13 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
   </header>
 
   <form
-    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-5"
+    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6"
     on:submit={generate}
   >
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left: review -->
-      <div class="space-y-3 lg:col-span-2">
-        <label class="form-control">
+      <div class="space-y-5 lg:col-span-2">
+        <label class="form-control gap-3">
           <span class="label-text">Paste the customer review</span>
           <textarea
             class="textarea textarea-bordered h-40 w-full"
@@ -145,8 +145,8 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       </div>
 
       <!-- Right: minimal controls -->
-      <div class="space-y-3">
-        <label class="form-control">
+      <div class="space-y-5">
+        <label class="form-control gap-3">
           <span class="label-text">Business name</span>
           <input
             class="input input-bordered w-full"
@@ -154,15 +154,15 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
             placeholder="e.g. BrightBuild Renovations"
           />
         </label>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="form-control"
+        <div class="grid grid-cols-2 gap-4">
+          <label class="form-control gap-3"
             ><span class="label-text">Customer (optional)</span
             ><input
               class="input input-bordered w-full"
               bind:value={customerName}
               placeholder="e.g. Jordan"
           /></label>
-          <label class="form-control"
+          <label class="form-control gap-3"
             ><span class="label-text">Platform</span>
             <select
               class="select select-bordered w-full"
@@ -179,7 +179,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
           </label>
         </div>
 
-        <label class="form-control">
+        <label class="form-control gap-3">
           <span class="label-text">Tone</span>
           <select
             class="select select-bordered w-full"
@@ -206,7 +206,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-4">
       <button class="btn btn-primary" type="submit" disabled={loading}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Response</span>

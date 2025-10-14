@@ -651,11 +651,11 @@ Thank you for considering our services!`;
   </header>
 
   <!-- Quick mode -->
-  <form class="card bg-base-100 border border-base-300 p-4 space-y-4" on:submit={generate}>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <label class="form-control"><span class="label-text">Client name</span><input class="input input-bordered" bind:value={clientName} /></label>
-      <label class="form-control"><span class="label-text">Site address</span><input class="input input-bordered" bind:value={siteAddress} /></label>
-      <label class="form-control md:col-span-2">
+  <form class="card bg-base-100 border border-base-300 p-5 sm:p-6 space-y-6" on:submit={generate}>
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <label class="form-control gap-3"><span class="label-text">Client name</span><input class="input input-bordered" bind:value={clientName} /></label>
+      <label class="form-control gap-3"><span class="label-text">Site address</span><input class="input input-bordered" bind:value={siteAddress} /></label>
+      <label class="form-control gap-3 md:col-span-2">
         <span class="label-text">Project brief (1–3 sentences)</span>
         <textarea
           class="textarea textarea-bordered h-24"
@@ -665,10 +665,10 @@ Thank you for considering our services!`;
       </label>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Materials -->
       <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-3">
+        <div class="card-body gap-4">
           <h2 class="card-title text-base">Materials (paste → Import)</h2>
           <textarea
             class="textarea textarea-bordered h-28"
@@ -719,7 +719,7 @@ Thank you for considering our services!`;
 
       <!-- Labour / Subs / Equip (optional) -->
       <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-3">
+        <div class="card-body gap-4">
           <h2 class="card-title text-base">Labour (optional)</h2>
           <div class="overflow-x-auto">
             <table class="table table-sm">
@@ -783,20 +783,20 @@ Thank you for considering our services!`;
         <h2 class="card-title text-base">Advanced (optional) <span class="opacity-60 text-xs">(click to expand)</span></h2>
       </summary>
       <div class="px-4 pb-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <label class="form-control"><span class="label-text">Overhead %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={overheadPctWhole} /></label>
-          <label class="form-control"><span class="label-text">Margin %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={marginPctWhole} /></label>
-          <label class="form-control"><span class="label-text">Contingency %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={contingencyPctWhole} /></label>
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <label class="form-control gap-3"><span class="label-text">Overhead %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={overheadPctWhole} /></label>
+          <label class="form-control gap-3"><span class="label-text">Margin %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={marginPctWhole} /></label>
+          <label class="form-control gap-3"><span class="label-text">Contingency %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={contingencyPctWhole} /></label>
         </div>
       </div>
     </details>
 
     <!-- Totals + Actions -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div class="card bg-base-100 border border-base-300">
-        <div class="card-body">
+        <div class="card-body gap-4">
           <h2 class="card-title text-base">Totals</h2>
-          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 text-sm">
+          <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
             <div><div class="opacity-60">Materials</div><div class="font-semibold">{fmt(materialsSubtotal)}</div></div>
             <div><div class="opacity-60">Labour</div><div class="font-semibold">{fmt(labourSubtotal)}</div></div>
             <div><div class="opacity-60">Subs</div><div class="font-semibold">{fmt(subsTotal)}</div></div>
@@ -811,7 +811,7 @@ Thank you for considering our services!`;
       </div>
 
       <div class="card bg-base-100 border border-base-300">
-        <div class="card-body flex flex-wrap items-center gap-3">
+        <div class="card-body flex flex-wrap items-center gap-4">
           <button class="btn btn-primary" type="submit" disabled={loading}>
             {#if loading}<span class="loading loading-dots"></span>{/if}
             <span>Generate Quote</span>
@@ -839,7 +839,7 @@ Thank you for considering our services!`;
 
   <!-- Rich Answer (final rendered quote) -->
   {#if output.trim().length}
-    <div class="card bg-base-100 border mt-2">
+    <div class="card bg-base-100 border mt-4">
       <div class="card-body">
         <RichAnswer text={output} />
       </div>

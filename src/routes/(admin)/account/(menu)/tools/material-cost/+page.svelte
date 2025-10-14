@@ -89,45 +89,46 @@
 
 <svelte:head><title>Material & Cost Calculator</title></svelte:head>
 
-<header class="flex justify-end mb-4">
-  <a href="/account/tools" class="btn btn-ghost">← Back</a>
-</header>
-
-<div class="max-w-5xl mx-auto p-4 space-y-6">
-  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight">Material &amp; Cost Calculator</h1>
-      <p class="text-base leading-relaxed text-base-content/80 text-pretty">
+      <h1 class="text-2xl font-semibold">Material &amp; Cost Calculator</h1>
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80 text-pretty">
         Stack up every nut, bolt and roll of cable in one place, then let the calculator spit out clean totals with markup baked
-        in. It’s built for aussie job sheets, so you can eyeball the margin, tweak discounts and hand a polished summary to the
+        in. It’s built for Aussie job sheets, so you can eyeball the margin, tweak discounts and hand a polished summary to the
         client without faffing around in spreadsheets.
       </p>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="form-control">
-        <label class="label"><span class="label-text">Markup % (profit)</span></label>
+    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
+  </header>
+
+  <div class="rounded-lg border border-base-300 bg-base-100/80 p-4 sm:p-5">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="form-control gap-2" for="markupPct">
+        <span class="label-text">Markup % (profit)</span>
         <input
+          id="markupPct"
           type="number"
-          class="input input-bordered w-full sm:w-28 sm:input-sm"
+          class="input input-bordered w-full"
           min="0"
           step="0.1"
           bind:value={markupPct}
         />
-      </div>
-      <div class="form-control">
-        <label class="label"><span class="label-text">Currency</span></label>
-        <select class="select select-bordered w-full sm:w-28 sm:select-sm" bind:value={currency}>
+      </label>
+      <label class="form-control gap-2" for="currency">
+        <span class="label-text">Currency</span>
+        <select id="currency" class="select select-bordered w-full" bind:value={currency}>
           <option value="AUD">AUD</option>
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
           <option value="GBP">GBP</option>
         </select>
-      </div>
+      </label>
     </div>
   </div>
 
-  <div class="card bg-base-100 border">
-    <div class="card-body">
+  <div class="card w-full border border-base-300 bg-base-100">
+    <div class="card-body gap-6">
       <div class="overflow-x-auto">
         <table class="table">
           <thead>
@@ -200,9 +201,9 @@
         </table>
       </div>
 
-      <div class="flex justify-between items-center pt-4">
+      <div class="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <button class="btn btn-outline w-full sm:w-auto sm:btn-sm" on:click={addRow}>+ Add Material</button>
-        <div class="text-right space-y-1">
+        <div class="space-y-1 text-right">
           <div>
             Total materials: <span class="font-semibold">{money(totalMaterial)}</span>
           </div>
@@ -218,9 +219,9 @@
   </div>
 
   <!-- Costing Summary -->
-  <div class="card bg-base-100 border">
-    <div class="card-body">
-      <div class="flex items-center justify-between">
+  <div class="card w-full border border-base-300 bg-base-100">
+    <div class="card-body gap-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="card-title">Costing Summary</h2>
         <button class="btn btn-primary w-full sm:w-auto sm:btn-sm" on:click={generateSummary} disabled={generating}>
           {generating ? "Generating…" : "Generate"}
@@ -229,7 +230,7 @@
 
       {#if __rich.length}
         <!-- Rich preview only (no extra headings, no markdown fallback) -->
-        <div class="mt-3">
+        <div class="space-y-3">
           <RichAnswer text={__rich} />
           <div class="mt-2">
             <button
@@ -244,4 +245,4 @@
       {/if}
     </div>
   </div>
-</div>
+</section>
