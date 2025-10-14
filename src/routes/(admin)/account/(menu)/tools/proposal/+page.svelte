@@ -78,15 +78,9 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   }
 
   function copyOut() {
-    try { navigator.clipboard.writeText(output || ""); } catch {}
-  }
-
-  function downloadOut() {
-    const blob = new Blob([output || ""], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "proposal.txt"; a.click();
-    URL.revokeObjectURL(url);
+    try {
+      navigator.clipboard.writeText(output || "");
+    } catch {}
   }
 </script>
 
@@ -108,7 +102,7 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   <form class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left: brief -->
-      <div class="space-y-5 lg:col-span-2">
+      <div class="flex flex-col gap-6 lg:col-span-2">
         <label class="form-control gap-3" for="trade">
           <span class="label-text">Trade</span>
           <select id="trade" class="select select-bordered w-full" bind:value={trade} aria-label="Trade">
@@ -132,7 +126,7 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
       </div>
 
       <!-- Right: business meta -->
-      <div class="space-y-5">
+      <div class="space-y-6">
         <label class="form-control gap-3" for="biz">
           <span class="label-text">Business name (optional)</span>
           <input id="biz" class="input input-bordered w-full" bind:value={businessName} placeholder="e.g. BrightSpark Electrical" />
@@ -147,11 +141,6 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
       </button>
       <button type="button" class="btn" on:click={useExample}>Use example</button>
       <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-      <button type="button" class="btn btn-outline" on:click={downloadOut} disabled={!output}>Download .txt</button>
-    </div>
-
-    <div class="alert alert-info">
-      <span>Draft only — review technical details before sending to a client.</span>
     </div>
   </form>
 
@@ -166,7 +155,6 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
           <RichAnswer text={output} />
           <div class="mt-3 flex gap-2">
             <button type="button" class="btn btn-outline btn-sm" on:click={copyOut}>Copy</button>
-            <button type="button" class="btn btn-outline btn-sm" on:click={downloadOut}>Download .txt</button>
           </div>
         </div>
 
