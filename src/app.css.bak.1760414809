@@ -112,24 +112,3 @@ button[disabled].authBtn::before {
   content: "Loading...";
   color: oklch(var(--pc));
 }
-
-/* MOBILE-SELECT-FIX START */
-/* Force native mobile select and kill custom chevron on small screens */
-@media (max-width: 640px) {
-  select.select,
-  .select {
-    appearance: auto !important;
-    -webkit-appearance: menulist !important; /* iOS/Safari */
-    -moz-appearance: auto !important;
-
-    background-image: none !important;       /* remove custom arrow */
-    min-height: 3.25rem;
-    padding-block: .75rem;
-    padding-inline-end: 2.5rem;
-
-    display: inline-block !important;        /* avoid inline-flex quirks */
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-  }
-}
-/* MOBILE-SELECT-FIX END */
