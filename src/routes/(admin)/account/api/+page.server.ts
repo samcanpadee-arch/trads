@@ -82,9 +82,9 @@ export const actions = {
     }
 
     const formData = await request.formData()
-    const newPassword1 = formData.get("newPassword1") as string
-    const newPassword2 = formData.get("newPassword2") as string
-    const currentPassword = formData.get("currentPassword") as string
+    const newPassword1 = formData.get("newPassword1")?.toString() ?? ""
+    const newPassword2 = formData.get("newPassword2")?.toString() ?? ""
+    const currentPassword = formData.get("currentPassword")?.toString() ?? ""
 
     // Can check if we're a "password recovery" session by checking session amr
     // let currentPassword take priority if provided (user can use either form)
@@ -117,11 +117,11 @@ export const actions = {
       validationError = "You must type the new password twice"
       errorFields.push("newPassword2")
     }
-    if (newPassword1.length < 6) {
+    if (newPassword1 && newPassword1.length < 6) {
       validationError = "The new password must be at least 6 charaters long"
       errorFields.push("newPassword1")
     }
-    if (newPassword1.length > 72) {
+    if (newPassword1 && newPassword1.length > 72) {
       validationError = "The new password can be at most 72 charaters long"
       errorFields.push("newPassword1")
     }
