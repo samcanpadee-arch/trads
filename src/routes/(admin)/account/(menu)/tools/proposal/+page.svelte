@@ -96,7 +96,11 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Sales Proposal Generator</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">Generate a detailed, long-form proposal document that sells your value. Pair this with the Job Estimation Wizard for pricing.</p>
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
+        Turn a scrappy project brief into a polished, big-wow proposal that shows
+        why your crew is the safe pair of hands. Pair it with the Job Estimation
+        Wizard to lock in the numbers.
+      </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
@@ -104,8 +108,8 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   <form class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left: brief -->
-      <div class="space-y-4 lg:col-span-2">
-        <label class="form-control" for="trade">
+      <div class="space-y-5 lg:col-span-2">
+        <label class="form-control gap-3" for="trade">
           <span class="label-text">Trade</span>
           <select id="trade" class="select select-bordered w-full" bind:value={trade} aria-label="Trade">
             <option>Electrical</option>
@@ -121,22 +125,22 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
           </select>
         </label>
 
-        <label class="form-control" for="brief">
+        <label class="form-control gap-3" for="brief">
           <span class="label-text">Project brief (1–2 lines)</span>
           <textarea id="brief" class="textarea textarea-bordered h-28 w-full" bind:value={projectBrief} placeholder="e.g. Kitchen renovation with custom cabinetry and engineered stone benchtops."></textarea>
         </label>
       </div>
 
       <!-- Right: business meta -->
-      <div class="space-y-4">
-        <label class="form-control" for="biz">
+      <div class="space-y-5">
+        <label class="form-control gap-3" for="biz">
           <span class="label-text">Business name (optional)</span>
           <input id="biz" class="input input-bordered w-full" bind:value={businessName} placeholder="e.g. BrightSpark Electrical" />
         </label>
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-4">
       <button type="submit" class="btn btn-primary" disabled={loading}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Proposal</span>

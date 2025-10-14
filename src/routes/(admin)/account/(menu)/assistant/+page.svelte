@@ -184,10 +184,18 @@
       <div class="space-y-4 rounded-md border border-base-200/70 bg-base-200/40 p-3">
         <div class="form-control">
           <label class="label cursor-pointer flex-wrap items-start gap-3">
-            <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm mt-1" bind:checked={share} />
-            <span class="label-text flex-1 text-sm leading-snug break-words">Share this upload to help other tradies (no files with personal data).</span>
+            <input
+              type="checkbox"
+              name="share"
+              value="yes"
+              class="checkbox mt-1 sm:checkbox-sm"
+              bind:checked={share}
+            />
+            <span class="label-text flex-1 text-base sm:text-sm leading-snug text-pretty break-words">
+              Share this upload to help other tradies (no files with personal data).
+            </span>
           </label>
-          <p class="text-xs sm:text-sm opacity-70 leading-snug break-words">
+          <p class="text-sm sm:text-xs opacity-70 leading-snug text-pretty break-words">
             If unticked, the file is used for this answer only and not added to the shared library.
           </p>
         </div>
@@ -226,14 +234,14 @@
     <div class="flex flex-wrap items-center gap-3 sm:justify-end">
       <button
         type="button"
-        class="btn btn-outline btn-sm"
+        class="btn btn-outline w-full sm:w-auto sm:btn-sm"
         on:click={fillExample}
         disabled={loading}
         aria-label="Fill with an example question"
       >
         Example
       </button>
-      <button type="submit" class="btn btn-primary" disabled={loading || !message.trim()}>
+      <button type="submit" class="btn btn-primary w-full sm:w-auto" disabled={loading || !message.trim()}>
         {#if loading}
           <span class="loading loading-spinner loading-sm"></span>
           <span>Thinking…</span>
@@ -243,7 +251,7 @@
       </button>
       <button
         type="button"
-        class="btn btn-ghost"
+        class="btn btn-ghost w-full sm:w-auto"
         on:click={() => { message = ""; brandModel = ""; trade = ""; focus = "general"; files = []; answer = ""; errorMsg = ""; share = false; }}
         disabled={loading}
       >
@@ -260,8 +268,13 @@
     {:else if errorMsg}
       <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
     {:else if answer && answer.length > 0}
-      <div class="flex items-center justify-end gap-2 mb-2">
-        <button type="button" class="btn btn-outline btn-xs" on:click={copyAnswer} aria-label="Copy answer">
+      <div class="flex flex-wrap items-center justify-end gap-2 mb-2">
+        <button
+          type="button"
+          class="btn btn-outline w-full sm:w-auto sm:btn-xs"
+          on:click={copyAnswer}
+          aria-label="Copy answer"
+        >
           {#if copied}Copied!{:else}Copy{/if}
         </button>
       </div>

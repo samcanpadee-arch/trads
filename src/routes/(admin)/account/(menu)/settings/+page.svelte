@@ -14,7 +14,11 @@
   <title>Settings</title>
 </svelte:head>
 
-<h1 class="text-2xl font-bold mb-6">Settings</h1>
+<h1 class="text-2xl font-bold mb-2">Settings</h1>
+<p class="mb-6 text-sm text-base-content/80">
+  Tidy up your account details, keep your crew’s info current, and make sure every
+  touch point looks the goods before clients see it.
+</p>
 
 <SettingsModule
   title="Profile"

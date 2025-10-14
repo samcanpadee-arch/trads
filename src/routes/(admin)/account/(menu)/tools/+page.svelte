@@ -7,7 +7,11 @@
   <header class="flex items-start justify-between">
     <div class="flex flex-col gap-1">
       <h1 class="text-2xl font-semibold">Smart Tools</h1>
-      <p class="text-sm opacity-70">Smart, trade-ready assistants to draft proposals, help with marketing and customer support, and turn job details into polished client docs — fast, accurate, and tailored for tradies.</p>
+      <p class="text-sm opacity-70">
+        Your AI toolbelt for Aussie tradies — built to wow clients, keep the
+        pipeline humming, and cut paperwork down to size so you can get back on
+        the tools.
+      </p>
     </div>
   </header>
 
@@ -30,7 +34,10 @@
           </div>
           <h2 class="card-title text-base">Material &amp; Cost Calculator</h2>
         </div>
-        <p class="text-sm opacity-80">Deterministic estimator with optional AI summary. Quickly price jobs and materials.</p>
+        <p class="text-sm opacity-80">
+          Crunch material costs with confidence, then pull the results straight
+          into your quotes without breaking a sweat.
+        </p>
         <div class="mt-2">
           <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
         </div>
@@ -54,7 +61,10 @@
           </div>
           <h2 class="card-title text-base">Sales Proposal Generator</h2>
         </div>
-        <p class="text-sm opacity-80">Create persuasive, long-form proposals that sell your value — pair with Job Estimation for pricing.</p>
+        <p class="text-sm opacity-80">
+          Spin a rough brief into a persuasive, wow-worthy proposal that shows why
+          your crew is the standout choice.
+        </p>
         <div class="mt-2">
           <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
         </div>
@@ -77,7 +87,10 @@
           </div>
           <h2 class="card-title text-base">Job Estimation Wizard</h2>
         </div>
-        <p class="text-sm opacity-80">Quote-style estimate with materials import, labour breakdown, overhead, margin &amp; GST.</p>
+        <p class="text-sm opacity-80">
+          Build out a detailed estimate with materials, labour, overheads and GST
+          ready to send — no spreadsheet wrangling required.
+        </p>
         <div class="mt-2">
           <span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span>
         </div>
@@ -93,7 +106,10 @@
         </div>
         <h2 class="card-title text-base">Review Responder</h2>
       </div>
-      <p class="text-sm opacity-80">Paste a review and generate a friendly, on-brand reply in seconds — with tone control and optional emojis.</p>
+      <p class="text-sm opacity-80">
+        Turn any customer shout-out or gripe into a warm, on-brand reply that keeps
+        your reputation sparkling.
+      </p>
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
@@ -106,7 +122,10 @@
         </div>
         <h2 class="card-title text-base">Social Media Post Generator</h2>
       </div>
-      <p class="text-sm opacity-80">Turn a quick brief into a platform-savvy caption with optional variants, hashtags, and media ideas.</p>
+      <p class="text-sm opacity-80">
+        Feed it a quick brief and get platform-ready captions, hashtags and ideas
+        with just the right Aussie flair.
+      </p>
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>
@@ -119,7 +138,10 @@
         </div>
         <h2 class="card-title text-base">Email Template Generator</h2>
       </div>
-      <p class="text-sm opacity-80">Write client-ready emails fast — progress updates, payment reminders, quote follow-ups, and job summaries.</p>
+      <p class="text-sm opacity-80">
+        Fire off tidy, professional emails for updates, payment nudges and
+        wrap-ups that still sound like you.
+      </p>
       <div class="mt-2"><span class="btn btn-sm btn-primary">Open<span class="ml-1" aria-hidden="true">→</span></span></div>
     </div>
   </a>

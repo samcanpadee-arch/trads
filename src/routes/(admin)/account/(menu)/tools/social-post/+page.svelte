@@ -173,8 +173,9 @@ Return ONLY strict JSON:
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Social Media Post Generator</h1>
       <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Generate a ready-to-post caption from a short brief. Category-aware,
-        platform-savvy, Aussie-friendly tone — ends with a soft CTA.
+        Hand us a quick brief and we’ll whip up a scroll-stopping caption with the
+        right vibe for each platform, a splash of Aussie charm, and a confident
+        call-to-action your followers will actually respond to.
       </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>

@@ -120,7 +120,9 @@ Return only the email body text (no preface, no quotes, no markdown).`;
     <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Email Template Generator</h1>
       <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Give us a quick summary and we’ll draft a tidy client-ready email.
+        Drop in the guts of the job and we’ll craft a clear, confident email that
+        sounds like your crew — perfect for progress updates, payment nudges, and
+        post-job wrap ups.
       </p>
     </div>
     <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
@@ -128,7 +130,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
   <form class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6" on:submit={generate}>
     <!-- Brief (the only required field) -->
-    <div class="form-control">
+    <div class="form-control gap-3">
       <label for="brief" class="label">
         <span class="label-text">Quick brief <span class="text-error">*</span></span>
       </label>
@@ -151,13 +153,13 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left column: core meta -->
-      <div class="space-y-4 lg:col-span-2">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label class="form-control">
+      <div class="space-y-5 lg:col-span-2">
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <label class="form-control gap-3">
             <span class="label-text">Client name (optional)</span>
             <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan" />
           </label>
-          <label class="form-control">
+          <label class="form-control gap-3">
             <span class="label-text">Purpose</span>
             <select class="select select-bordered w-full" bind:value={purpose} aria-label="Purpose">
               <option>Job summary (after completion)</option>
@@ -173,8 +175,8 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
 
       <!-- Right column: brand & tone -->
-      <div class="space-y-4">
-        <label class="form-control">
+      <div class="space-y-5">
+        <label class="form-control gap-3">
           <span class="label-text">Email signature / contact details (optional)</span>
           <input
             class="input input-bordered w-full"
@@ -183,7 +185,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
           />
         </label>
 
-        <label class="form-control">
+        <label class="form-control gap-3">
           <span class="label-text">Business name (optional)</span>
           <input
             class="input input-bordered w-full"
@@ -192,7 +194,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
           />
         </label>
 
-        <label class="form-control">
+        <label class="form-control gap-3">
           <span class="label-text">Tone</span>
           <select class="select select-bordered w-full" bind:value={tone} aria-label="Tone">
             <option>Professional</option>
@@ -208,7 +210,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-4">
       <button class="btn btn-primary" type="submit" disabled={loading || !brief.trim()}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Email</span>
