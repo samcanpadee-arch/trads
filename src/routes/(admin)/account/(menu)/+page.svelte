@@ -58,9 +58,12 @@
   </div>
 
   <!-- Hub -->
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <h2 class="text-base font-semibold">Your hub</h2>
-    <p class="text-xs opacity-70">Everything you need in one place - your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to win work, talk clearer, and fix problems on the spot.</p>
+    <p class="text-sm opacity-70 sm:max-w-md sm:text-right">
+      Everything you need in one place - your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to win work,
+      talk clearer, and fix problems on the spot.
+    </p>
   </div>
 
   <!-- Existing tiles in a grid -->

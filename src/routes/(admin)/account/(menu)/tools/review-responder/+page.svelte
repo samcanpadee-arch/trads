@@ -155,7 +155,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
           />
         </label>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
-          <label class="form-control gap-3">
+          <label class="form-control gap-3 sm:self-start">
             <span class="label-text">Customer (optional)</span>
             <input
               class="input input-bordered w-full"
@@ -163,7 +163,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
               placeholder="e.g. Jordan"
             />
           </label>
-          <label class="form-control gap-3">
+          <label class="form-control gap-3 sm:self-start">
             <span class="label-text">Platform</span>
             <select
               class="select select-bordered w-full"
