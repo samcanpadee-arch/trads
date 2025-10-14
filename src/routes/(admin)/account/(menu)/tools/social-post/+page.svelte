@@ -168,38 +168,38 @@ Return ONLY strict JSON:
 
 <svelte:head><title>Social Media Post Generator</title></svelte:head>
 
-<section class="flex flex-col gap-6">
-  <header class="flex items-start justify-between">
-    <div>
+<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Social Media Post Generator</h1>
-      <p class="text-sm opacity-70">
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
         Generate a ready-to-post caption from a short brief. Category-aware,
         platform-savvy, Aussie-friendly tone — ends with a soft CTA.
       </p>
     </div>
-    <a href="/account/tools" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
   <form
-    class="card bg-base-100 border border-base-300 p-4 space-y-4"
+    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-5"
     on:submit={generate}
   >
     <!-- Brief -->
     <label class="form-control">
       <span class="label-text">Quick brief (1–3 sentences)</span>
       <textarea
-        class="textarea textarea-bordered h-28"
+        class="textarea textarea-bordered h-28 w-full"
         bind:value={brief}
         placeholder="What’s the post about? e.g., Finished a kitchen reno in Coburg; before/after; promo for winter heater servicing; safety tip about RCDs…"
       ></textarea>
     </label>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <!-- Category -->
       <label class="form-control">
         <span class="label-text">Category</span>
         <select
-          class="select select-bordered"
+          class="select select-bordered w-full"
           bind:value={category}
           aria-label="Category"
         >
@@ -216,7 +216,7 @@ Return ONLY strict JSON:
       <label class="form-control">
         <span class="label-text">Tone</span>
         <select
-          class="select select-bordered"
+          class="select select-bordered w-full"
           bind:value={tone}
           aria-label="Tone"
         >
@@ -233,7 +233,7 @@ Return ONLY strict JSON:
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={businessName}
             placeholder="e.g. BrightBuild"
           />
@@ -241,7 +241,7 @@ Return ONLY strict JSON:
         <label class="form-control">
           <span class="label-text">Service area (optional)</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={serviceArea}
             placeholder="e.g. Sydney Inner West"
           />
@@ -249,7 +249,7 @@ Return ONLY strict JSON:
         <label class="form-control">
           <span class="label-text">Phone/URL (optional)</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={contact}
             placeholder="e.g. (02) 1234 5678 or brightbuild.au/book"
           />
@@ -258,7 +258,7 @@ Return ONLY strict JSON:
     </div>
 
     <!-- Platforms -->
-    <div class="card bg-base-100 border border-base-300">
+    <div class="card border border-base-300 bg-base-100">
       <div class="card-body gap-3">
         <h2 class="card-title text-base">Platforms</h2>
         <div class="flex flex-wrap gap-3">
@@ -311,7 +311,7 @@ Return ONLY strict JSON:
     </div>
 
     <!-- Actions -->
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-3">
       <button
         class="btn btn-primary"
         type="submit"
@@ -333,14 +333,14 @@ Return ONLY strict JSON:
 
     <div class="alert alert-info">
       <span
-        >Draft only - review names, details and tone before posting.</span
+        >Draft only — review names, details and tone before posting.</span
       >
     </div>
   </form>
 
   <!-- Single Rich preview card -->
   {#if (__richMain && __richMain.trim().length)}
-    <div class="card bg-base-100 border mt-2">
+    <div class="card mt-2 border border-base-300 bg-base-100">
       <div class="card-body gap-3">
         <!-- No heading (per request) -->
         <RichAnswer text={__richMain} />

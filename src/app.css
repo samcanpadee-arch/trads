@@ -69,6 +69,32 @@
   }
 }
 
+@layer base {
+  :is(select.select, .select, .input, .textarea, .file-input) {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  :is(select.select, .select) option {
+    font-size: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    :is(select.select, .select) {
+      appearance: auto;
+      background-image: none;
+      min-height: 3.25rem;
+      padding-block: 0.75rem;
+      padding-inline-end: 2.5rem;
+    }
+
+    :is(select.select, .select) option {
+      font-size: 1.05rem;
+      line-height: 1.55;
+    }
+  }
+}
+
 a {
   @apply cursor-pointer;
 }

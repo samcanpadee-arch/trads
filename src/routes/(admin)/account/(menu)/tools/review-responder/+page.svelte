@@ -114,30 +114,30 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
 <svelte:head><title>Review Responder</title></svelte:head>
 
-<section class="flex flex-col gap-6">
-  <header class="flex items-start justify-between">
-    <div>
+<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Review Responder</h1>
-      <p class="text-sm opacity-70">
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
         Paste a customer review and generate a friendly, on-brand reply with
         tone control — perfect for Google, Facebook, Instagram, ProductReview,
         Hipages and more.
       </p>
     </div>
-    <a href="/account/tools" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
   <form
-    class="card bg-base-100 border border-base-300 p-4 space-y-4"
+    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-5"
     on:submit={generate}
   >
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <!-- Left: review -->
-      <div class="lg:col-span-2 space-y-3">
+      <div class="space-y-3 lg:col-span-2">
         <label class="form-control">
           <span class="label-text">Paste the customer review</span>
           <textarea
-            class="textarea textarea-bordered h-40"
+            class="textarea textarea-bordered h-40 w-full"
             bind:value={reviewText}
             placeholder="Paste the review exactly as written…"
           ></textarea>
@@ -149,7 +149,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
         <label class="form-control">
           <span class="label-text">Business name</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={businessName}
             placeholder="e.g. BrightBuild Renovations"
           />
@@ -158,14 +158,14 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
           <label class="form-control"
             ><span class="label-text">Customer (optional)</span
             ><input
-              class="input input-bordered"
+              class="input input-bordered w-full"
               bind:value={customerName}
               placeholder="e.g. Jordan"
           /></label>
           <label class="form-control"
             ><span class="label-text">Platform</span>
             <select
-              class="select select-bordered"
+              class="select select-bordered w-full"
               bind:value={platform}
               aria-label="Platform"
             >
@@ -182,7 +182,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
         <label class="form-control">
           <span class="label-text">Tone</span>
           <select
-            class="select select-bordered"
+            class="select select-bordered w-full"
             bind:value={tone}
             aria-label="Tone"
           >
@@ -206,7 +206,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-3">
       <button class="btn btn-primary" type="submit" disabled={loading}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Response</span>
@@ -227,7 +227,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
   <!-- Rich preview only -->
   {#if __rich.length}
-    <div class="card bg-base-100 border mt-4">
+    <div class="card mt-4 border border-base-300 bg-base-100">
       <div class="card-body">
         <h3 class="card-title text-base">Suggested Response</h3>
         <RichAnswer text={__rich} />

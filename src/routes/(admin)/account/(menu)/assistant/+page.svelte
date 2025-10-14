@@ -107,7 +107,7 @@
 </header>
 
 <form
-  class="assistant-form card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm px-3 sm:px-0"
+  class="assistant-form card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm"
   on:submit|preventDefault={onAsk}
 >
   <div class="card-body space-y-8 p-5 sm:p-8">
@@ -129,7 +129,7 @@
         <select
           id="trade"
           name="trade"
-          class="select select-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
+          class="select select-bordered w-full"
           bind:value={trade}
         >
           <option value="">— Select trade (optional) —</option>
@@ -147,11 +147,11 @@
         <input
           id="brandModel"
           type="text"
-          class="input input-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
+          class="input input-bordered w-full"
           placeholder='e.g., "Mitsubishi Heavy SRK63" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
-        <p class="text-sm opacity-70 leading-snug break-words">
+        <p class="block text-sm opacity-70 leading-snug break-words">
           Useful when your question is appliance-specific or cites a standard/code.
         </p>
       </div>
@@ -165,7 +165,7 @@
       <select
         id="focus"
         name="focus"
-        class="select select-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
+        class="select select-bordered w-full"
         bind:value={focus}
       >
         {#each focuses as f}
@@ -181,11 +181,11 @@
       </label>
 
       <!-- Share with community consent -->
-      <div class="space-y-3 rounded-md border border-base-200/70 bg-base-200/40 p-3">
+      <div class="space-y-4 rounded-md border border-base-200/70 bg-base-200/40 p-3">
         <div class="form-control">
-          <label class="label cursor-pointer items-start gap-3">
+          <label class="label cursor-pointer flex-wrap items-start gap-3">
             <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm mt-1" bind:checked={share} />
-            <span class="label-text text-sm leading-snug break-words">Share this upload to help other tradies (no files with personal data).</span>
+            <span class="label-text flex-1 text-sm leading-snug break-words">Share this upload to help other tradies (no files with personal data).</span>
           </label>
           <p class="text-xs sm:text-sm opacity-70 leading-snug break-words">
             If unticked, the file is used for this answer only and not added to the shared library.
@@ -194,7 +194,7 @@
 
         <input
           id="files"
-          class="file-input file-input-bordered w-full max-w-2xl text-base sm:text-sm"
+          class="file-input file-input-bordered w-full max-w-2xl"
           type="file"
           multiple
           accept=".pdf,.txt,.md"
@@ -274,39 +274,6 @@
 <style>
   :global(.assistant-form .card-body) {
     overflow-wrap: anywhere;
-  }
-
-  :global(.assistant-form select),
-  :global(.assistant-form input[type="text"]),
-  :global(.assistant-form textarea),
-  :global(.assistant-form .file-input) {
-    font-size: 1.05rem;
-    line-height: 1.55;
-  }
-
-  :global(.assistant-form select option) {
-    font-size: 1.05rem;
-  }
-
-  @media (max-width: 639px) {
-    :global(.assistant-form select) {
-      appearance: auto;
-      background-image: none;
-      padding-right: 0.875rem;
-    }
-  }
-
-  @media (min-width: 640px) {
-    :global(.assistant-form select),
-    :global(.assistant-form input[type="text"]),
-    :global(.assistant-form textarea),
-    :global(.assistant-form .file-input) {
-      font-size: 1rem;
-    }
-
-    :global(.assistant-form select option) {
-      font-size: 1rem;
-    }
   }
 
   :global(.assistant-form .file-input::file-selector-button) {
