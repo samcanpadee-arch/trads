@@ -129,7 +129,7 @@
         <select
           id="trade"
           name="trade"
-          class="select select-bordered w-full min-h-[3.25rem]"
+          class="select select-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
           bind:value={trade}
         >
           <option value="">— Select trade (optional) —</option>
@@ -147,15 +147,13 @@
         <input
           id="brandModel"
           type="text"
-          class="input input-bordered w-full min-h-[3.25rem]"
+          class="input input-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
           placeholder='e.g., "Mitsubishi Heavy SRK63" or "AS/NZS 3000"'
           bind:value={brandModel}
         />
-        <label class="label">
-          <span class="label-text-alt opacity-70">
-            Useful when your question is appliance-specific or cites a standard/code.
-          </span>
-        </label>
+        <p class="text-sm opacity-70 leading-snug break-words">
+          Useful when your question is appliance-specific or cites a standard/code.
+        </p>
       </div>
     </div>
 
@@ -167,7 +165,7 @@
       <select
         id="focus"
         name="focus"
-        class="select select-bordered w-full min-h-[3.25rem]"
+        class="select select-bordered w-full min-h-[3.35rem] text-base sm:text-sm"
         bind:value={focus}
       >
         {#each focuses as f}
@@ -177,35 +175,37 @@
     </div>
 
     <!-- Files -->
-    <div class="form-control gap-3 break-words">
-      <label for="files" class="label">
-        <span class="label-text">Bring your own docs (PDF, optional)</span>
+    <div class="form-control gap-4 break-words">
+      <label for="files" class="label items-start">
+        <span class="label-text leading-snug">Bring your own docs (PDF, optional)</span>
       </label>
 
       <!-- Share with community consent -->
-      <div class="form-control mt-2">
-        <label class="label cursor-pointer gap-2">
-          <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm" bind:checked={share} />
-          <span class="label-text text-sm">Share this upload to help other tradies (no files with personal data).</span>
-        </label>
-        <p class="text-xs opacity-70 mt-1 break-words">
-          If unticked, the file is used for this answer only and not added to the shared library.
-        </p>
-      </div>
+      <div class="space-y-3 rounded-md border border-base-200/70 bg-base-200/40 p-3">
+        <div class="form-control">
+          <label class="label cursor-pointer items-start gap-3">
+            <input type="checkbox" name="share" value="yes" class="checkbox checkbox-sm mt-1" bind:checked={share} />
+            <span class="label-text text-sm leading-snug break-words">Share this upload to help other tradies (no files with personal data).</span>
+          </label>
+          <p class="text-xs sm:text-sm opacity-70 leading-snug break-words">
+            If unticked, the file is used for this answer only and not added to the shared library.
+          </p>
+        </div>
 
-      <input
-        id="files"
-        class="file-input file-input-bordered w-full max-w-2xl"
-        type="file"
-        multiple
-        accept=".pdf,.txt,.md"
-        on:change={handleFileChange}
-      />
-      <div class="text-xs sm:text-sm opacity-70 leading-relaxed space-y-1 break-words">
-        <p>
-          Only upload when you need something outside our shared library of thousands of manuals&mdash;it’s still gold if you’re chasing a specific clause or project doc.
-        </p>
-        <p>Max 4 MB per file.</p>
+        <input
+          id="files"
+          class="file-input file-input-bordered w-full max-w-2xl text-base sm:text-sm"
+          type="file"
+          multiple
+          accept=".pdf,.txt,.md"
+          on:change={handleFileChange}
+        />
+        <div class="text-xs sm:text-sm opacity-80 leading-relaxed space-y-2 break-words">
+          <p>
+            Only upload when you need something outside our shared library of thousands of manuals—it’s still gold if you’re chasing a specific clause or project doc.
+          </p>
+          <p>Max 4 MB per file.</p>
+        </div>
       </div>
     </div>
 
@@ -277,25 +277,45 @@
   }
 
   :global(.assistant-form select),
-  :global(.assistant-form select option),
   :global(.assistant-form input[type="text"]),
   :global(.assistant-form textarea),
   :global(.assistant-form .file-input) {
     font-size: 1.05rem;
-    line-height: 1.5;
+    line-height: 1.55;
+  }
+
+  :global(.assistant-form select option) {
+    font-size: 1.05rem;
+  }
+
+  @media (max-width: 639px) {
+    :global(.assistant-form select) {
+      appearance: auto;
+      background-image: none;
+      padding-right: 0.875rem;
+    }
   }
 
   @media (min-width: 640px) {
     :global(.assistant-form select),
-    :global(.assistant-form select option),
     :global(.assistant-form input[type="text"]),
     :global(.assistant-form textarea),
     :global(.assistant-form .file-input) {
+      font-size: 1rem;
+    }
+
+    :global(.assistant-form select option) {
       font-size: 1rem;
     }
   }
 
   :global(.assistant-form .file-input::file-selector-button) {
     font-size: inherit;
+  }
+
+  :global(.assistant-form .label),
+  :global(.assistant-form .label-text),
+  :global(.assistant-form .label-text-alt) {
+    width: 100%;
   }
 </style>
