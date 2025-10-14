@@ -88,14 +88,18 @@
       </p>
     </div>
 
-    <div class="sm:ml-auto flex items-center gap-2">
-      <label class="text-sm opacity-80">Model</label>
-      <select class="select select-bordered select-sm" bind:value={model} disabled={streaming}>
+    <div class="sm:ml-auto flex flex-wrap items-center gap-2">
+      <label class="text-sm opacity-80 w-full sm:w-auto">Model</label>
+      <select
+        class="select select-bordered w-full sm:w-auto sm:select-sm"
+        bind:value={model}
+        disabled={streaming}
+      >
         {#each models as m}
           <option value={m.id}>{m.label}</option>
         {/each}
       </select>
-      <button class="btn btn-ghost btn-sm" on:click={clearChat} disabled={streaming}>
+      <button class="btn btn-ghost w-full sm:w-auto sm:btn-sm" on:click={clearChat} disabled={streaming}>
         Clear
       </button>
     </div>

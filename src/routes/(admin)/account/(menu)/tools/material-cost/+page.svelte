@@ -108,7 +108,7 @@
         <label class="label"><span class="label-text">Markup % (profit)</span></label>
         <input
           type="number"
-          class="input input-bordered input-sm w-28"
+          class="input input-bordered w-full sm:w-28 sm:input-sm"
           min="0"
           step="0.1"
           bind:value={markupPct}
@@ -116,7 +116,7 @@
       </div>
       <div class="form-control">
         <label class="label"><span class="label-text">Currency</span></label>
-        <select class="select select-bordered select-sm w-28" bind:value={currency}>
+        <select class="select select-bordered w-full sm:w-28 sm:select-sm" bind:value={currency}>
           <option value="AUD">AUD</option>
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
@@ -147,7 +147,7 @@
               <tr>
                 <td class="min-w-[12rem]">
                   <input
-                    class="input input-bordered input-sm w-full"
+                    class="input input-bordered w-full sm:input-sm"
                     placeholder="e.g. 2.5mm TPS Cable"
                     bind:value={r.name}
                   />
@@ -157,7 +157,7 @@
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input input-bordered input-sm text-right w-28"
+                    class="input input-bordered text-right w-full sm:w-28 sm:input-sm"
                     bind:value={r.unitCost}
                   />
                 </td>
@@ -166,7 +166,7 @@
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input input-bordered input-sm text-right w-20"
+                    class="input input-bordered text-right w-full sm:w-20 sm:input-sm"
                     bind:value={r.quantity}
                   />
                 </td>
@@ -176,7 +176,7 @@
                     min="0"
                     max="100"
                     step="0.1"
-                    class="input input-bordered input-sm text-right w-24"
+                    class="input input-bordered text-right w-full sm:w-24 sm:input-sm"
                     bind:value={r.discountPct}
                   />
                 </td>
@@ -191,7 +191,7 @@
                 {/if}
                 <td class="text-right">
                   {#if items.length > 1}
-                    <button class="btn btn-ghost btn-xs" on:click={() => removeRow(i)}>Remove</button>
+                    <button class="btn btn-ghost w-full sm:w-auto sm:btn-xs" on:click={() => removeRow(i)}>Remove</button>
                   {/if}
                 </td>
               </tr>
@@ -201,7 +201,7 @@
       </div>
 
       <div class="flex justify-between items-center pt-4">
-        <button class="btn btn-outline btn-sm" on:click={addRow}>+ Add Material</button>
+        <button class="btn btn-outline w-full sm:w-auto sm:btn-sm" on:click={addRow}>+ Add Material</button>
         <div class="text-right space-y-1">
           <div>
             Total materials: <span class="font-semibold">{money(totalMaterial)}</span>
@@ -222,7 +222,7 @@
     <div class="card-body">
       <div class="flex items-center justify-between">
         <h2 class="card-title">Costing Summary</h2>
-        <button class="btn btn-primary btn-sm" on:click={generateSummary} disabled={generating}>
+        <button class="btn btn-primary w-full sm:w-auto sm:btn-sm" on:click={generateSummary} disabled={generating}>
           {generating ? "Generating…" : "Generate"}
         </button>
       </div>
@@ -234,7 +234,7 @@
           <div class="mt-2">
             <button
               type="button"
-              class="btn btn-outline btn-sm"
+              class="btn btn-outline w-full sm:w-auto sm:btn-sm"
               on:click={() => navigator.clipboard.writeText(__rich)}
             >
               Copy answer
