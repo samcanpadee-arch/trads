@@ -154,16 +154,17 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
             placeholder="e.g. BrightBuild Renovations"
           />
         </label>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label class="form-control gap-3"
-            ><span class="label-text">Customer (optional)</span
-            ><input
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
+          <label class="form-control gap-3">
+            <span class="label-text">Customer (optional)</span>
+            <input
               class="input input-bordered w-full"
               bind:value={customerName}
               placeholder="e.g. Jordan"
-          /></label>
-          <label class="form-control gap-3"
-            ><span class="label-text">Platform</span>
+            />
+          </label>
+          <label class="form-control gap-3">
+            <span class="label-text">Platform</span>
             <select
               class="select select-bordered w-full"
               bind:value={platform}
