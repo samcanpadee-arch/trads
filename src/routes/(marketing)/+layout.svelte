@@ -9,7 +9,7 @@ export let data;
   <header class="border-b bg-base-100">
     <nav class="navbar max-w-6xl mx-auto px-4 md:px-6 lg:px-10">
       <!-- Left: burger + brand -->
-      <div class="navbar-start">
+      <div class="navbar-start items-center gap-2">
         <!-- Mobile menu -->
         <div class="dropdown">
           <label tabindex="0" class="btn btn-ghost lg:hidden" aria-label="Open menu">
@@ -31,11 +31,32 @@ export let data;
       </div>
 
       <!-- Center: desktop nav (exact spacing + alignment) -->
-      <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal items-center text-sm px-0 gap-0">
-          <li class="md:mx-2"><a href="/blog" sveltekit:prefetch class="px-0">Blog</a></li>
-          <li class="md:mx-2"><a href="/pricing" sveltekit:prefetch class="px-0">Pricing</a></li>
-          <li class="md:mx-2"><a href="/contact_us" sveltekit:prefetch class="px-0">Contact</a></li>
+      <div class="navbar-center hidden lg:flex flex-1 justify-center">
+        <ul class="flex items-center gap-8 text-sm font-medium text-base-content/80">
+          <li>
+            <a
+              href="/blog"
+              sveltekit:prefetch
+              class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >Blog</a
+            >
+          </li>
+          <li>
+            <a
+              href="/pricing"
+              sveltekit:prefetch
+              class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >Pricing</a
+            >
+          </li>
+          <li>
+            <a
+              href="/contact_us"
+              sveltekit:prefetch
+              class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >Contact</a
+            >
+          </li>
         </ul>
       </div>
 

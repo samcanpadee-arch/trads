@@ -115,18 +115,18 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
 <svelte:head><title>Email Template Generator</title></svelte:head>
 
-<section class="flex flex-col gap-6">
-  <header class="flex items-start justify-between">
-    <div>
+<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="space-y-2">
       <h1 class="text-2xl font-semibold">Email Template Generator</h1>
-      <p class="text-sm opacity-70">
+      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
         Give us a quick summary and we’ll draft a tidy client-ready email.
       </p>
     </div>
-    <a href="/account/tools" class="btn btn-ghost">← Back</a>
+    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
-  <form class="card bg-base-100 border border-base-300 p-6 space-y-6" on:submit={generate}>
+  <form class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6" on:submit={generate}>
     <!-- Brief (the only required field) -->
     <div class="form-control">
       <label for="brief" class="label">
@@ -134,7 +134,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </label>
       <textarea
         id="brief"
-        class="textarea textarea-bordered h-32"
+        class="textarea textarea-bordered h-32 w-full"
         bind:value={brief}
         on:blur={() => (briefTouched = true)}
         placeholder="In one or two sentences, what did you do / what’s the purpose? (e.g., Completed switchboard upgrade, added kitchen GPOs, replaced 6x downlights; now ready to send a completion email.)"
@@ -149,17 +149,17 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </label>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left column: core meta -->
-      <div class="lg:col-span-2 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="space-y-4 lg:col-span-2">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label class="form-control">
             <span class="label-text">Client name (optional)</span>
-            <input class="input input-bordered" bind:value={clientName} placeholder="e.g. Jordan" />
+            <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan" />
           </label>
           <label class="form-control">
             <span class="label-text">Purpose</span>
-            <select class="select select-bordered" bind:value={purpose} aria-label="Purpose">
+            <select class="select select-bordered w-full" bind:value={purpose} aria-label="Purpose">
               <option>Job summary (after completion)</option>
               <option>Progress update</option>
               <option>Payment reminder</option>
@@ -177,7 +177,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
         <label class="form-control">
           <span class="label-text">Email signature / contact details (optional)</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={contact}
             placeholder="e.g. 0400 123 456 · hello@bright.au · bright.au/book"
           />
@@ -186,7 +186,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
         <label class="form-control">
           <span class="label-text">Business name (optional)</span>
           <input
-            class="input input-bordered"
+            class="input input-bordered w-full"
             bind:value={businessName}
             placeholder="e.g. BrightSpark Electrical"
           />
@@ -194,7 +194,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
         <label class="form-control">
           <span class="label-text">Tone</span>
-          <select class="select select-bordered" bind:value={tone} aria-label="Tone">
+          <select class="select select-bordered w-full" bind:value={tone} aria-label="Tone">
             <option>Professional</option>
             <option>Friendly</option>
             <option>Casual Aussie</option>
@@ -208,7 +208,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-3">
       <button class="btn btn-primary" type="submit" disabled={loading || !brief.trim()}>
         {#if loading}<span class="loading loading-dots"></span>{/if}
         <span>Generate Email</span>
@@ -218,13 +218,13 @@ Return only the email body text (no preface, no quotes, no markdown).`;
     </div>
 
     <div class="alert alert-info">
-      <span>Draft only -— please review names, dates, and amounts before sending.</span>
+      <span>Draft only — please review names, dates, and amounts before sending.</span>
     </div>
   </form>
 
   <!-- Rich preview -->
   {#if __rich.length}
-    <div class="card bg-base-100 border mt-4">
+    <div class="card mt-4 border border-base-300 bg-base-100">
       <div class="card-body">
         <h3 class="card-title text-base">Generated Email</h3>
         <RichAnswer text={__rich} />
