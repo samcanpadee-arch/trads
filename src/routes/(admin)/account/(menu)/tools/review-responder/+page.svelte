@@ -145,7 +145,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       </div>
 
       <!-- Right: minimal controls -->
-      <div class="space-y-5">
+      <div class="flex flex-col gap-4">
         <label class="form-control gap-3">
           <span class="label-text">Business name</span>
           <input
@@ -154,7 +154,7 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
             placeholder="e.g. BrightBuild Renovations"
           />
         </label>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label class="form-control gap-3"
             ><span class="label-text">Customer (optional)</span
             ><input
@@ -197,11 +197,11 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
         <label class="label cursor-pointer justify-start gap-3">
           <input type="checkbox" class="checkbox" bind:checked={keepItShort} />
-          <span class="label-text">Keep it short (about a paragraph)</span>
+          <span class="label-text text-sm">Keep it short (about a paragraph)</span>
         </label>
         <label class="label cursor-pointer justify-start gap-3">
           <input type="checkbox" class="checkbox" bind:checked={includeEmojis} />
-          <span class="label-text">Include 1–2 light emojis</span>
+          <span class="label-text text-sm">Include 1–2 light emojis</span>
         </label>
       </div>
     </div>
@@ -214,13 +214,6 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
       <button type="button" class="btn" on:click={useExample}>Use example</button>
       <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}
         >Copy</button
-      >
-    </div>
-
-    <div class="alert alert-info">
-      <span
-        >Note: This is a generated draft. Please review names, job details and
-        tone before posting publicly.</span
       >
     </div>
   </form>

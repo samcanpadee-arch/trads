@@ -280,18 +280,18 @@ Return ONLY strict JSON:
     </div>
 
     <!-- Options -->
-    <div class="flex flex-wrap items-center gap-4">
+    <div class="flex flex-wrap gap-x-6 gap-y-3">
       <label class="label cursor-pointer gap-2">
         <input
           type="checkbox"
           class="checkbox"
           bind:checked={keepUnderPlatformLimits}
         />
-        <span class="label-text">Keep under platform limits</span>
+        <span class="label-text text-sm">Keep under platform limits</span>
       </label>
       <label class="label cursor-pointer gap-2">
         <input type="checkbox" class="checkbox" bind:checked={includeEmojis} />
-        <span class="label-text">Include up to 2 emojis</span>
+        <span class="label-text text-sm">Include up to 2 emojis</span>
       </label>
       <label class="label cursor-pointer gap-2">
         <input
@@ -299,7 +299,7 @@ Return ONLY strict JSON:
           class="checkbox"
           bind:checked={includeHashtags}
         />
-        <span class="label-text">Include hashtags</span>
+        <span class="label-text text-sm">Include hashtags</span>
       </label>
       <label class="label cursor-pointer gap-2">
         <input
@@ -307,7 +307,7 @@ Return ONLY strict JSON:
           class="checkbox"
           bind:checked={prettyLineBreaks}
         />
-        <span class="label-text">Readable line breaks</span>
+        <span class="label-text text-sm">Readable line breaks</span>
       </label>
     </div>
 
@@ -329,12 +329,6 @@ Return ONLY strict JSON:
         class="btn btn-ghost"
         on:click={() => copy(caption || outputText)}
         disabled={!caption && !outputText}>Copy</button
-      >
-    </div>
-
-    <div class="alert alert-info">
-      <span
-        >Draft only — review names, details and tone before posting.</span
       >
     </div>
   </form>
