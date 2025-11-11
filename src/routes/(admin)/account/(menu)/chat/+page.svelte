@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
-  import { onMount } from "svelte";
+  import { afterUpdate, onMount } from "svelte";
   type Role = 'system' | 'user' | 'assistant';
   type Msg = { role: Role; content: string };
 
@@ -26,6 +26,8 @@
   let streamingIndex: number | null = null;
   let errorMsg: string | null = null;
   let storageReady = false;
+  let chatContainer: HTMLDivElement | null = null;
+  let shouldStickToBottom = true;
 
   const serialize = (value: Msg[]) => JSON.stringify(value);
 
@@ -74,6 +76,18 @@
     }
   }
 
+  afterUpdate(() => {
+    if (!chatContainer || !browser || !shouldStickToBottom) return;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  });
+
+  function handleScroll() {
+    if (!chatContainer) return;
+    const distanceFromBottom =
+      chatContainer.scrollHeight - (chatContainer.scrollTop + chatContainer.clientHeight);
+    shouldStickToBottom = distanceFromBottom < 120;
+  }
+
   async function sendMessage(e?: Event) {
     e?.preventDefault();
     if (!input.trim() || streaming) return;
@@ -83,6 +97,7 @@
     const payload = { messages: nextMessages, model };
 
     messages = nextMessages;
+    shouldStickToBottom = true;
 
     input = '';
     streaming = true;
@@ -101,6 +116,7 @@
         messages = messages.slice(0, -1);
         streaming = false;
         streamingIndex = null;
+        shouldStickToBottom = true;
         return;
       }
 
@@ -109,6 +125,7 @@
         messages = messages.slice(0, -1);
         streaming = false;
         streamingIndex = null;
+        shouldStickToBottom = true;
         return;
       }
 
@@ -126,6 +143,7 @@
             { ...current, content: current.content + chunk },
             ...messages.slice(streamingIndex + 1)
           ];
+          shouldStickToBottom = true;
         }
       }
 
@@ -137,12 +155,14 @@
           { ...current, content: current.content + finalChunk },
           ...messages.slice(streamingIndex + 1)
         ];
+        shouldStickToBottom = true;
       }
     } catch (err: any) {
       errorMsg = err?.message ?? 'Network error';
       if (streamingIndex !== null) {
         messages = messages.slice(0, -1);
       }
+      shouldStickToBottom = true;
     } finally {
       streaming = false;
       streamingIndex = null;
@@ -153,6 +173,7 @@
     messages = [{ ...INITIAL_MESSAGE, content: "New chat. What’s up?" }];
     errorMsg = null;
     streamingIndex = null;
+    shouldStickToBottom = true;
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -194,7 +215,11 @@
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto space-y-4 p-4 rounded bg-base-200">
+  <div
+    class="flex-1 overflow-y-auto space-y-4 p-4 rounded bg-base-200"
+    bind:this={chatContainer}
+    on:scroll={handleScroll}
+  >
     {#each messages as m, i}
       <div class="chat {m.role === 'user' ? 'chat-end' : 'chat-start'}">
         {#if m.role === 'assistant'}
