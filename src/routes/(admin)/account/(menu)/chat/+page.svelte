@@ -1,5 +1,6 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
   type Role = 'system' | 'user' | 'assistant';
   type Msg = { role: Role; content: string };
 
@@ -38,8 +39,14 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok || !res.body) {
-        errorMsg = await res.text();
+      if (!res.ok) {
+        errorMsg = await getChatErrorMessage(res);
+        streaming = false;
+        return;
+      }
+
+      if (!res.body) {
+        errorMsg = 'The assistant sent an empty response. Please try again.';
         streaming = false;
         return;
       }

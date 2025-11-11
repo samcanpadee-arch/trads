@@ -1,6 +1,7 @@
 <!-- /account/tools/social-post (v1.2 single rich preview + collapsible extras) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
 
   // Minimal inputs
   let brief = ""; // required
@@ -113,15 +114,23 @@ Return ONLY strict JSON:
         body: JSON.stringify(body),
       });
 
+      if (!res.ok) {
+        outputText = await getChatErrorMessage(res);
+        return;
+      }
+
+      if (!res.body) {
+        outputText = "The assistant returned an empty response. Please try again.";
+        return;
+      }
+
       let text = "";
-      if (res.ok && res.body) {
-        const r = res.body.getReader();
-        const d = new TextDecoder();
-        while (true) {
-          const { done, value } = await r.read();
-          if (done) break;
-          text += d.decode(value);
-        }
+      const r = res.body.getReader();
+      const d = new TextDecoder();
+      while (true) {
+        const { done, value } = await r.read();
+        if (done) break;
+        text += d.decode(value);
       }
       outputText = text || "";
 
