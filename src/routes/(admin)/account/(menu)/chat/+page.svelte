@@ -2,7 +2,6 @@
   import { browser } from "$app/environment";
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
-  import { afterUpdate, onMount } from "svelte";
   type Role = 'system' | 'user' | 'assistant';
   type Msg = { role: Role; content: string };
 
@@ -113,7 +112,12 @@
 
       if (!res.ok) {
         errorMsg = await getChatErrorMessage(res);
-        messages = messages.slice(0, -1);
+        streaming = false;
+        return;
+      }
+
+      if (!res.body) {
+        errorMsg = 'The assistant sent an empty response. Please try again.';
         streaming = false;
         streamingIndex = null;
         shouldStickToBottom = true;
