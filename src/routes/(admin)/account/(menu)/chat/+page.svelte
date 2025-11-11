@@ -1,4 +1,5 @@
 <script lang="ts">
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
   type Role = 'system' | 'user' | 'assistant';
   type Msg = { role: Role; content: string };
 
@@ -108,14 +109,23 @@
   <div class="flex-1 overflow-y-auto space-y-4 p-4 rounded bg-base-200">
     {#each messages as m}
       <div class="chat {m.role === 'user' ? 'chat-end' : 'chat-start'}">
-        <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
+        {#if m.role === 'assistant'}
+          <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
+            <RichAnswer text={m.content} />
+          </div>
+        {:else}
+          <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
+        {/if}
       </div>
     {/each}
 
     {#if streaming}
       <div class="chat chat-start">
-        <div class="chat-bubble">
-          {streamBuffer}<span class="loading loading-dots loading-xs align-middle ml-2"></span>
+        <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
+          <RichAnswer text={streamBuffer} />
+          <div class="mt-2 flex justify-start">
+            <span class="loading loading-dots loading-xs"></span>
+          </div>
         </div>
       </div>
     {/if}
