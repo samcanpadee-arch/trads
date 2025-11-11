@@ -1,6 +1,7 @@
 <!-- /account/tools/review-responder (v1.3 — rich-only, no download, no markdown) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
 
   // Minimal inputs
   let businessName = "";
@@ -84,16 +85,22 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
         })
       });
 
-      if (res.ok && res.body) {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          output += decoder.decode(value);
-        }
-      } else {
-        output = "Could not generate a response. Please try again.";
+      if (!res.ok) {
+        output = await getChatErrorMessage(res);
+        return;
+      }
+
+      if (!res.body) {
+        output = "The assistant returned an empty response. Please try again.";
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        output += decoder.decode(value);
       }
     } catch {
       output = "Network error while generating. Please try again.";

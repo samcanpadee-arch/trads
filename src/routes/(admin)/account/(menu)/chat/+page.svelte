@@ -1,11 +1,18 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
+  import { onMount } from "svelte";
   type Role = 'system' | 'user' | 'assistant';
   type Msg = { role: Role; content: string };
 
-  let messages: Msg[] = [
-    { role: 'assistant', content: "Hi! I'm your AI helper. How can I help today?" }
-  ];
+  const STORAGE_KEY = 'smart-chat-transcript';
+  const INITIAL_MESSAGE: Msg = {
+    role: 'assistant',
+    content: "Hi! I'm your AI helper. How can I help today?"
+  };
+
+  let messages: Msg[] = [INITIAL_MESSAGE];
 
   // Simple model selector similar to “GPT-3.5/4” idea
   const models = [
@@ -16,20 +23,72 @@
 
   let input = '';
   let streaming = false;
-  let streamBuffer = '';
+  let streamingIndex: number | null = null;
   let errorMsg: string | null = null;
+  let storageReady = false;
+
+  const serialize = (value: Msg[]) => JSON.stringify(value);
+
+  function parseSavedMessages(raw: string | null): Msg[] | null {
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return null;
+      const cleaned: Msg[] = [];
+      for (const entry of parsed) {
+        if (
+          entry &&
+          typeof entry === 'object' &&
+          'role' in entry &&
+          'content' in entry &&
+          (entry as any).role !== 'system'
+        ) {
+          const role = (entry as any).role;
+          if (role === 'assistant' || role === 'user') {
+            cleaned.push({ role, content: String((entry as any).content ?? '') });
+          }
+        }
+      }
+      if (!cleaned.length) return null;
+      return cleaned;
+    } catch (err) {
+      console.warn('Failed to parse saved Smart Chat messages', err);
+      return null;
+    }
+  }
+
+  onMount(() => {
+    if (!browser) return;
+    const restored = parseSavedMessages(localStorage.getItem(STORAGE_KEY));
+    if (restored) {
+      messages = restored;
+    }
+    storageReady = true;
+  });
+
+  $effect(() => {
+    if (!browser || !storageReady) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, serialize(messages));
+    } catch (err) {
+      console.warn('Unable to persist Smart Chat messages', err);
+    }
+  });
 
   async function sendMessage(e?: Event) {
     e?.preventDefault();
     if (!input.trim() || streaming) return;
 
     errorMsg = null;
-    messages = [...messages, { role: 'user', content: input }];
-    const payload = { messages, model };
+    const nextMessages = [...messages, { role: 'user', content: input }];
+    const payload = { messages: nextMessages, model };
+
+    messages = nextMessages;
 
     input = '';
     streaming = true;
-    streamBuffer = '';
+    messages = [...messages, { role: 'assistant', content: '' }];
+    streamingIndex = messages.length - 1;
 
     try {
       const res = await fetch('/api/chat', {
@@ -38,9 +97,19 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok || !res.body) {
-        errorMsg = await res.text();
+      if (!res.ok) {
+        errorMsg = await getChatErrorMessage(res);
+        messages = messages.slice(0, -1);
         streaming = false;
+        streamingIndex = null;
+        return;
+      }
+
+      if (!res.body) {
+        errorMsg = 'The assistant sent an empty response. Please try again.';
+        messages = messages.slice(0, -1);
+        streaming = false;
+        streamingIndex = null;
         return;
       }
 
@@ -50,21 +119,41 @@
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        streamBuffer += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk && streamingIndex !== null) {
+          const current = messages[streamingIndex] ?? { role: 'assistant', content: '' };
+          messages = [
+            ...messages.slice(0, streamingIndex),
+            { ...current, content: current.content + chunk },
+            ...messages.slice(streamingIndex + 1)
+          ];
+        }
       }
 
-      messages = [...messages, { role: 'assistant', content: streamBuffer }];
+      const finalChunk = decoder.decode();
+      if (finalChunk && streamingIndex !== null) {
+        const current = messages[streamingIndex] ?? { role: 'assistant', content: '' };
+        messages = [
+          ...messages.slice(0, streamingIndex),
+          { ...current, content: current.content + finalChunk },
+          ...messages.slice(streamingIndex + 1)
+        ];
+      }
     } catch (err: any) {
       errorMsg = err?.message ?? 'Network error';
+      if (streamingIndex !== null) {
+        messages = messages.slice(0, -1);
+      }
     } finally {
       streaming = false;
+      streamingIndex = null;
     }
   }
 
   function clearChat() {
-    messages = [{ role: 'assistant', content: "New chat. What’s up?" }];
+    messages = [{ ...INITIAL_MESSAGE, content: "New chat. What’s up?" }];
     errorMsg = null;
-    streamBuffer = '';
+    streamingIndex = null;
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -107,28 +196,22 @@
   </div>
 
   <div class="flex-1 overflow-y-auto space-y-4 p-4 rounded bg-base-200">
-    {#each messages as m}
+    {#each messages as m, i}
       <div class="chat {m.role === 'user' ? 'chat-end' : 'chat-start'}">
         {#if m.role === 'assistant'}
           <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
             <RichAnswer text={m.content} />
+            {#if streaming && streamingIndex === i}
+              <div class="mt-2 flex justify-start">
+                <span class="loading loading-dots loading-xs"></span>
+              </div>
+            {/if}
           </div>
         {:else}
           <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
         {/if}
       </div>
     {/each}
-
-    {#if streaming}
-      <div class="chat chat-start">
-        <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
-          <RichAnswer text={streamBuffer} />
-          <div class="mt-2 flex justify-start">
-            <span class="loading loading-dots loading-xs"></span>
-          </div>
-        </div>
-      </div>
-    {/if}
   </div>
 
   {#if errorMsg}

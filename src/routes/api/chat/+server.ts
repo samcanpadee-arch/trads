@@ -6,7 +6,12 @@ type Msg = { role: Role; content: string };
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+  const { session, user } = await locals.safeGetSession();
+  if (!session || !user) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return new Response('Missing OPENAI_API_KEY', { status: 500 });
 
