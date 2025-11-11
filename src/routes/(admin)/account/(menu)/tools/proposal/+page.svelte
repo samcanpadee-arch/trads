@@ -1,6 +1,7 @@
 <!-- /account/tools/proposal — Long-form Sales Proposal Generator (no client name input) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
 
   let __mdProposal: HTMLDivElement | null = null;
   let __previewProposal = "";
@@ -59,16 +60,22 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
         })
       });
 
-      if (res.ok && res.body) {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          output += decoder.decode(value);
-        }
-      } else {
-        output = "Could not generate a proposal right now. Please try again.";
+      if (!res.ok) {
+        output = await getChatErrorMessage(res);
+        return;
+      }
+
+      if (!res.body) {
+        output = "The assistant returned an empty response. Please try again.";
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        output += decoder.decode(value);
       }
     } catch {
       output = "Network error while generating. Please try again.";

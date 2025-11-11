@@ -124,8 +124,13 @@ const SERVER_MAX_FILES = 4;                      // at most 4 files
 
 const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
   try {
+    const { session, user } = await locals.safeGetSession();
+    if (!session || !user) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     const API = privateEnv.OPENAI_API_KEY;
     if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 

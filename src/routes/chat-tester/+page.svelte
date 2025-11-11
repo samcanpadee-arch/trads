@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getChatErrorMessage } from "$lib/utils/chat-errors";
+
   let input = '';
   let output = '';
   let sending = false;
@@ -15,14 +17,20 @@
     });
 
     if (!res.ok) {
-      const body = await res.text().catch(()=>'');
-      output = `HTTP ${res.status} ${res.statusText} ${body}`;
+      const message = await getChatErrorMessage(res);
+      output = `HTTP ${res.status} ${res.statusText} - ${message}`;
+      sending = false;
+      return;
+    }
+
+    if (!res.body) {
+      output = 'The assistant returned an empty response. Please try again.';
       sending = false;
       return;
     }
 
     // Stream the plain text response
-    const reader = res.body?.getReader();
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     if (reader) {
       while (true) {
