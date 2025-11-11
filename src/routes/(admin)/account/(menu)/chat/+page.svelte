@@ -66,14 +66,13 @@
     storageReady = true;
   });
 
-  $effect(() => {
-    if (!browser || !storageReady) return;
+  $: if (browser && storageReady) {
     try {
       localStorage.setItem(STORAGE_KEY, serialize(messages));
     } catch (err) {
       console.warn('Unable to persist Smart Chat messages', err);
     }
-  });
+  }
 
   async function sendMessage(e?: Event) {
     e?.preventDefault();
