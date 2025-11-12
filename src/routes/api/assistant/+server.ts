@@ -205,13 +205,31 @@ async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fi
 }
 
 async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Promise<Array<{ file_id: string; status: string }>> {
-  const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=200`, {
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
-  if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
-  const json = await resp.json();
-  const files = Array.isArray(json.data) ? json.data : [];
-  return files.map((f: any) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }));
+  const aggregated: Array<{ file_id: string; status: string }> = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 20; page += 1) {
+    const params = new URLSearchParams({ limit: "100" });
+    if (cursor) params.set("after", cursor);
+
+    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
+    const json = await resp.json();
+    const files = Array.isArray(json.data) ? json.data : [];
+    aggregated.push(
+      ...files.map((f: any) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }))
+    );
+
+    if (!json?.has_more) break;
+    const last = files[files.length - 1];
+    const nextCursor = (last?.id as string | undefined) || (last?.file_id as string | undefined);
+    if (!nextCursor) break;
+    cursor = nextCursor;
+  }
+
+  return aggregated;
 }
 
 async function waitForIndexing(apiKey: string, vectorStoreId: string, expectedFileIds: string[], timeoutMs = 20000): Promise<void> {
