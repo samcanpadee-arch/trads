@@ -483,6 +483,25 @@
       </button>
     </div>
 
+    {#if shareActivity.length}
+      <div class="alert alert-info flex flex-col gap-2 whitespace-pre-wrap break-words text-sm">
+        <span class="font-semibold">Library sharing summary</span>
+        <ul class="space-y-1">
+          {#each shareActivity as activity, idx (activity.name + idx)}
+            <li class="flex flex-wrap items-start gap-2">
+              <span class={`badge badge-sm ${shareStatusBadgeClass(activity.status)}`}>
+                {shareStatusCopy[activity.status]}
+              </span>
+              <span class="font-medium">{activity.name}</span>
+              {#if activity.status === "failed" && activity.message}
+                <span class="opacity-70">({activity.message})</span>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
+
     <!-- Answer -->
     {#if loading}
       <div class="flex items-center gap-2 opacity-80">
@@ -492,24 +511,6 @@
     {:else if errorMsg}
       <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
     {:else if answer && answer.length > 0}
-      {#if shareActivity.length}
-        <div class="alert alert-info flex flex-col gap-2 whitespace-pre-wrap break-words text-sm">
-          <span class="font-semibold">Library sharing summary</span>
-          <ul class="space-y-1">
-            {#each shareActivity as activity, idx (activity.name + idx)}
-              <li class="flex flex-wrap items-start gap-2">
-                <span class={`badge badge-sm ${shareStatusBadgeClass(activity.status)}`}>
-                  {shareStatusCopy[activity.status]}
-                </span>
-                <span class="font-medium">{activity.name}</span>
-                {#if activity.status === "failed" && activity.message}
-                  <span class="opacity-70">({activity.message})</span>
-                {/if}
-              </li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
       <div class="flex flex-wrap items-center justify-end gap-2 mb-2">
         <button
           type="button"
