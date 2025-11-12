@@ -12,7 +12,6 @@
   let { data }: Props = $props();
 
   let localDisplayName = "";
-  let displayName = "";
   let hasVisited = false;
 
   onMount(() => {
@@ -30,10 +29,12 @@
     } catch {}
   });
 
-  $: profileName = (data?.profile?.full_name ?? "").trim();
-  $: displayName = profileName || localDisplayName;
-  $: salutation = hasVisited ? "Welcome back" : "Welcome";
-  $: greeting = displayName ? `${salutation}, ${displayName} 👋` : `${salutation} 👋`;
+  const profileName = $derived((data?.profile?.full_name ?? "").trim());
+  const displayName = $derived(profileName || localDisplayName);
+  const salutation = $derived(hasVisited ? "Welcome back" : "Welcome");
+  const greeting = $derived(
+    displayName ? `${salutation}, ${displayName} 👋` : `${salutation} 👋`
+  );
 </script>
 
 <svelte:head><title>Account</title></svelte:head>
