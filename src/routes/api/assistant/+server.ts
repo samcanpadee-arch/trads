@@ -164,7 +164,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     // Upload or reuse files with stable hashed filename
-    const uploaded: Array<{ id: string; filename: string; hash: string }> = [];
+    const uploaded: Array<{ id: string; filename: string; hash: string; originalName: string }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);
       const stableName = `${hash}-${f.name}`;
@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const up = await uploadToOpenAIWithStableName(f, API, stableName);
         fileId = up.id;
       }
-      uploaded.push({ id: fileId, filename: stableName, hash });
+      uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name });
     }
 
     // Temp per-request store for uploaded files
@@ -212,6 +212,11 @@ GROUNDING & CITATIONS (MANDATORY RULES):
    - Do NOT provide exact specifications (numbers with units) in GENERAL mode.
    - If asked for exact values while in GENERAL, explain you cannot provide numeric specs without a manual citation.
 
+ATTACHMENT PRIORITY:
+- When user-uploaded documents exist, search them before consulting the shared library.
+- Prefer citing user uploads first; only rely on the library if the uploads don't cover the request.
+- Cite user uploads as [user upload: <original filename>, p.<page>].
+
 STYLE:
 - Be concise but technical. Safety/compliance notes where relevant.
 - End with a short checklist.`;
@@ -221,6 +226,12 @@ STYLE:
       brand ? `Brand/Model or Standard: ${brand}` : null,
       model ? `Model: ${model}` : null,
       `Question: ${message}`,
+      uploaded.length
+        ? [
+            "User uploaded documents (highest priority, cite as [user upload: <original name>, p.X]):",
+            ...uploaded.map((u) => `- ${u.originalName} (stored internally as ${u.filename})`)
+          ].join("\n")
+        : null,
       "Task:",
       "- Provide detailed, technical guidance.",
       "- If exact values/specs are requested, only provide them when grounded in retrieved text (with page/section citation).",
@@ -230,8 +241,8 @@ STYLE:
 
     // Build vector_store_ids: libraries + temp
     const vsIds: string[] = [];
-    if (Array.isArray(libraryIds) && libraryIds.length) vsIds.push(...libraryIds);
     if (tempVectorStoreId) vsIds.push(tempVectorStoreId);
+    if (Array.isArray(libraryIds) && libraryIds.length) vsIds.push(...libraryIds);
     const uniqueVsIds = Array.from(new Set(vsIds));
 
     // Tools config

@@ -28,19 +28,85 @@
   let trade = "";
   let brandModel = "";     // single combined field (e.g., "Panasonic CS-Z50VKR" or "AS/NZS 3000")
   let focus = "general";
+
+  type FileStatus = {
+    id: string;
+    name: string;
+    size: number;
+    status: "ready" | "uploading" | "uploaded" | "error";
+  };
+
   let files: File[] = [];
+  let fileStatuses: FileStatus[] = [];
   let share = false;
   let message = "";
 
   // --- ui state ---
   let loading = false;
+  let isUploadingFiles = false;
+  let totalUploadProgress = 0;
   let errorMsg = "";
   let answer = "";
   let copied = false;
 
+  const statusMessages: Record<FileStatus["status"], string> = {
+    ready: "Ready to upload",
+    uploading: "Uploading…",
+    uploaded: "Uploaded",
+    error: "Upload failed"
+  };
+
+  function statusBadgeClass(status: FileStatus["status"]) {
+    switch (status) {
+      case "uploaded":
+        return "badge-success";
+      case "uploading":
+        return "badge-primary";
+      case "error":
+        return "badge-error";
+      default:
+        return "badge-ghost";
+    }
+  }
+
+  function formatFileSize(bytes: number) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    let value = bytes;
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+    const fixed = value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1);
+    return `${fixed} ${units[unitIndex]}`;
+  }
+
+  function toPercent(value: number) {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(100, Math.round(value * 100)));
+  }
+
   function handleFileChange(e: Event) {
     const el = e.target as HTMLInputElement;
-    files = Array.from(el.files ?? []);
+    const selected = Array.from(el.files ?? []);
+    files = selected;
+
+    if (!selected.length) {
+      fileStatuses = [];
+      totalUploadProgress = 0;
+      isUploadingFiles = false;
+      return;
+    }
+
+    fileStatuses = selected.map((file, idx) => ({
+      id: `${file.name}-${file.size}-${file.lastModified ?? idx}-${idx}`,
+      name: file.name,
+      size: file.size,
+      status: "ready"
+    }));
+    totalUploadProgress = 0;
+    isUploadingFiles = false;
   }
 
   async function onAsk(e?: Event) {
@@ -58,13 +124,44 @@
       if (share) fd.set("share", "yes");
       for (const f of files) fd.append("files", f);
 
-      const res = await fetch("/api/assistant", { method: "POST", body: fd });
-      const text = (await res.text()) ?? "";
+      const activeFiles = files.slice();
+      if (fileStatuses.length) {
+        isUploadingFiles = true;
+        totalUploadProgress = 0;
+        fileStatuses = fileStatuses.map((fs) => ({ ...fs, status: "uploading" }));
+      }
 
-      if (!res.ok) {
-        errorMsg = text || `HTTP ${res.status}`;
-        console.error("[assistant] http error", res.status, text.slice(0, 200));
-        return;
+      const text = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/assistant");
+        xhr.responseType = "text";
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.responseText ?? "");
+          } else {
+            reject(new Error(xhr.responseText || `HTTP ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error"));
+
+        if (activeFiles.length) {
+          const totalBytes = activeFiles.reduce((sum, file) => sum + file.size, 0);
+          xhr.upload.onprogress = (event) => {
+            const denom = event.lengthComputable && event.total > 0 ? event.total : totalBytes;
+            if (denom > 0) {
+              totalUploadProgress = Math.min(1, event.loaded / denom);
+            }
+          };
+        }
+
+        xhr.send(fd);
+      });
+
+      if (fileStatuses.length) {
+        totalUploadProgress = 1;
+        fileStatuses = fileStatuses.map((fs) => ({ ...fs, status: "uploaded" }));
       }
 
       answer = text.trim();
@@ -72,8 +169,14 @@
     } catch (err) {
       console.error("[assistant] fetch error", err);
       errorMsg = (err as Error)?.message || String(err);
+      if (fileStatuses.length) {
+        fileStatuses = fileStatuses.map((fs) =>
+          fs.status === "uploading" ? { ...fs, status: "error" } : fs
+        );
+      }
     } finally {
       loading = false;
+      isUploadingFiles = false;
     }
   }
 
@@ -207,7 +310,40 @@
           multiple
           accept=".pdf,.txt,.md"
           on:change={handleFileChange}
+          disabled={loading}
         />
+        {#if fileStatuses.length}
+          <div class="space-y-3">
+            {#if isUploadingFiles}
+              <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <progress
+                  class="progress progress-primary flex-1 min-w-[8rem]"
+                  value={toPercent(totalUploadProgress)}
+                  max="100"
+                  aria-label="Upload progress"
+                ></progress>
+                <span class="tabular-nums text-xs sm:text-sm">{toPercent(totalUploadProgress)}%</span>
+              </div>
+            {:else if fileStatuses.some((fs) => fs.status === "error")}
+              <div class="text-xs font-medium text-error">Some files failed to upload.</div>
+            {/if}
+            <ul class="space-y-2">
+              {#each fileStatuses as fileStatus (fileStatus.id)}
+                <li class="rounded-md border border-base-200 bg-base-200/30 p-3 space-y-2">
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
+                    <span class="break-words">{fileStatus.name}</span>
+                    <span class="opacity-70">{formatFileSize(fileStatus.size)}</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs sm:text-[0.8rem]">
+                    <span class={`badge badge-sm ${statusBadgeClass(fileStatus.status)}`}>
+                      {statusMessages[fileStatus.status]}
+                    </span>
+                  </div>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
         <div class="text-xs sm:text-sm opacity-80 leading-relaxed space-y-2 break-words">
           <p>
             Only upload when you need something outside our shared library of thousands of manuals—it’s still gold if you’re chasing a specific clause or project doc.
@@ -252,7 +388,19 @@
       <button
         type="button"
         class="btn btn-ghost w-full sm:w-auto"
-        on:click={() => { message = ""; brandModel = ""; trade = ""; focus = "general"; files = []; answer = ""; errorMsg = ""; share = false; }}
+        on:click={() => {
+          message = "";
+          brandModel = "";
+          trade = "";
+          focus = "general";
+          files = [];
+          fileStatuses = [];
+          totalUploadProgress = 0;
+          isUploadingFiles = false;
+          answer = "";
+          errorMsg = "";
+          share = false;
+        }}
         disabled={loading}
       >
         Reset
