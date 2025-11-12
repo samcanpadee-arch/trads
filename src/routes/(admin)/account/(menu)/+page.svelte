@@ -1,24 +1,37 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  interface Props {
+    data: {
+      profile?: {
+        full_name?: string | null;
+      } | null;
+    };
+  }
+
+  let { data }: Props = $props();
+
+  let localDisplayName = "";
   let displayName = "";
   let hasVisited = false;
 
   onMount(() => {
     try {
-      // Name fallback (until wired directly to profile load)
-      displayName =
-        (localStorage.getItem("profile.name") ||
-         localStorage.getItem("profile_full_name") ||
-         localStorage.getItem("name") ||
-         "").trim();
-
       // First vs return visit
       hasVisited = localStorage.getItem("hasVisited") === "1";
       localStorage.setItem("hasVisited", "1");
+
+      // Name fallback (only used when profile data is missing)
+      localDisplayName =
+        (localStorage.getItem("profile.name") ||
+          localStorage.getItem("profile_full_name") ||
+          localStorage.getItem("name") ||
+          "").trim();
     } catch {}
   });
 
+  $: profileName = (data?.profile?.full_name ?? "").trim();
+  $: displayName = profileName || localDisplayName;
   $: salutation = hasVisited ? "Welcome back" : "Welcome";
   $: greeting = displayName ? `${salutation}, ${displayName} 👋` : `${salutation} 👋`;
 </script>
