@@ -1,10 +1,22 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 // @ts-ignore
 import registry from "$lib/vectorstores.json";
+import type { Database } from "../../../DatabaseDefinitions";
 
 export const config = { runtime: 'nodejs20.x' };
+
+type ServiceSupabase = SupabaseClient<Database>;
+
+function readPositiveNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const SESSION_VECTOR_TTL_HOURS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_TTL_HOURS, 12);
+const SESSION_VECTOR_EXPIRE_DAYS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_EXPIRE_DAYS, 7);
 
 /* ================= utils ================= */
 
@@ -43,6 +55,111 @@ async function findFileByStableName(apiKey: string, stableName: string): Promise
   return match?.id ?? null;
 }
 
+type CachedFile = {
+  file_id: string;
+  original_name: string | null;
+  size_bytes: number | null;
+};
+
+async function getCachedFile(
+  supabase: ServiceSupabase | undefined,
+  stableName: string
+): Promise<CachedFile | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("openai_file_cache")
+      .select("file_id, original_name, size_bytes")
+      .eq("stable_name", stableName)
+      .maybeSingle();
+    if (error) {
+      console.warn("[assistant] openai_file_cache lookup failed", error);
+      return null;
+    }
+    return data ?? null;
+  } catch (err) {
+    console.warn("[assistant] openai_file_cache lookup threw", err);
+    return null;
+  }
+}
+
+async function upsertCachedFile(
+  supabase: ServiceSupabase | undefined,
+  stableName: string,
+  fileId: string,
+  originalName: string,
+  sizeBytes: number
+): Promise<void> {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from("openai_file_cache").upsert({
+      stable_name: stableName,
+      file_id: fileId,
+      original_name: originalName,
+      size_bytes: Number.isFinite(sizeBytes) ? sizeBytes : null,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) console.warn("[assistant] openai_file_cache upsert failed", error);
+  } catch (err) {
+    console.warn("[assistant] openai_file_cache upsert threw", err);
+  }
+}
+
+type SessionVectorRow = {
+  vector_store_id: string;
+  last_used_at: string;
+};
+
+async function getSessionVectorStore(
+  supabase: ServiceSupabase | undefined,
+  scopeId: string
+): Promise<SessionVectorRow | null> {
+  if (!supabase || !scopeId) return null;
+  try {
+    const { data, error } = await supabase
+      .from("assistant_vector_sessions")
+      .select("vector_store_id, last_used_at")
+      .eq("scope_id", scopeId)
+      .maybeSingle();
+    if (error) {
+      console.warn("[assistant] session vector lookup failed", error);
+      return null;
+    }
+    return data ?? null;
+  } catch (err) {
+    console.warn("[assistant] session vector lookup threw", err);
+    return null;
+  }
+}
+
+async function upsertSessionVectorStore(
+  supabase: ServiceSupabase | undefined,
+  scopeId: string,
+  userId: string | null,
+  vectorStoreId: string
+): Promise<void> {
+  if (!supabase || !scopeId) return;
+  try {
+    const { error } = await supabase.from("assistant_vector_sessions").upsert({
+      scope_id: scopeId,
+      user_id: userId,
+      vector_store_id: vectorStoreId,
+      last_used_at: new Date().toISOString(),
+    });
+    if (error) console.warn("[assistant] session vector upsert failed", error);
+  } catch (err) {
+    console.warn("[assistant] session vector upsert threw", err);
+  }
+}
+
+function isSessionVectorExpired(lastUsedAt: string | null): boolean {
+  if (!lastUsedAt) return true;
+  const last = Date.parse(lastUsedAt);
+  if (Number.isNaN(last)) return true;
+  const ttlMs = SESSION_VECTOR_TTL_HOURS * 3600 * 1000;
+  return Date.now() - last > ttlMs;
+}
+
 async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string): Promise<{ id: string; filename: string }> {
   const form = new FormData();
   form.append("purpose", "assistants");
@@ -57,38 +174,57 @@ async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableNa
   return { id: json.id as string, filename: (json.filename as string) || stableName };
 }
 
-async function createVectorStore(apiKey: string, name: string): Promise<string> {
+async function createVectorStore(apiKey: string, name: string, expiresAfterDays?: number): Promise<string> {
   const resp = await fetch("https://api.openai.com/v1/vector_stores", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
+    body: JSON.stringify({
+      name,
+      ...(Number.isFinite(expiresAfterDays) && (expiresAfterDays || 0) > 0
+        ? { expires_after: { anchor: "last_active_at", days: expiresAfterDays } }
+        : {}),
+    })
   });
   if (!resp.ok) throw new Error(`Create vector store failed: ${await resp.text()}`);
   const json = await resp.json();
   return json.id as string;
 }
 
-async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<void> {
+async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<boolean> {
   const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ file_id: fileId })
   });
-  if (!resp.ok) throw new Error(`Attach file to vector store failed: ${await resp.text()}`);
+  if (resp.ok) return true;
+  const msg = await resp.text();
+  if (resp.status === 400 || resp.status === 409) {
+    if (/already\s+(added|exists)/i.test(msg)) return false;
+  }
+  throw new Error(`Attach file to vector store failed: ${msg}`);
 }
 
-async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs = 20000): Promise<void> {
+async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Promise<Array<{ file_id: string; status: string }>> {
+  const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=200`, {
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
+  if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
+  const json = await resp.json();
+  const files = Array.isArray(json.data) ? json.data : [];
+  return files.map((f: any) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }));
+}
+
+async function waitForIndexing(apiKey: string, vectorStoreId: string, expectedFileIds: string[], timeoutMs = 20000): Promise<void> {
+  if (!expectedFileIds.length) return;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
-      headers: { Authorization: `Bearer ${apiKey}` }
-    });
-    if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
-    const json = await resp.json();
-    const files = (json.data || []) as Array<any>;
+    const files = await listVectorStoreFiles(apiKey, vectorStoreId);
     if (files.length) {
-      const pending = files.find((f) => f.status !== "completed");
-      if (!pending) return;
+      const relevant = files.filter((f) => expectedFileIds.includes(f.file_id));
+      if (relevant.length === expectedFileIds.length) {
+        const pending = relevant.find((f) => f.status !== "completed");
+        if (!pending) return;
+      }
     }
     await new Promise((r) => setTimeout(r, 700));
   }
@@ -131,6 +267,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       return new Response("Unauthorized", { status: 401 });
     }
 
+    const supabase = locals.supabaseServiceRole as ServiceSupabase | undefined;
+
     const API = privateEnv.OPENAI_API_KEY;
     if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
@@ -164,24 +302,93 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     // Upload or reuse files with stable hashed filename
-    const uploaded: Array<{ id: string; filename: string; hash: string; originalName: string }> = [];
+    const uploaded: Array<{
+      id: string;
+      filename: string;
+      hash: string;
+      originalName: string;
+      file: File;
+      size: number;
+    }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);
       const stableName = `${hash}-${f.name}`;
-      let fileId = await findFileByStableName(API, stableName);
+      const size = Number(f.size || 0);
+      let fileId: string | null = null;
+      const cached = await getCachedFile(supabase, stableName);
+      if (cached?.file_id) fileId = cached.file_id;
+      if (!fileId) {
+        fileId = await findFileByStableName(API, stableName);
+      }
       if (!fileId) {
         const up = await uploadToOpenAIWithStableName(f, API, stableName);
         fileId = up.id;
       }
-      uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name });
+      await upsertCachedFile(supabase, stableName, fileId, f.name, size);
+      uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name, file: f, size });
     }
 
     // Temp per-request store for uploaded files
     let tempVectorStoreId: string | null = null;
     if (uploaded.length) {
-      tempVectorStoreId = await createVectorStore(API, `session-${Date.now()}`);
-      for (const u of uploaded) await attachFileToVectorStore(API, tempVectorStoreId, u.id);
-      await waitForIndexing(API, tempVectorStoreId);
+      const scopeKey = user.id;
+      const userId = user.id;
+      let reusable: SessionVectorRow | null = null;
+      if (scopeKey) {
+        const row = await getSessionVectorStore(supabase, scopeKey);
+        if (row && !isSessionVectorExpired(row.last_used_at)) {
+          reusable = row;
+        }
+      }
+
+      if (reusable) {
+        tempVectorStoreId = reusable.vector_store_id;
+      } else {
+        tempVectorStoreId = await createVectorStore(API, `session-${scopeKey || Date.now()}`, SESSION_VECTOR_EXPIRE_DAYS);
+        if (scopeKey) await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+      }
+
+      let existingIds = new Set<string>();
+      if (tempVectorStoreId) {
+        try {
+          const existingFiles = await listVectorStoreFiles(API, tempVectorStoreId);
+          existingIds = new Set(existingFiles.map((f) => f.file_id).filter(Boolean));
+        } catch (err) {
+          console.warn("[assistant] vector store list failed, recreating", err);
+          tempVectorStoreId = await createVectorStore(API, `session-${scopeKey || Date.now()}`, SESSION_VECTOR_EXPIRE_DAYS);
+          existingIds = new Set();
+          if (scopeKey) await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+        }
+      }
+
+      const toAttach = uploaded.filter((u) => !existingIds.has(u.id));
+      const waitFor: string[] = [];
+      for (const u of toAttach) {
+        if (!tempVectorStoreId) break;
+        try {
+          const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
+          if (attached) {
+            waitFor.push(u.id);
+          }
+        } catch (err: any) {
+          const msg = String(err?.message || err);
+          if (/not\s+found/i.test(msg) || /no such file/i.test(msg)) {
+            const up = await uploadToOpenAIWithStableName(u.file, API, u.filename);
+            u.id = up.id;
+            await upsertCachedFile(supabase, u.filename, u.id, u.originalName, u.size);
+            const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
+            if (attached) waitFor.push(u.id);
+          } else {
+            throw err;
+          }
+        }
+      }
+      if (tempVectorStoreId && waitFor.length) {
+        await waitForIndexing(API, tempVectorStoreId, waitFor);
+      }
+      if (scopeKey && tempVectorStoreId) {
+        await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+      }
     }
 
     // Library stores from registry JSON (approved store IDs)
