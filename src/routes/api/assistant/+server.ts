@@ -269,6 +269,34 @@ function extractTextFromResponses(resJson: any): string {
   return "";
 }
 
+function cleanCitationLabel(label: string): string {
+  let working = label.trim();
+
+  const match = working.match(/^([0-9a-f]{16,})([-_])(.*)$/i);
+  if (match) {
+    working = match[3];
+  }
+
+  const [, basePart = working, suffix = ""] = working.match(/^(.*?)(,(.*))?$/) || [];
+  const withoutExt = basePart.replace(/\.[A-Za-z0-9]+$/, "");
+  const prettyBase = withoutExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  const rebuiltBase = prettyBase || withoutExt || basePart.trim();
+
+  return suffix ? `${rebuiltBase}${suffix}` : rebuiltBase;
+}
+
+function prettifyCitations(text: string): string {
+  return text.replace(/【([^】]+)】/g, (full, inner) => {
+    const segments = inner.split(":");
+    if (!segments.length) return full;
+    const last = segments[segments.length - 1];
+    const cleaned = cleanCitationLabel(last);
+    if (!cleaned || cleaned === last) return full;
+    segments[segments.length - 1] = cleaned;
+    return `【${segments.join(":")}】`;
+  });
+}
+
 /* ================= constants (performance caps) ================= */
 
 const SERVER_MAX_TOTAL_BYTES = 4 * 1024 * 1024; // 4 MB total
@@ -512,7 +540,7 @@ STYLE:
       sourceFlag = "GENERAL";
       lines.shift();
     }
-    text = lines.join("\n").trim();
+    text = prettifyCitations(lines.join("\n").trim());
 
     // HARD GUARD: if GENERAL and numeric specs present, refuse to provide numbers
     if (sourceFlag !== "MANUAL" && SPEC_UNIT_RE.test(text)) {
@@ -526,7 +554,7 @@ STYLE:
 
     // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
     if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
-      text += "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
+      text += "\n\n_Note: If the page or section isn’t listed above, please refer to the cited document to confirm the exact location._";
     }
 
     return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });

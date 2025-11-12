@@ -36,6 +36,7 @@
     status: "ready" | "uploading" | "uploaded" | "error";
   };
 
+  let fileInput: HTMLInputElement | null = null;
   let files: File[] = [];
   let fileStatuses: FileStatus[] = [];
   let share = false;
@@ -309,6 +310,7 @@
           type="file"
           multiple
           accept=".pdf,.txt,.md"
+          bind:this={fileInput}
           on:change={handleFileChange}
           disabled={loading}
         />
@@ -393,6 +395,9 @@
           brandModel = "";
           trade = "";
           focus = "general";
+          if (fileInput) {
+            fileInput.value = "";
+          }
           files = [];
           fileStatuses = [];
           totalUploadProgress = 0;
