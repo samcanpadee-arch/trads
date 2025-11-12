@@ -1,7 +1,9 @@
 import Stripe from "stripe";
 import { PRIVATE_STRIPE_API_KEY } from "$env/static/private";
 
-const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" });
+const stripe = PRIVATE_STRIPE_API_KEY
+  ? new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" })
+  : null;
 
 /** Map Stripe price IDs to tiers */
 const TIER_BY_PRICE: Record<string, "free" | "standard" | "pro"> = {
@@ -31,6 +33,8 @@ async function ensureCustomerId(locals: {
     .single();
 
   if (prof?.stripe_customer_id) return prof.stripe_customer_id as string;
+
+  if (!stripe) return null;
 
   // 2) Fallback: try to find existing customer by email
   const email = user.email ?? undefined;
@@ -67,6 +71,8 @@ export async function getUserTier(locals: {
   safeGetSession: () => Promise<{ session: any; user: { id: string; email?: string|null } | null }>;
   supabaseServiceRole: any;
 }): Promise<Tier> {
+  if (!stripe) return "free";
+
   const customerId = await ensureCustomerId(locals);
   if (!customerId) return "free";
 

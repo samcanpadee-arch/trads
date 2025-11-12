@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { afterUpdate, onMount } from "svelte";
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
   type Role = 'system' | 'user' | 'assistant';
