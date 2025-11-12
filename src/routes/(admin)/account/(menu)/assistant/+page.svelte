@@ -324,8 +324,6 @@
                 ></progress>
                 <span class="tabular-nums text-xs sm:text-sm">{toPercent(totalUploadProgress)}%</span>
               </div>
-            {:else if fileStatuses.every((fs) => fs.status === "uploaded")}
-              <div class="text-xs font-medium text-success">Uploads complete.</div>
             {:else if fileStatuses.some((fs) => fs.status === "error")}
               <div class="text-xs font-medium text-error">Some files failed to upload.</div>
             {/if}
