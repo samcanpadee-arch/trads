@@ -297,6 +297,61 @@ function prettifyCitations(text: string): string {
   });
 }
 
+function normalizeForLookup(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function humanizeDocumentLabel(label: string): string {
+  let working = label.trim();
+  if (!working) return working;
+
+  working = working.replace(/\.[A-Za-z0-9]+$/, "");
+  working = working.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!working) return label.trim();
+
+  const words = working.split(" ").map((word) => {
+    if (!word) return word;
+    if (/^[A-Z0-9]{2,}$/.test(word)) return word; // keep acronyms/initialisms
+    if (/^[0-9]+[A-Za-z]*$/.test(word)) return word.toUpperCase();
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+
+  return words.join(" ").trim();
+}
+
+function collectDocumentReferences(text: string, uploadLookup: Map<string, string>): string[] {
+  const seen = new Set<string>();
+  const docs: string[] = [];
+
+  text.replace(/【([^】]+)】/g, (_full: string, inner: string) => {
+    const parts = inner.split(":");
+    if (!parts.length) return "";
+
+    let last = parts[parts.length - 1] || "";
+    if (!last) return "";
+
+    last = last.split("†")[0]?.trim() || "";
+    if (!last) return "";
+
+    const cleaned = cleanCitationLabel(last);
+    let core = cleaned.split(",")[0]?.trim() || "";
+    core = core.replace(/^user upload:\s*/i, "").trim();
+    if (!core) return "";
+
+    const lookupKey = normalizeForLookup(core);
+    const mapped = uploadLookup.get(lookupKey);
+    const humanized = mapped ? mapped.trim() : humanizeDocumentLabel(core);
+    const key = normalizeForLookup(humanized);
+    if (!key || seen.has(key)) return "";
+
+    seen.add(key);
+    docs.push(humanized);
+    return "";
+  });
+
+  return docs;
+}
+
 /* ================= constants (performance caps) ================= */
 
 const SERVER_MAX_TOTAL_BYTES = 4 * 1024 * 1024; // 4 MB total
@@ -348,6 +403,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     // Upload or reuse files with stable hashed filename
+    const uploadLookup = new Map<string, string>();
     const uploaded: Array<{
       id: string;
       filename: string;
@@ -372,6 +428,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       }
       await upsertCachedFile(supabase, stableName, fileId, f.name, size);
       uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name, file: f, size });
+
+      const stableLookup = normalizeForLookup(stableName);
+      if (stableLookup) uploadLookup.set(stableLookup, f.name);
+      const originalLookup = normalizeForLookup(f.name);
+      if (originalLookup && !uploadLookup.has(originalLookup)) {
+        uploadLookup.set(originalLookup, f.name);
+      }
     }
 
     // Temp per-request store for uploaded files
@@ -541,6 +604,7 @@ STYLE:
       lines.shift();
     }
     text = prettifyCitations(lines.join("\n").trim());
+    const docReferences = collectDocumentReferences(text, uploadLookup);
 
     // HARD GUARD: if GENERAL and numeric specs present, refuse to provide numbers
     if (sourceFlag !== "MANUAL" && SPEC_UNIT_RE.test(text)) {
@@ -550,6 +614,11 @@ STYLE:
         "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
       ].join("\n");
       return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+
+    if (docReferences.length) {
+      const docList = docReferences.map((name) => `- ${name}`).join("\n");
+      text += `\n\nReferenced documents:\n${docList}`;
     }
 
     // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
