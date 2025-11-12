@@ -190,16 +190,22 @@ async function createVectorStore(apiKey: string, name: string, expiresAfterDays?
   return json.id as string;
 }
 
-async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<boolean> {
+type AttachResult = "attached" | "already";
+
+async function attachFileToVectorStore(
+  apiKey: string,
+  vectorStoreId: string,
+  fileId: string
+): Promise<AttachResult> {
   const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ file_id: fileId })
   });
-  if (resp.ok) return true;
+  if (resp.ok) return "attached";
   const msg = await resp.text();
   if (resp.status === 400 || resp.status === 409) {
-    if (/already\s+(added|exists)/i.test(msg)) return false;
+    if (/already\s+(added|exists)/i.test(msg)) return "already";
   }
   throw new Error(`Attach file to vector store failed: ${msg}`);
 }
@@ -277,6 +283,11 @@ function cleanCitationLabel(label: string): string {
     working = match[3];
   }
 
+  const spaceMatch = working.match(/^([0-9a-f]{16,})\s+(.*)$/i);
+  if (spaceMatch) {
+    working = spaceMatch[2];
+  }
+
   const [, basePart = working, suffix = ""] = working.match(/^(.*?)(,(.*))?$/) || [];
   const withoutExt = basePart.replace(/\.[A-Za-z0-9]+$/, "");
   const prettyBase = withoutExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
@@ -319,22 +330,28 @@ function humanizeDocumentLabel(label: string): string {
   return words.join(" ").trim();
 }
 
+function stripTrailingLocation(value: string): string {
+  return value
+    .replace(/[,\s]*(?:p{1,2}\.?|§)\s*[0-9A-Za-z\-–,\s]+$/i, "")
+    .trim();
+}
+
 function collectDocumentReferences(text: string, uploadLookup: Map<string, string>): string[] {
   const seen = new Set<string>();
   const docs: string[] = [];
 
   text.replace(/【([^】]+)】/g, (_full: string, inner: string) => {
-    const parts = inner.split(":");
-    if (!parts.length) return "";
+    const daggerParts = inner.split("†");
+    const labelCandidate = daggerParts.length > 1 ? daggerParts[daggerParts.length - 1] : inner;
 
-    let last = parts[parts.length - 1] || "";
-    if (!last) return "";
+    const colonParts = labelCandidate.split(":");
+    let last = colonParts.length ? colonParts[colonParts.length - 1] : labelCandidate;
 
-    last = last.split("†")[0]?.trim() || "";
+    last = last.trim();
     if (!last) return "";
 
     const cleaned = cleanCitationLabel(last);
-    let core = cleaned.split(",")[0]?.trim() || "";
+    let core = stripTrailingLocation(cleaned.split(",")[0] || "");
     core = core.replace(/^user upload:\s*/i, "").trim();
     if (!core) return "";
 
@@ -360,6 +377,12 @@ const SERVER_MAX_FILES = 4;                      // at most 4 files
 /* ================= handler ================= */
 
 const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
+
+type ShareResult = {
+  name: string;
+  status: AttachResult | "failed";
+  message?: string;
+};
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
@@ -476,7 +499,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         if (!tempVectorStoreId) break;
         try {
           const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
-          if (attached) {
+          if (attached === "attached") {
             waitFor.push(u.id);
           }
         } catch (err: any) {
@@ -486,7 +509,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             u.id = up.id;
             await upsertCachedFile(supabase, u.filename, u.id, u.originalName, u.size);
             const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
-            if (attached) waitFor.push(u.id);
+            if (attached === "attached") waitFor.push(u.id);
           } else {
             throw err;
           }
@@ -506,12 +529,26 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       : [];
 
     // If opted-in, attach uploaded files to all library stores
+    const shareResults: ShareResult[] = [];
     try {
       const approvedId = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID || "";
       console.log(`[assistant] share=${share} files=${uploaded.length} approved=${approvedId || "none"}`);
       if (share && approvedId && uploaded.length) {
         for (const u of uploaded) {
-          try { await attachFileToVectorStore(API, approvedId, u.id); } catch (e) { console.warn("attach approved failed", e); }
+          try {
+            const result = await attachFileToVectorStore(API, approvedId, u.id);
+            shareResults.push({
+              name: u.originalName,
+              status: result
+            });
+          } catch (e: any) {
+            console.warn("attach approved failed", e);
+            shareResults.push({
+              name: u.originalName,
+              status: "failed",
+              message: e?.message ? String(e.message) : String(e)
+            });
+          }
         }
       }
     } catch {}
@@ -613,7 +650,14 @@ STYLE:
         "I can’t provide exact specifications (numbers/units) without citing a manual or standard.",
         "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
       ].join("\n");
-      return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      return new Response(
+        JSON.stringify({
+          answer: refusal,
+          referencedDocuments: docReferences,
+          shareActivity: shareResults
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     if (docReferences.length) {
@@ -626,7 +670,14 @@ STYLE:
       text += "\n\n_Note: If the page or section isn’t listed above, please refer to the cited document to confirm the exact location._";
     }
 
-    return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(
+      JSON.stringify({
+        answer: text,
+        referencedDocuments: docReferences,
+        shareActivity: shareResults
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
     return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });

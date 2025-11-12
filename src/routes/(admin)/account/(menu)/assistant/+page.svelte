@@ -42,6 +42,14 @@
   let share = false;
   let message = "";
 
+  type ShareFeedback = {
+    name: string;
+    status: "attached" | "already" | "failed";
+    message?: string;
+  };
+
+  let shareActivity: ShareFeedback[] = [];
+
   // --- ui state ---
   let loading = false;
   let isUploadingFiles = false;
@@ -64,6 +72,25 @@
       case "uploading":
         return "badge-primary";
       case "error":
+        return "badge-error";
+      default:
+        return "badge-ghost";
+    }
+  }
+
+  const shareStatusCopy: Record<ShareFeedback["status"], string> = {
+    attached: "Shared to the community library",
+    already: "Already available in the shared library",
+    failed: "Could not share this upload"
+  };
+
+  function shareStatusBadgeClass(status: ShareFeedback["status"]) {
+    switch (status) {
+      case "attached":
+        return "badge-success";
+      case "already":
+        return "badge-info";
+      case "failed":
         return "badge-error";
       default:
         return "badge-ghost";
@@ -117,6 +144,7 @@
       loading = true;
       errorMsg = "";
       answer = "";
+      shareActivity = [];
 
       const fd = new FormData();
       fd.set("message", (typeof message === "string" ? message : "").trim());
@@ -132,16 +160,28 @@
         fileStatuses = fileStatuses.map((fs) => ({ ...fs, status: "uploading" }));
       }
 
-      const text = await new Promise<string>((resolve, reject) => {
+      const text = await new Promise<{ raw: any; text: string }>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/assistant");
-        xhr.responseType = "text";
+        xhr.responseType = "json";
 
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(xhr.responseText ?? "");
+            if (xhr.response && typeof xhr.response === "object") {
+              resolve({ raw: xhr.response, text: "" });
+            } else {
+              resolve({ raw: xhr.responseText ?? "", text: String(xhr.responseText ?? "") });
+            }
           } else {
-            reject(new Error(xhr.responseText || `HTTP ${xhr.status}`));
+            const body =
+              typeof xhr.response === "object" && xhr.response !== null
+                ? xhr.response
+                : xhr.responseText;
+            if (body && typeof body === "object" && "error" in body) {
+              reject(new Error(String((body as { error: string }).error)));
+            } else {
+              reject(new Error(typeof body === "string" && body.length ? body : `HTTP ${xhr.status}`));
+            }
           }
         };
 
@@ -165,7 +205,37 @@
         fileStatuses = fileStatuses.map((fs) => ({ ...fs, status: "uploaded" }));
       }
 
-      answer = text.trim();
+      let payload = text.raw;
+      if (!payload || typeof payload !== "object") {
+        try {
+          payload = JSON.parse(typeof text.raw === "string" ? text.raw : text.text ?? "");
+        } catch {
+          payload = null;
+        }
+      }
+
+      const derivedAnswer =
+        payload && typeof payload === "object" && typeof payload.answer === "string"
+          ? payload.answer
+          : typeof text.text === "string"
+            ? text.text
+            : "";
+
+      answer = (derivedAnswer || "").trim();
+
+      if (payload && typeof payload === "object" && Array.isArray(payload.shareActivity)) {
+        shareActivity = payload.shareActivity
+          .map((item: any) => ({
+            name: typeof item?.name === "string" ? item.name : "Unknown upload",
+            status:
+              item?.status === "attached" || item?.status === "already" || item?.status === "failed"
+                ? item.status
+                : "failed",
+            message: typeof item?.message === "string" ? item.message : undefined
+          }))
+          .filter((entry) => entry.name);
+      }
+
       console.log("[assistant] answer len=", answer.length, "snippet:", answer.slice(0, 120));
     } catch (err) {
       console.error("[assistant] fetch error", err);
@@ -405,6 +475,7 @@
           answer = "";
           errorMsg = "";
           share = false;
+          shareActivity = [];
         }}
         disabled={loading}
       >
@@ -421,6 +492,24 @@
     {:else if errorMsg}
       <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
     {:else if answer && answer.length > 0}
+      {#if shareActivity.length}
+        <div class="alert alert-info flex flex-col gap-2 whitespace-pre-wrap break-words text-sm">
+          <span class="font-semibold">Library sharing summary</span>
+          <ul class="space-y-1">
+            {#each shareActivity as activity, idx (activity.name + idx)}
+              <li class="flex flex-wrap items-start gap-2">
+                <span class={`badge badge-sm ${shareStatusBadgeClass(activity.status)}`}>
+                  {shareStatusCopy[activity.status]}
+                </span>
+                <span class="font-medium">{activity.name}</span>
+                {#if activity.status === "failed" && activity.message}
+                  <span class="opacity-70">({activity.message})</span>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
       <div class="flex flex-wrap items-center justify-end gap-2 mb-2">
         <button
           type="button"
