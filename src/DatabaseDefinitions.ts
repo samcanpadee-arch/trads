@@ -9,6 +9,37 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      assistant_vector_sessions: {
+        Row: {
+          created_at: string
+          last_used_at: string
+          scope_id: string
+          user_id: string | null
+          vector_store_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_used_at?: string
+          scope_id: string
+          user_id?: string | null
+          vector_store_id: string
+        }
+        Update: {
+          created_at?: string
+          last_used_at?: string
+          scope_id?: string
+          user_id?: string | null
+          vector_store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_vector_sessions_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_requests: {
         Row: {
           company_name: string | null
@@ -39,6 +70,33 @@ export interface Database {
           message_body?: string | null
           phone?: string | null
           updated_at?: Date | null
+        }
+        Relationships: []
+      }
+      openai_file_cache: {
+        Row: {
+          created_at: string
+          file_id: string
+          original_name: string | null
+          size_bytes: number | null
+          stable_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_id: string
+          original_name?: string | null
+          size_bytes?: number | null
+          stable_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string
+          original_name?: string | null
+          size_bytes?: number | null
+          stable_name?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -1,10 +1,22 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 // @ts-ignore
 import registry from "$lib/vectorstores.json";
+import type { Database } from "../../../DatabaseDefinitions";
 
 export const config = { runtime: 'nodejs20.x' };
+
+type ServiceSupabase = SupabaseClient<Database>;
+
+function readPositiveNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const SESSION_VECTOR_TTL_HOURS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_TTL_HOURS, 12);
+const SESSION_VECTOR_EXPIRE_DAYS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_EXPIRE_DAYS, 7);
 
 /* ================= utils ================= */
 
@@ -43,6 +55,111 @@ async function findFileByStableName(apiKey: string, stableName: string): Promise
   return match?.id ?? null;
 }
 
+type CachedFile = {
+  file_id: string;
+  original_name: string | null;
+  size_bytes: number | null;
+};
+
+async function getCachedFile(
+  supabase: ServiceSupabase | undefined,
+  stableName: string
+): Promise<CachedFile | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("openai_file_cache")
+      .select("file_id, original_name, size_bytes")
+      .eq("stable_name", stableName)
+      .maybeSingle();
+    if (error) {
+      console.warn("[assistant] openai_file_cache lookup failed", error);
+      return null;
+    }
+    return data ?? null;
+  } catch (err) {
+    console.warn("[assistant] openai_file_cache lookup threw", err);
+    return null;
+  }
+}
+
+async function upsertCachedFile(
+  supabase: ServiceSupabase | undefined,
+  stableName: string,
+  fileId: string,
+  originalName: string,
+  sizeBytes: number
+): Promise<void> {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from("openai_file_cache").upsert({
+      stable_name: stableName,
+      file_id: fileId,
+      original_name: originalName,
+      size_bytes: Number.isFinite(sizeBytes) ? sizeBytes : null,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) console.warn("[assistant] openai_file_cache upsert failed", error);
+  } catch (err) {
+    console.warn("[assistant] openai_file_cache upsert threw", err);
+  }
+}
+
+type SessionVectorRow = {
+  vector_store_id: string;
+  last_used_at: string;
+};
+
+async function getSessionVectorStore(
+  supabase: ServiceSupabase | undefined,
+  scopeId: string
+): Promise<SessionVectorRow | null> {
+  if (!supabase || !scopeId) return null;
+  try {
+    const { data, error } = await supabase
+      .from("assistant_vector_sessions")
+      .select("vector_store_id, last_used_at")
+      .eq("scope_id", scopeId)
+      .maybeSingle();
+    if (error) {
+      console.warn("[assistant] session vector lookup failed", error);
+      return null;
+    }
+    return data ?? null;
+  } catch (err) {
+    console.warn("[assistant] session vector lookup threw", err);
+    return null;
+  }
+}
+
+async function upsertSessionVectorStore(
+  supabase: ServiceSupabase | undefined,
+  scopeId: string,
+  userId: string | null,
+  vectorStoreId: string
+): Promise<void> {
+  if (!supabase || !scopeId) return;
+  try {
+    const { error } = await supabase.from("assistant_vector_sessions").upsert({
+      scope_id: scopeId,
+      user_id: userId,
+      vector_store_id: vectorStoreId,
+      last_used_at: new Date().toISOString(),
+    });
+    if (error) console.warn("[assistant] session vector upsert failed", error);
+  } catch (err) {
+    console.warn("[assistant] session vector upsert threw", err);
+  }
+}
+
+function isSessionVectorExpired(lastUsedAt: string | null): boolean {
+  if (!lastUsedAt) return true;
+  const last = Date.parse(lastUsedAt);
+  if (Number.isNaN(last)) return true;
+  const ttlMs = SESSION_VECTOR_TTL_HOURS * 3600 * 1000;
+  return Date.now() - last > ttlMs;
+}
+
 async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableName: string): Promise<{ id: string; filename: string }> {
   const form = new FormData();
   form.append("purpose", "assistants");
@@ -57,38 +174,81 @@ async function uploadToOpenAIWithStableName(file: File, apiKey: string, stableNa
   return { id: json.id as string, filename: (json.filename as string) || stableName };
 }
 
-async function createVectorStore(apiKey: string, name: string): Promise<string> {
+async function createVectorStore(apiKey: string, name: string, expiresAfterDays?: number): Promise<string> {
   const resp = await fetch("https://api.openai.com/v1/vector_stores", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
+    body: JSON.stringify({
+      name,
+      ...(Number.isFinite(expiresAfterDays) && (expiresAfterDays || 0) > 0
+        ? { expires_after: { anchor: "last_active_at", days: expiresAfterDays } }
+        : {}),
+    })
   });
   if (!resp.ok) throw new Error(`Create vector store failed: ${await resp.text()}`);
   const json = await resp.json();
   return json.id as string;
 }
 
-async function attachFileToVectorStore(apiKey: string, vectorStoreId: string, fileId: string): Promise<void> {
+type AttachResult = "attached" | "already";
+
+async function attachFileToVectorStore(
+  apiKey: string,
+  vectorStoreId: string,
+  fileId: string
+): Promise<AttachResult> {
   const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ file_id: fileId })
   });
-  if (!resp.ok) throw new Error(`Attach file to vector store failed: ${await resp.text()}`);
+  if (resp.ok) return "attached";
+  const msg = await resp.text();
+  if (resp.status === 400 || resp.status === 409) {
+    if (/already\s+(added|exists)/i.test(msg)) return "already";
+  }
+  throw new Error(`Attach file to vector store failed: ${msg}`);
 }
 
-async function waitForIndexing(apiKey: string, vectorStoreId: string, timeoutMs = 20000): Promise<void> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?limit=100`, {
+async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Promise<Array<{ file_id: string; status: string }>> {
+  const aggregated: Array<{ file_id: string; status: string }> = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 20; page += 1) {
+    const params = new URLSearchParams({ limit: "100" });
+    if (cursor) params.set("after", cursor);
+
+    const resp = await fetch(`https://api.openai.com/v1/vector_stores/${vectorStoreId}/files?${params.toString()}`, {
       headers: { Authorization: `Bearer ${apiKey}` }
     });
     if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
     const json = await resp.json();
-    const files = (json.data || []) as Array<any>;
+    const files = Array.isArray(json.data) ? json.data : [];
+    aggregated.push(
+      ...files.map((f: any) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }))
+    );
+
+    if (!json?.has_more) break;
+    const last = files[files.length - 1];
+    const nextCursor = (last?.id as string | undefined) || (last?.file_id as string | undefined);
+    if (!nextCursor) break;
+    cursor = nextCursor;
+  }
+
+  return aggregated;
+}
+
+async function waitForIndexing(apiKey: string, vectorStoreId: string, expectedFileIds: string[], timeoutMs = 20000): Promise<void> {
+  if (!expectedFileIds.length) return;
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const files = await listVectorStoreFiles(apiKey, vectorStoreId);
     if (files.length) {
-      const pending = files.find((f) => f.status !== "completed");
-      if (!pending) return;
+      const relevant = files.filter((f) => expectedFileIds.includes(f.file_id));
+      if (relevant.length === expectedFileIds.length) {
+        const pending = relevant.find((f) => f.status !== "completed");
+        if (!pending) return;
+      }
     }
     await new Promise((r) => setTimeout(r, 700));
   }
@@ -115,6 +275,100 @@ function extractTextFromResponses(resJson: any): string {
   return "";
 }
 
+function cleanCitationLabel(label: string): string {
+  let working = label.trim();
+
+  const match = working.match(/^([0-9a-f]{16,})([-_])(.*)$/i);
+  if (match) {
+    working = match[3];
+  }
+
+  const spaceMatch = working.match(/^([0-9a-f]{16,})\s+(.*)$/i);
+  if (spaceMatch) {
+    working = spaceMatch[2];
+  }
+
+  const [, basePart = working, suffix = ""] = working.match(/^(.*?)(,(.*))?$/) || [];
+  const withoutExt = basePart.replace(/\.[A-Za-z0-9]+$/, "");
+  const prettyBase = withoutExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  const rebuiltBase = prettyBase || withoutExt || basePart.trim();
+
+  return suffix ? `${rebuiltBase}${suffix}` : rebuiltBase;
+}
+
+function prettifyCitations(text: string): string {
+  return text.replace(/【([^】]+)】/g, (full, inner) => {
+    const segments = inner.split(":");
+    if (!segments.length) return full;
+    const last = segments[segments.length - 1];
+    const cleaned = cleanCitationLabel(last);
+    if (!cleaned || cleaned === last) return full;
+    segments[segments.length - 1] = cleaned;
+    return `【${segments.join(":")}】`;
+  });
+}
+
+function normalizeForLookup(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function humanizeDocumentLabel(label: string): string {
+  let working = label.trim();
+  if (!working) return working;
+
+  working = working.replace(/\.[A-Za-z0-9]+$/, "");
+  working = working.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!working) return label.trim();
+
+  const words = working.split(" ").map((word) => {
+    if (!word) return word;
+    if (/^[A-Z0-9]{2,}$/.test(word)) return word; // keep acronyms/initialisms
+    if (/^[0-9]+[A-Za-z]*$/.test(word)) return word.toUpperCase();
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+
+  return words.join(" ").trim();
+}
+
+function stripTrailingLocation(value: string): string {
+  return value
+    .replace(/[,\s]*(?:p{1,2}\.?|§)\s*[0-9A-Za-z\-–,\s]+$/i, "")
+    .trim();
+}
+
+function collectDocumentReferences(text: string, uploadLookup: Map<string, string>): string[] {
+  const seen = new Set<string>();
+  const docs: string[] = [];
+
+  text.replace(/【([^】]+)】/g, (_full: string, inner: string) => {
+    const daggerParts = inner.split("†");
+    const labelCandidate = daggerParts.length > 1 ? daggerParts[daggerParts.length - 1] : inner;
+
+    const colonParts = labelCandidate.split(":");
+    let last = colonParts.length ? colonParts[colonParts.length - 1] : labelCandidate;
+
+    last = last.trim();
+    if (!last) return "";
+
+    const cleaned = cleanCitationLabel(last);
+    let core = stripTrailingLocation(cleaned.split(",")[0] || "");
+    core = core.replace(/^user upload:\s*/i, "").trim();
+    if (!core) return "";
+
+    const lookupKey = normalizeForLookup(core);
+    const mapped = uploadLookup.get(lookupKey);
+    const humanized = mapped ? mapped.trim() : humanizeDocumentLabel(core);
+    const key = normalizeForLookup(humanized);
+    if (!key || seen.has(key)) return "";
+
+    seen.add(key);
+    docs.push(humanized);
+    return "";
+  });
+
+  return docs;
+}
+
 /* ================= constants (performance caps) ================= */
 
 const SERVER_MAX_TOTAL_BYTES = 4 * 1024 * 1024; // 4 MB total
@@ -124,12 +378,20 @@ const SERVER_MAX_FILES = 4;                      // at most 4 files
 
 const SPEC_UNIT_RE = /\b\d+(\.\d+)?\s*(mm|cm|m|Nm|N·m|N-m|°C|°F|A|V|kV|kW|W|Pa|kPa|MPa|bar|psi|Hz|dB|%|°|kg|g|L|min|s)\b/;
 
+type ShareResult = {
+  name: string;
+  status: AttachResult | "failed";
+  message?: string;
+};
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     const { session, user } = await locals.safeGetSession();
     if (!session || !user) {
       return new Response("Unauthorized", { status: 401 });
     }
+
+    const supabase = locals.supabaseServiceRole as ServiceSupabase | undefined;
 
     const API = privateEnv.OPENAI_API_KEY;
     if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
@@ -164,24 +426,101 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     // Upload or reuse files with stable hashed filename
-    const uploaded: Array<{ id: string; filename: string; hash: string; originalName: string }> = [];
+    const uploadLookup = new Map<string, string>();
+    const uploaded: Array<{
+      id: string;
+      filename: string;
+      hash: string;
+      originalName: string;
+      file: File;
+      size: number;
+    }> = [];
     for (const f of files) {
       const hash = await sha256OfFile(f);
       const stableName = `${hash}-${f.name}`;
-      let fileId = await findFileByStableName(API, stableName);
+      const size = Number(f.size || 0);
+      let fileId: string | null = null;
+      const cached = await getCachedFile(supabase, stableName);
+      if (cached?.file_id) fileId = cached.file_id;
+      if (!fileId) {
+        fileId = await findFileByStableName(API, stableName);
+      }
       if (!fileId) {
         const up = await uploadToOpenAIWithStableName(f, API, stableName);
         fileId = up.id;
       }
-      uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name });
+      await upsertCachedFile(supabase, stableName, fileId, f.name, size);
+      uploaded.push({ id: fileId, filename: stableName, hash, originalName: f.name, file: f, size });
+
+      const stableLookup = normalizeForLookup(stableName);
+      if (stableLookup) uploadLookup.set(stableLookup, f.name);
+      const originalLookup = normalizeForLookup(f.name);
+      if (originalLookup && !uploadLookup.has(originalLookup)) {
+        uploadLookup.set(originalLookup, f.name);
+      }
     }
 
     // Temp per-request store for uploaded files
     let tempVectorStoreId: string | null = null;
     if (uploaded.length) {
-      tempVectorStoreId = await createVectorStore(API, `session-${Date.now()}`);
-      for (const u of uploaded) await attachFileToVectorStore(API, tempVectorStoreId, u.id);
-      await waitForIndexing(API, tempVectorStoreId);
+      const scopeKey = user.id;
+      const userId = user.id;
+      let reusable: SessionVectorRow | null = null;
+      if (scopeKey) {
+        const row = await getSessionVectorStore(supabase, scopeKey);
+        if (row && !isSessionVectorExpired(row.last_used_at)) {
+          reusable = row;
+        }
+      }
+
+      if (reusable) {
+        tempVectorStoreId = reusable.vector_store_id;
+      } else {
+        tempVectorStoreId = await createVectorStore(API, `session-${scopeKey || Date.now()}`, SESSION_VECTOR_EXPIRE_DAYS);
+        if (scopeKey) await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+      }
+
+      let existingIds = new Set<string>();
+      if (tempVectorStoreId) {
+        try {
+          const existingFiles = await listVectorStoreFiles(API, tempVectorStoreId);
+          existingIds = new Set(existingFiles.map((f) => f.file_id).filter(Boolean));
+        } catch (err) {
+          console.warn("[assistant] vector store list failed, recreating", err);
+          tempVectorStoreId = await createVectorStore(API, `session-${scopeKey || Date.now()}`, SESSION_VECTOR_EXPIRE_DAYS);
+          existingIds = new Set();
+          if (scopeKey) await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+        }
+      }
+
+      const toAttach = uploaded.filter((u) => !existingIds.has(u.id));
+      const waitFor: string[] = [];
+      for (const u of toAttach) {
+        if (!tempVectorStoreId) break;
+        try {
+          const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
+          if (attached === "attached") {
+            waitFor.push(u.id);
+          }
+        } catch (err: any) {
+          const msg = String(err?.message || err);
+          if (/not\s+found/i.test(msg) || /no such file/i.test(msg)) {
+            const up = await uploadToOpenAIWithStableName(u.file, API, u.filename);
+            u.id = up.id;
+            await upsertCachedFile(supabase, u.filename, u.id, u.originalName, u.size);
+            const attached = await attachFileToVectorStore(API, tempVectorStoreId, u.id);
+            if (attached === "attached") waitFor.push(u.id);
+          } else {
+            throw err;
+          }
+        }
+      }
+      if (tempVectorStoreId && waitFor.length) {
+        await waitForIndexing(API, tempVectorStoreId, waitFor);
+      }
+      if (scopeKey && tempVectorStoreId) {
+        await upsertSessionVectorStore(supabase, scopeKey, userId, tempVectorStoreId);
+      }
     }
 
     // Library stores from registry JSON (approved store IDs)
@@ -190,12 +529,26 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       : [];
 
     // If opted-in, attach uploaded files to all library stores
+    const shareResults: ShareResult[] = [];
     try {
       const approvedId = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID || "";
       console.log(`[assistant] share=${share} files=${uploaded.length} approved=${approvedId || "none"}`);
       if (share && approvedId && uploaded.length) {
         for (const u of uploaded) {
-          try { await attachFileToVectorStore(API, approvedId, u.id); } catch (e) { console.warn("attach approved failed", e); }
+          try {
+            const result = await attachFileToVectorStore(API, approvedId, u.id);
+            shareResults.push({
+              name: u.originalName,
+              status: result
+            });
+          } catch (e: any) {
+            console.warn("attach approved failed", e);
+            shareResults.push({
+              name: u.originalName,
+              status: "failed",
+              message: e?.message ? String(e.message) : String(e)
+            });
+          }
         }
       }
     } catch {}
@@ -287,7 +640,8 @@ STYLE:
       sourceFlag = "GENERAL";
       lines.shift();
     }
-    text = lines.join("\n").trim();
+    text = prettifyCitations(lines.join("\n").trim());
+    const docReferences = collectDocumentReferences(text, uploadLookup);
 
     // HARD GUARD: if GENERAL and numeric specs present, refuse to provide numbers
     if (sourceFlag !== "MANUAL" && SPEC_UNIT_RE.test(text)) {
@@ -296,15 +650,34 @@ STYLE:
         "I can’t provide exact specifications (numbers/units) without citing a manual or standard.",
         "Please attach or reference the installation/standard document, and I’ll give precise values with page/section citations."
       ].join("\n");
-      return new Response(refusal, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      return new Response(
+        JSON.stringify({
+          answer: refusal,
+          referencedDocuments: docReferences,
+          shareActivity: shareResults
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (docReferences.length) {
+      const docList = docReferences.map((name) => `- ${name}`).join("\n");
+      text += `\n\nReferenced documents:\n${docList}`;
     }
 
     // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
     if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
-      text += "\n\n_Note: please verify page/section in the cited document if not shown explicitly above._";
+      text += "\n\n_Note: If the page or section isn’t listed above, please refer to the cited document to confirm the exact location._";
     }
 
-    return new Response(text, { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(
+      JSON.stringify({
+        answer: text,
+        referencedDocuments: docReferences,
+        shareActivity: shareResults
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (outer: any) {
     console.error("Unhandled /api/assistant error", outer);
     return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
