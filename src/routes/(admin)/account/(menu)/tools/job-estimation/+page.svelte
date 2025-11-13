@@ -647,20 +647,21 @@ Thank you for considering our services!`;
 
 <svelte:head><title>Job Estimation Wizard</title></svelte:head>
 
-<section class="flex flex-col gap-6">
-  <header class="flex items-start justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold">Job Estimation Wizard</h1>
-      <p class="text-sm opacity-70">
-        Fire in the job details, pull materials straight from the Cost Calculator,
-        and get a sharp, client-ready estimate that proves you’ve done the maths.
-      </p>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Pricing</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Job Estimation Wizard</h1>
+        <p class="max-w-3xl text-base text-gray-700">
+          Fire in the job details, pull materials straight from the Cost Calculator, and get a sharp, client-ready estimate that proves you’ve done the maths.
+        </p>
+      </div>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
-    <a href="/account/tools" class="btn btn-ghost">← Back</a>
   </header>
 
-  <!-- Quick mode -->
-  <form class="card bg-base-100 border border-base-300 p-5 sm:p-6 space-y-6" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <label class="form-control gap-3"><span class="label-text">Client name</span><input class="input input-bordered" bind:value={clientName} /></label>
       <label class="form-control gap-3"><span class="label-text">Site address</span><input class="input input-bordered" bind:value={siteAddress} /></label>
@@ -676,9 +677,9 @@ Thank you for considering our services!`;
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Materials -->
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-4">
-          <h2 class="card-title text-base">Materials (paste → Import)</h2>
+      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+        <div class="space-y-4 p-5 sm:p-6">
+          <h2 class="text-lg font-semibold">Materials (paste → Import)</h2>
           <textarea
             class="textarea textarea-bordered h-28"
             bind:value={materialsText}
@@ -727,9 +728,9 @@ Thank you for considering our services!`;
       </div>
 
       <!-- Labour / Subs / Equip (optional) -->
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-4">
-          <h2 class="card-title text-base">Labour (optional)</h2>
+      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+        <div class="space-y-4 p-5 sm:p-6">
+          <h2 class="text-lg font-semibold">Labour (optional)</h2>
           <div class="overflow-x-auto">
             <table class="table table-sm">
               <thead><tr><th>Role</th><th>Hours</th><th>Rate</th><th>Total</th><th></th></tr></thead>
@@ -750,7 +751,7 @@ Thank you for considering our services!`;
 
           <div class="divider my-2"></div>
 
-          <h2 class="card-title text-base">Subs / Equipment (optional)</h2>
+          <h2 class="text-lg font-semibold">Subs / Equipment (optional)</h2>
           <div class="overflow-x-auto">
             <table class="table table-sm">
               <thead><tr><th>Subcontractor</th><th class="text-right">Amount</th><th></th></tr></thead>
@@ -787,9 +788,9 @@ Thank you for considering our services!`;
     </div>
 
     <!-- Advanced (collapsible) -->
-    <details class="card bg-base-100 border border-base-300">
-      <summary class="card-body cursor-pointer">
-        <h2 class="card-title text-base">Advanced (optional) <span class="opacity-60 text-xs">(click to expand)</span></h2>
+    <details class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <summary class="cursor-pointer space-y-2 p-5 sm:p-6">
+        <h2 class="text-lg font-semibold">Advanced (optional) <span class="opacity-60 text-xs">(click to expand)</span></h2>
       </summary>
       <div class="px-4 pb-4">
         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -802,9 +803,9 @@ Thank you for considering our services!`;
 
     <!-- Totals + Actions -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body gap-4">
-          <h2 class="card-title text-base">Totals</h2>
+      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+        <div class="space-y-4 p-5 sm:p-6">
+          <h2 class="text-lg font-semibold">Totals</h2>
           <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
             <div><div class="opacity-60">Materials</div><div class="font-semibold">{fmt(materialsSubtotal)}</div></div>
             <div><div class="opacity-60">Labour</div><div class="font-semibold">{fmt(labourSubtotal)}</div></div>
@@ -819,8 +820,8 @@ Thank you for considering our services!`;
         </div>
       </div>
 
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body flex flex-wrap items-center gap-4">
+      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+        <div class="flex flex-wrap items-center gap-4 p-5 sm:p-6">
           <button class="btn btn-primary" type="submit" disabled={loading}>
             {#if loading}<span class="loading loading-dots"></span>{/if}
             <span>Generate Quote</span>
@@ -835,8 +836,8 @@ Thank you for considering our services!`;
         </div>
       </div>
 
-      <div class="card bg-base-100 border border-base-300">
-        <div class="card-body">
+      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+        <div class="p-5 sm:p-6">
           <p class="text-xs opacity-70">
             Tip: Copy the <em>Costing Summary</em> table from the
             <a href="/account/tools/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
@@ -848,8 +849,8 @@ Thank you for considering our services!`;
 
   <!-- Rich Answer (final rendered quote) -->
   {#if output.trim().length}
-    <div class="card bg-base-100 border mt-4">
-      <div class="card-body">
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-4">
+      <div class="p-5 sm:p-6">
         <RichAnswer text={output} />
       </div>
     </div>

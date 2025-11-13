@@ -187,77 +187,106 @@
   <title>Smart Chat</title>
 </svelte:head>
 
-<div class="flex flex-col h-full">
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
-    <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight">Smart Chat</h1>
-      <p class="text-base leading-relaxed text-base-content/80 text-pretty">
-        Need to bounce a quick idea off someone who speaks tradie? Fire it into Smart Chat and you’ll get fast, plain-English
-        answers without waiting on hold. It remembers the convo, keeps things on the tools, and shouts out next steps like a
-        switched-on mate in the ute.
-      </p>
-    </div>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Conversations</p>
+    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">Smart Chat</h1>
+    <p class="mt-3 max-w-3xl text-base text-gray-700">
+      Bounce site dramas, quoting curveballs, and client replies off an assistant that speaks tradie. Smart Chat keeps the full
+      thread, offers next steps, and hands back wording you can paste straight into texts, emails, or the job log.
+    </p>
+  </header>
 
-    <div class="sm:ml-auto flex flex-wrap items-center gap-2">
-      <label class="text-sm opacity-80 w-full sm:w-auto" for="chat-model">Model</label>
-      <select
-        id="chat-model"
-        class="select select-bordered w-full sm:w-auto sm:select-sm"
-        bind:value={model}
-        disabled={streaming}
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <div class="rounded-3xl border border-gray-200 bg-white/95 p-4 shadow-sm sm:p-6 space-y-5">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Live thread</p>
+          <p class="text-sm text-gray-600">Chat history saves locally so you can pick up where you left off.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="text-xs font-semibold uppercase tracking-wide text-gray-500" for="chat-model">Model</label>
+          <select
+            id="chat-model"
+            class="select select-bordered w-full sm:w-auto sm:select-sm"
+            bind:value={model}
+            disabled={streaming}
+          >
+            {#each models as m}
+              <option value={m.id}>{m.label}</option>
+            {/each}
+          </select>
+          <button class="btn btn-ghost w-full sm:w-auto sm:btn-sm" on:click={clearChat} disabled={streaming}>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[420px] max-h-[65vh] overflow-y-auto space-y-4"
+        bind:this={chatContainer}
+        on:scroll={handleScroll}
       >
-        {#each models as m}
-          <option value={m.id}>{m.label}</option>
-        {/each}
-      </select>
-      <button class="btn btn-ghost w-full sm:w-auto sm:btn-sm" on:click={clearChat} disabled={streaming}>
-        Clear
-      </button>
-    </div>
-  </div>
-
-  <div
-    class="flex-1 overflow-y-auto space-y-4 p-4 rounded bg-base-200"
-    bind:this={chatContainer}
-    on:scroll={handleScroll}
-  >
-    {#each messages as m, i}
-      <div class="chat {m.role === 'user' ? 'chat-end' : 'chat-start'}">
-        {#if m.role === 'assistant'}
-          <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
-            <RichAnswer text={m.content} />
-            {#if streaming && streamingIndex === i}
-              <div class="mt-2 flex justify-start">
-                <span class="loading loading-dots loading-xs"></span>
+        {#each messages as m, i}
+          <div class="chat {m.role === 'user' ? 'chat-end' : 'chat-start'}">
+            {#if m.role === 'assistant'}
+              <div class="chat-bubble max-w-full bg-base-100 text-base-content [&_.prose]:m-0">
+                <RichAnswer text={m.content} />
+                {#if streaming && streamingIndex === i}
+                  <div class="mt-2 flex justify-start">
+                    <span class="loading loading-dots loading-xs"></span>
+                  </div>
+                {/if}
               </div>
+            {:else}
+              <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
             {/if}
           </div>
-        {:else}
-          <div class="chat-bubble whitespace-pre-wrap">{m.content}</div>
-        {/if}
+        {/each}
       </div>
-    {/each}
-  </div>
 
-  {#if errorMsg}
-    <div class="mt-3 alert alert-error">
-      <span>{errorMsg}</span>
-    </div>
-  {/if}
-
-  <form class="mt-4 flex gap-2" on:submit|preventDefault={sendMessage}>
-    <textarea
-      class="textarea textarea-bordered flex-1 min-h-[48px]"
-      placeholder="Ask me anything… (Ctrl/Cmd+Enter to send)"
-      bind:value={input}
-      on:keydown={onKeydown}
-    ></textarea>
-    <button class="btn btn-primary" disabled={streaming || !input.trim()}>
-      {#if streaming}
-        <span class="loading loading-spinner"></span>
-      {:else}
-        Send
+      {#if errorMsg}
+        <div class="alert alert-error">
+          <span>{errorMsg}</span>
+        </div>
       {/if}
-    </button>
-  </form>
-</div>
+
+      <form class="flex flex-col gap-3 lg:flex-row" on:submit|preventDefault={sendMessage}>
+        <textarea
+          class="textarea textarea-bordered min-h-[64px] flex-1"
+          placeholder="Ask me anything… (Ctrl/Cmd+Enter to send)"
+          bind:value={input}
+          on:keydown={onKeydown}
+        ></textarea>
+        <button class="btn btn-primary shrink-0" disabled={streaming || !input.trim()}>
+          {#if streaming}
+            <span class="loading loading-spinner"></span>
+          {:else}
+            Send
+          {/if}
+        </button>
+      </form>
+    </div>
+
+    <aside class="space-y-4">
+      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/70 to-rose-50/70 p-5 shadow-sm backdrop-blur">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Best results</p>
+        <ul class="mt-3 space-y-2 text-sm text-gray-700">
+          <li>• Lead with the job context: trade, location, and what’s gone sideways.</li>
+          <li>• Tell it what format you need back (SMS, quote wording, job notes).</li>
+          <li>• Keep the thread open—Smart Chat remembers what you’ve tried.</li>
+        </ul>
+      </div>
+      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
+        <p class="text-sm font-semibold text-gray-900">Need manuals or pricing tools?</p>
+        <p class="mt-1 text-sm text-gray-600">
+          Jump into the Tradie Library or Smart Tools when you need standards, proposals, or calculators to back up the chat.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2 text-sm font-medium">
+          <a class="btn btn-outline btn-sm" href="/account/assistant">Tradie Library</a>
+          <a class="btn btn-ghost btn-sm" href="/account/tools">Smart Tools</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

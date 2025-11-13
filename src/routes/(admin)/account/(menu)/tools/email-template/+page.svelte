@@ -130,20 +130,21 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
 <svelte:head><title>Email Template Generator</title></svelte:head>
 
-<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
-  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-    <div class="space-y-2">
-      <h1 class="text-2xl font-semibold">Email Template Generator</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Drop in the guts of the job and we’ll craft a clear, confident email that
-        sounds like your crew — perfect for progress updates, payment nudges, and
-        post-job wrap ups.
-      </p>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Comms</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Email Template Generator</h1>
+        <p class="max-w-3xl text-base text-gray-700">
+          Drop in the guts of the job and we’ll craft a clear, confident email that sounds like your crew—perfect for progress updates, payment nudges, and post-job wrap ups.
+        </p>
+      </div>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
-    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
-  <form class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
     <!-- Brief (the only required field) -->
     <div class="form-control gap-3">
       <label for="brief" class="label">
@@ -237,9 +238,9 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
   <!-- Rich preview -->
   {#if __rich.length}
-    <div class="card mt-4 border border-base-300 bg-base-100">
-      <div class="card-body">
-        <h3 class="card-title text-base">Generated Email</h3>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-4">
+      <div class="space-y-4 p-5 sm:p-6">
+        <h3 class="text-lg font-semibold">Generated Email</h3>
         <RichAnswer text={__rich} />
       </div>
     </div>

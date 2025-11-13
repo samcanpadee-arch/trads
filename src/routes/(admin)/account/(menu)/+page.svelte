@@ -7,8 +7,17 @@
       profile?: {
         full_name?: string | null;
       } | null;
+      billingSummary?: BillingSummary | null;
     };
   }
+
+  type BillingSummary = {
+    planName: string;
+    status: string;
+    interval: string | null;
+    trialEnds: string | null;
+    nextBill: string | null;
+  };
 
   type InstallGuide = {
     platform: string;
@@ -52,8 +61,9 @@
       })()
     : null;
 
-  let localDisplayName = "";
-  let hasVisited = false;
+  let localDisplayName = $state("");
+  let hasVisited = $state(false);
+  let installModalOpen = $state(false);
 
   onMount(() => {
     try {
@@ -78,101 +88,156 @@
   const greeting = $derived(
     displayName ? `${salutation}, ${displayName} 👋` : `${salutation} 👋`
   );
+
+  const billingSummary = $derived(data?.billingSummary ?? null);
+
+  const billingStatus = $derived(billingSummary?.status ?? "Free tier access");
+
+  const formatDate = (iso: string | null) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  };
+
+  const billingDetail = $derived(
+    !billingSummary
+      ? "You're on the Free tier. Upgrade to unlock manuals, quoting workflows, and Smart Chat."
+      : billingSummary.trialEnds
+        ? `Trial ends ${formatDate(billingSummary.trialEnds)}.`
+        : billingSummary.nextBill
+          ? `Next bill ${formatDate(billingSummary.nextBill)} (${billingSummary.interval ? `${billingSummary.interval} plan` : "plan"}).`
+          : "No upcoming billing date yet."
+  );
 </script>
 
 <svelte:head><title>Home</title></svelte:head>
 
-<section class="flex flex-col gap-6">
+<section class="max-w-6xl mx-auto px-4 py-10 space-y-8">
   <!-- Hero / welcome -->
-  <div class="card bg-base-100 border">
-    <div class="card-body grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-      <div class="lg:col-span-2 space-y-2">
-        <h1 class="text-2xl font-semibold">{greeting}</h1>
-  <div class="mt-3">
-    <a href="/account/guide" class="btn btn-outline">Tools Guide</a>
+  <header class="rounded-3xl bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border border-amber-200/70 px-6 py-8 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">{salutation}</p>
+    <h1 class="mt-2 text-3xl font-bold text-gray-900 leading-tight">{greeting}</h1>
+    <p class="mt-3 text-base text-gray-700 max-w-3xl">
+      Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas, client comms, or “how do I fix this?” You’ll get clear, friendly help in seconds.
+    </p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat</p>
+        <p class="mt-1 text-sm text-gray-800">Draft quotes, SMS, and safety notes with on-call trade copy.</p>
+      </div>
+      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Tradie Library</p>
+        <p class="mt-1 text-sm text-gray-800">Look up manuals, standards, and job guides without leaving site.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Smart surface -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <a
+      href="/account/chat"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Conversations</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Chat</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Ask for word-perfect comms, site-ready advice, or quick explainers. Ideal for clear, confident replies on the go.
+      </p>
+    </a>
+
+    <a
+      href="/account/assistant"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Manuals & knowledge</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Assistant</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Tap into the Tradie Library for technical references, standards, and how-tos so every answer cites the right material.
+      </p>
+    </a>
+
+    <a
+      href="/account/tools"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Documents & pricing</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Tools</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Generate quotes, proposals, calculators, and marketing copy that feel on-brand so you spend less time in spreadsheets.
+      </p>
+    </a>
   </div>
-        <p class="text-sm opacity-80">
-          Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas,
-          client comms, or “how do I fix this?” You’ll get clear, friendly help in seconds.
-        </p>
-        <!-- Chat CTA removed (reserved for Pro in future) -->
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div class="space-y-6">
+      <!-- Billing summary -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div class="space-y-1 text-gray-800">
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Plan & billing</p>
+            <h3 class="text-xl font-semibold">{billingSummary ? billingSummary.planName : 'Free plan'}</h3>
+            <p class="text-sm text-gray-600">{billingDetail}</p>
+          </div>
+          <div class="space-y-1 text-sm text-gray-700">
+            <p class="font-semibold">Status: {billingStatus}</p>
+            <a href="/account/billing" class="btn btn-outline w-full md:w-auto">Manage plan</a>
+          </div>
+        </div>
       </div>
 
-      <!-- Simple inline SVG illustration (toolbox) -->
-      <div class="justify-self-end hidden lg:block">
-        <div class="rounded-2xl bg-base-200 p-6">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 192" class="w-56 h-40" aria-hidden="true">
-            <rect x="18" y="64" width="220" height="96" rx="12" fill="currentColor" opacity="0.1"/>
-            <rect x="32" y="80" width="192" height="64" rx="8" fill="currentColor" opacity="0.15"/>
-            <path d="M80 64c0-11 9-20 20-20h56c11 0 20 9 20 20v8h-16v-8a4 4 0 0 0-4-4h-56a4 4 0 0 0-4 4v8H80v-8z" fill="currentColor" opacity="0.25"/>
-            <rect x="56" y="104" width="40" height="16" rx="4" fill="currentColor" opacity="0.35"/>
-            <rect x="100" y="104" width="40" height="16" rx="4" fill="currentColor" opacity="0.35"/>
-            <rect x="144" y="104" width="40" height="16" rx="4" fill="currentColor" opacity="0.35"/>
-          </svg>
+      <!-- Install helper -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Stay site-ready</p>
+            <h3 class="mt-1 text-xl font-semibold text-gray-900">Pin Tradie Assistant to your home screen</h3>
+            <p class="mt-1 text-sm text-gray-600">Save it beside your other field tools so the next quote, checklist, or manual is one tap away.</p>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button class="btn btn-neutral" onclick={() => (installModalOpen = true)}>Add to your phone</button>
+            <a href="/account/guide" class="btn btn-ghost">View guide</a>
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="space-y-6">
+      <!-- Support / contact -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-900">Need a hand?</h3>
+        <p class="mt-1 text-sm text-gray-600">Something not working or need a tip? We’re here to help.</p>
+        <a
+          href="/contact_us"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-outline mt-4"
+          aria-label="Open contact page in a new tab"
+        >Contact support ↗</a>
+      </div>
+
+      <!-- Footer note -->
+      <div class="rounded-2xl border border-dashed border-gray-200 px-5 py-4 text-xs text-gray-500">
+        Remember — AI’s here to save you time, not replace your know-how. Always review before sending to a client.
+      </div>
+    </div>
   </div>
+</section>
 
-  <!-- Hub -->
-  <div class="space-y-2 sm:max-w-2xl">
-    <h2 class="text-base font-semibold">Your hub</h2>
-    <p class="text-sm opacity-70">
-      Everything you need in one place - your Smart Tools, Smart Chat, and Smart Assistant. Built for Aussie tradies to win work,
-      talk clearer, and fix problems on the spot.
-    </p>
+<!-- Checkout success banner (client-only, safe) -->
+{#if typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('session_id')}
+  <div class="alert alert-success mt-4">
+    <span>🎉 You’re all set! Your subscription is active. You can manage it anytime in <a class="link" href="/account/billing">Billing</a>.</span>
   </div>
+{/if}
 
-  <!-- Existing tiles in a grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <!-- Chat -->
-    <a href="/account/chat" class="card bg-base-100 border hover:shadow">
-      <div class="card-body">
-        <h2 class="card-title">Smart Chat</h2>
-        <p class="text-sm opacity-70">Ask anything - write client messages, safety notes, checklists, or quick explainers. Great for clear communication and everyday advice.</p>
-      </div>
-    </a>
-
-    <!-- AI Assistant -->
-    <a href="/account/assistant" class="card bg-base-100 border hover:shadow">
-      <div class="card-body">
-        <h2 class="card-title">Smart Assistant</h2>
-        <p class="text-sm opacity-70">The technical brain of your setup — check codes, standards, guides, how-tos, manuals, and spec sheets. Upload a manual or just ask a question — we’ll reference trusted sources where possible.</p>
-      </div>
-    </a>
-
-    <!-- Tools -->
-    <a href="/account/tools" class="card bg-base-100 border hover:shadow">
-      <div class="card-body">
-        <h2 class="card-title">Smart Tools</h2>
-        <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client marketing docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>
-      </div>
-    </a>
-  </div>
-
-  <!-- Mobile install helper -->
-  <div class="card bg-base-100 border">
-    <div class="card-body grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
-      <div>
-        <p class="text-xs font-semibold tracking-wide text-primary uppercase">Add it to your phone</p>
-        <h2 class="text-xl font-semibold mt-2">One tap from the job site</h2>
-        <p class="text-sm opacity-80 mt-3">
-          Tradie Assistant is already mobile ready. Add it to your home screen now so the tools, chat, and manuals are one tap
-          away when you’re out on site.
-        </p>
-        {#if detectedPlatform}
-          <div class="mt-4 alert alert-info text-xs">
-            <div>
-              Looks like you’re on <strong>{detectedPlatform}</strong>. Follow those steps below to pin the app in about 10 seconds.
-            </div>
-          </div>
-        {:else}
-          <p class="mt-4 text-xs opacity-70">
-            Not on your phone right now? Screenshot these steps or send the link to yourself so you can add it later.
-          </p>
-        {/if}
-      </div>
-      <div class="space-y-3">
+{#if installModalOpen}
+  <div class="modal modal-open">
+    <div class="modal-box max-w-3xl">
+      <h3 class="font-semibold text-lg">Add Tradie Assistant to your phone</h3>
+      <p class="mt-2 text-sm opacity-70">
+        Follow the steps below so this dashboard behaves like a native app. Once pinned, you stay signed in and everything is just one tap away from the job site.
+      </p>
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
         {#each installGuides as guide}
           <div
             class={`rounded-2xl border p-4 bg-base-200/70 text-sm transition-all ${
@@ -194,35 +259,13 @@
           </div>
         {/each}
       </div>
-    </div>
-  </div>
-
-  <!-- Support / contact -->
-  <div class="card bg-base-100 border">
-    <div class="card-body flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="space-y-1">
-        <h3 class="text-base font-semibold">Need a hand?</h3>
-        <p class="text-sm opacity-80">Something not working or need a tip? We’re here to help.</p>
+      {#if !detectedPlatform}
+        <p class="mt-4 text-xs opacity-70">Tip: Screenshot or share this page so you can follow it on your phone later.</p>
+      {/if}
+      <div class="modal-action">
+        <button class="btn" onclick={() => (installModalOpen = false)}>Done</button>
       </div>
-      <a
-        href="/contact_us"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-outline"
-        aria-label="Open contact page in a new tab"
-      >Contact support ↗</a>
     </div>
-  </div>
-
-  <!-- Footer note -->
-  <p class="text-xs opacity-60">
-    Remember — AI’s here to save you time, not replace your know-how. Always review before sending to a client.
-  </p>
-</section>
-
-<!-- Checkout success banner (client-only, safe) -->
-{#if typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('session_id')}
-  <div class="alert alert-success mt-4">
-    <span>🎉 You’re all set! Your subscription is active. You can manage it anytime in <a class="link" href="/account/billing">Billing</a>.</span>
+    <button class="modal-backdrop" onclick={() => (installModalOpen = false)} aria-label="Close install guide"></button>
   </div>
 {/if}
