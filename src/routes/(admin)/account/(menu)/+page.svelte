@@ -65,7 +65,7 @@
     },
     {
       label: 'Check a standard',
-      description: 'Drop a question and supporting manual into Smart Assistant.',
+      description: 'Ask Smart Assistant to pull from the Tradie Library of codes and guides.',
       href: '/account/assistant'
     }
   ];
@@ -127,19 +127,15 @@
     return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   };
 
-  const billingDetail = $derived(() => {
-    if (!billingSummary) {
-      return "You're on the Free tier. Upgrade to unlock manuals, quoting workflows, and priority chat.";
-    }
-    if (billingSummary.trialEnds) {
-      return `Trial ends ${formatDate(billingSummary.trialEnds)}.`;
-    }
-    if (billingSummary.nextBill) {
-      const interval = billingSummary.interval ? `${billingSummary.interval} plan` : "plan";
-      return `Next bill ${formatDate(billingSummary.nextBill)} (${interval}).`;
-    }
-    return "No upcoming billing date yet.";
-  });
+  const billingDetail = $derived(
+    !billingSummary
+      ? "You're on the Free tier. Upgrade to unlock manuals, quoting workflows, and priority chat."
+      : billingSummary.trialEnds
+        ? `Trial ends ${formatDate(billingSummary.trialEnds)}.`
+        : billingSummary.nextBill
+          ? `Next bill ${formatDate(billingSummary.nextBill)} (${billingSummary.interval ? `${billingSummary.interval} plan` : "plan"}).`
+          : "No upcoming billing date yet."
+  );
 </script>
 
 <svelte:head><title>Home</title></svelte:head>
@@ -153,26 +149,9 @@
         <h1 class="text-3xl font-semibold leading-tight">{greeting}</h1>
       </div>
       <p class="text-base opacity-80">
-        The dashboard that keeps you sharp on site and organised back at the ute. Pick up the right workflow, drop in a manual, or get answers from the Tradie Assistant without digging through menus.
+        The dashboard that keeps you sharp on site and organised back at the ute. Tap straight into Smart Chat, the Tradie
+        Library, and everyday tools without digging through menus.
       </p>
-      <div class="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-2xl border border-base-300/70 bg-base-100/70 p-4">
-          <p class="text-xs uppercase tracking-wide opacity-60">Smart Chat</p>
-          <p class="font-semibold">Write quotes, SMS, and site notes in plain English.</p>
-        </div>
-        <div class="rounded-2xl border border-base-300/70 bg-base-100/70 p-4">
-          <p class="text-xs uppercase tracking-wide opacity-60">Smart Assistant</p>
-          <p class="font-semibold">Upload manuals & get code answers in seconds.</p>
-        </div>
-        <div class="rounded-2xl border border-base-300/70 bg-base-100/70 p-4">
-          <p class="text-xs uppercase tracking-wide opacity-60">Smart Tools</p>
-          <p class="font-semibold">Job-ready workflows for pricing & paperwork.</p>
-        </div>
-        <div class="rounded-2xl border border-base-300/70 bg-base-100/70 p-4">
-          <p class="text-xs uppercase tracking-wide opacity-60">Sync</p>
-          <p class="font-semibold">History, docs & prompts across every device.</p>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -190,7 +169,7 @@
       <div class="card-body space-y-2">
         <p class="text-xs font-semibold uppercase tracking-wide text-primary">Manuals & knowledge</p>
         <h2 class="card-title">Smart Assistant</h2>
-        <p class="text-sm opacity-70">The technical brain of your setup — check codes, standards, guides, how-tos, manuals, and spec sheets. Upload a manual or just ask a question.</p>
+        <p class="text-sm opacity-70">The technical brain of your setup — dive into codes, standards, guides, how-tos, manuals, and spec sheets from the Tradie Library for confident answers.</p>
       </div>
     </a>
 
