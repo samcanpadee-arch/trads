@@ -25,12 +25,6 @@
     extra?: string;
   };
 
-  type QuickAction = {
-    label: string;
-    description: string;
-    href: string;
-  };
-
   const installGuides: InstallGuide[] = [
     {
       platform: 'iPhone (Safari)',
@@ -49,24 +43,6 @@
         'Select “Add to Home screen” then tap Add.'
       ],
       extra: 'If Chrome shows an Install banner, tap it and confirm.'
-    }
-  ];
-
-  const quickActions: QuickAction[] = [
-    {
-      label: 'Send a client update',
-      description: 'Turn dot-points into a polished SMS or email.',
-      href: '/account/chat'
-    },
-    {
-      label: 'Price today’s job',
-      description: 'Use the Job Estimator or Material & Cost calculator.',
-      href: '/account/tools/job-estimation'
-    },
-    {
-      label: 'Check a standard',
-      description: 'Ask Smart Assistant to pull from the Tradie Library of codes and guides.',
-      href: '/account/assistant'
     }
   ];
 
@@ -116,10 +92,6 @@
   const billingSummary = $derived(data?.billingSummary ?? null);
 
   const billingStatus = $derived(billingSummary?.status ?? "Free tier access");
-  const billingIntervalLabel = $derived(() => {
-    if (!billingSummary?.interval) return null;
-    return billingSummary.interval.charAt(0).toUpperCase() + billingSummary.interval.slice(1);
-  });
 
   const formatDate = (iso: string | null) => {
     if (!iso) return null;
@@ -149,8 +121,8 @@
         <h1 class="text-3xl font-semibold leading-tight">{greeting}</h1>
       </div>
       <p class="text-base opacity-80">
-        The dashboard that keeps you sharp on site and organised back at the ute. Tap straight into Smart Chat, the Tradie
-        Library, and everyday tools without digging through menus.
+        Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas, client comms, or
+        “how do I fix this?” You’ll get clear, friendly help in seconds.
       </p>
     </div>
   </div>
@@ -184,7 +156,7 @@
 
   <!-- Billing summary -->
   <div class="card border bg-base-100">
-    <div class="card-body gap-6 md:flex md:items-center md:justify-between">
+    <div class="card-body gap-6 md:flex md:items-start md:justify-between">
       <div class="space-y-1">
         <p class="text-xs font-semibold uppercase tracking-wide text-primary">Plan & billing</p>
         <h3 class="text-xl font-semibold">{billingSummary ? billingSummary.planName : 'Free plan'}</h3>
@@ -192,29 +164,7 @@
       </div>
       <div class="space-y-1 text-sm">
         <p class="font-semibold">Status: {billingStatus}</p>
-        {#if billingIntervalLabel}
-          <p class="opacity-70">Interval: {billingIntervalLabel}</p>
-        {/if}
         <a href="/account/billing" class="btn btn-outline w-full md:w-auto">Manage plan</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick actions -->
-  <div class="card border bg-base-100">
-    <div class="card-body gap-6 md:flex md:items-center md:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Quick actions</p>
-        <h3 class="text-xl font-semibold">Pick up where you left off</h3>
-        <p class="text-sm opacity-70">Popular workflows that most tradies run on the go. Tap one to dive straight in.</p>
-      </div>
-      <div class="grid flex-1 gap-3 md:grid-cols-3">
-        {#each quickActions as action}
-          <a href={action.href} class="rounded-2xl border border-base-300/80 bg-base-200/40 p-4 transition hover:-translate-y-0.5 hover:border-primary hover:bg-base-100">
-            <p class="text-sm font-semibold">{action.label}</p>
-            <p class="text-xs opacity-70">{action.description}</p>
-          </a>
-        {/each}
       </div>
     </div>
   </div>
