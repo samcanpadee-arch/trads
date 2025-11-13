@@ -9,7 +9,7 @@ const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const CHAT_LIMIT = Number.isFinite(Number(process.env.CHAT_RATE_LIMIT)) && Number(process.env.CHAT_RATE_LIMIT) > 0
   ? Number(process.env.CHAT_RATE_LIMIT)
-  : 60; // default: 60 chats per hour
+  : 80; // default: 80 chats per hour
 const CHAT_WINDOW_MS = Number.isFinite(Number(process.env.CHAT_RATE_WINDOW_MS)) && Number(process.env.CHAT_RATE_WINDOW_MS) > 0
   ? Number(process.env.CHAT_RATE_WINDOW_MS)
   : 60 * 60 * 1000;

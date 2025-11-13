@@ -271,6 +271,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Smart Assistant</title>
+</svelte:head>
+
 <!-- Header -->
 <header class="mb-6 max-w-4xl mx-auto px-4 space-y-3">
   <h1 class="text-3xl font-bold tracking-tight">Smart Assistant</h1>
