@@ -184,23 +184,21 @@ Return ONLY strict JSON:
 
 <svelte:head><title>Social Media Post Generator</title></svelte:head>
 
-<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
-  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-    <div class="space-y-2">
-      <h1 class="text-2xl font-semibold">Social Media Post Generator</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Hand us a quick brief and we’ll whip up a scroll-stopping caption with the
-        right vibe for each platform, a splash of Aussie charm, and a confident
-        call-to-action your followers will actually respond to.
-      </p>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Marketing</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Social Media Post Generator</h1>
+        <p class="max-w-3xl text-base text-gray-700">
+          Hand us a quick brief and we’ll whip up a scroll-stopping caption with the right vibe for each platform, a splash of Aussie charm, and a confident call-to-action your followers will actually respond to.
+        </p>
+      </div>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
-    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
-  <form
-    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-5"
-    on:submit={generate}
-  >
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-5" on:submit={generate}>
     <!-- Brief -->
     <label class="form-control">
       <span class="label-text">Quick brief (1–3 sentences)</span>
@@ -275,9 +273,9 @@ Return ONLY strict JSON:
     </div>
 
     <!-- Platforms -->
-    <div class="card border border-base-300 bg-base-100">
-      <div class="card-body gap-3">
-        <h2 class="card-title text-base">Platforms</h2>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <div class="space-y-3 p-5 sm:p-6">
+        <h2 class="text-lg font-semibold">Platforms</h2>
         <div class="flex flex-wrap gap-3">
           {#each ["Instagram", "Facebook", "LinkedIn", "Google Business Profile", "TikTok"] as p}
             <label class="label cursor-pointer gap-2">
@@ -351,14 +349,14 @@ Return ONLY strict JSON:
 
   <!-- Single Rich preview card -->
   {#if (__richMain && __richMain.trim().length)}
-    <div class="card mt-2 border border-base-300 bg-base-100">
-      <div class="card-body gap-3">
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-2">
+      <div class="space-y-3 p-5 sm:p-6">
         <!-- No heading (per request) -->
         <RichAnswer text={__richMain} />
 
         <!-- Collapsible Variants & Extras (only when we parsed JSON) -->
         {#if caption}
-          <details class="collapse collapse-arrow border border-base-300 rounded-box mt-2">
+          <details class="collapse collapse-arrow rounded-3xl border border-gray-200 bg-white/90 mt-2">
             <summary class="collapse-title text-sm font-medium">
               Variants & Extras
             </summary>

@@ -127,23 +127,21 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
 <svelte:head><title>Review Responder</title></svelte:head>
 
-<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
-  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-    <div class="space-y-2">
-      <h1 class="text-2xl font-semibold">Review Responder</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80">
-        Drop in any customer feedback and we’ll spin up a personable, Aussie-toned
-        reply that backs your workmanship and keeps the convo rolling on Google,
-        socials, ProductReview, Hipages and more.
-      </p>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Reputation</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Review Responder</h1>
+        <p class="max-w-3xl text-base text-gray-700">
+          Drop in any customer feedback and we’ll spin up a personable, Aussie-toned reply that backs your workmanship and keeps the convo rolling across Google, socials, ProductReview, Hipages, and more.
+        </p>
+      </div>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
-    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
-  <form
-    class="card w-full border border-base-300 bg-base-100 p-5 sm:p-6 space-y-6"
-    on:submit={generate}
-  >
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left: review -->
       <div class="space-y-5 lg:col-span-2">
@@ -234,9 +232,9 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
   <!-- Rich preview only -->
   {#if __rich.length}
-    <div class="card mt-4 border border-base-300 bg-base-100">
-      <div class="card-body">
-        <h3 class="card-title text-base">Suggested Response</h3>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-4">
+      <div class="space-y-4 p-5 sm:p-6">
+        <h3 class="text-lg font-semibold">Suggested Response</h3>
         <RichAnswer text={__rich} />
       </div>
     </div>

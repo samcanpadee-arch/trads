@@ -94,20 +94,22 @@
 
 <svelte:head><title>Material & Cost Calculator</title></svelte:head>
 
-<section class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10">
-  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-    <div class="space-y-2">
-      <h1 class="text-2xl font-semibold">Material &amp; Cost Calculator</h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-base-content/80 text-pretty">
-        Stack up every nut, bolt and roll of cable in one place, then let the calculator spit out clean totals with markup baked
-        in. It’s built for Aussie job sheets, so you can eyeball the margin, tweak discounts and hand a polished summary to the
-        client without faffing around in spreadsheets.
-      </p>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Costing</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Material &amp; Cost Calculator</h1>
+        <p class="max-w-3xl text-base text-gray-700">
+          Stack every nut, bolt, and roll of cable in one place, then let the calculator spit out clean totals with markup baked in.
+          It’s built for Aussie job sheets so you can eyeball the margin, tweak discounts, and hand clients a polished summary without spreadsheets.
+        </p>
+      </div>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
-    <a href="/account/tools" class="btn btn-ghost self-start sm:self-auto">← Back</a>
   </header>
 
-  <div class="rounded-lg border border-base-300 bg-base-100/80 p-4 sm:p-5">
+  <div class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6">
     <div class="grid gap-4 sm:grid-cols-2">
       <label class="form-control gap-2" for="markupPct">
         <span class="label-text">Markup % (profit)</span>
@@ -132,8 +134,8 @@
     </div>
   </div>
 
-  <div class="card w-full border border-base-300 bg-base-100">
-    <div class="card-body gap-6">
+  <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+    <div class="space-y-6 p-5 sm:p-6">
       <div class="overflow-x-auto">
         <table class="table">
           <thead>
@@ -224,10 +226,10 @@
   </div>
 
   <!-- Costing Summary -->
-  <div class="card w-full border border-base-300 bg-base-100">
-    <div class="card-body gap-4">
+  <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+    <div class="space-y-4 p-5 sm:p-6">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="card-title">Costing Summary</h2>
+        <h2 class="text-lg font-semibold">Costing Summary</h2>
         <button class="btn btn-primary w-full sm:w-auto sm:btn-sm" on:click={generateSummary} disabled={generating}>
           {generating ? "Generating…" : "Generate"}
         </button>
