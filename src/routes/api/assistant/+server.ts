@@ -18,7 +18,7 @@ function readPositiveNumber(value: string | undefined, fallback: number): number
 
 const SESSION_VECTOR_TTL_HOURS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_TTL_HOURS, 12);
 const SESSION_VECTOR_EXPIRE_DAYS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_EXPIRE_DAYS, 7);
-const ASSISTANT_LIMIT = readPositiveNumber(privateEnv.ASSISTANT_RATE_LIMIT, 20); // default: 20 assistant requests/hour
+const ASSISTANT_LIMIT = readPositiveNumber(privateEnv.ASSISTANT_RATE_LIMIT, 40); // default: 40 assistant requests/hour
 const ASSISTANT_WINDOW_MS = readPositiveNumber(privateEnv.ASSISTANT_RATE_WINDOW_MS, 60 * 60 * 1000);
 
 /* ================= utils ================= */

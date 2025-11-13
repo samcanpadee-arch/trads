@@ -37,7 +37,7 @@
   );
 </script>
 
-<svelte:head><title>Account</title></svelte:head>
+<svelte:head><title>Home</title></svelte:head>
 
 <section class="flex flex-col gap-6">
   <!-- Hero / welcome -->
