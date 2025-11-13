@@ -22,6 +22,10 @@
   const PRO_MONTHLY      = 'price_1OtoSZKLg7O2VGgDU66pqdqm';
 </script>
 
+<svelte:head>
+  <title>Billing</title>
+</svelte:head>
+
 <section class="max-w-3xl mx-auto px-4 py-10 space-y-6">
   <header>
     <h1 class="text-2xl font-bold">Billing</h1>

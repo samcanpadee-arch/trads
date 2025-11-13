@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 // @ts-ignore
 import registry from "$lib/vectorstores.json";
+import { consumeRateLimit } from "$lib/server/rate_limit";
 import type { Database } from "../../../DatabaseDefinitions";
 
 export const config = { runtime: 'nodejs20.x' };
@@ -17,6 +18,8 @@ function readPositiveNumber(value: string | undefined, fallback: number): number
 
 const SESSION_VECTOR_TTL_HOURS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_TTL_HOURS, 12);
 const SESSION_VECTOR_EXPIRE_DAYS = readPositiveNumber(privateEnv.ASSISTANT_SESSION_VECTOR_EXPIRE_DAYS, 7);
+const ASSISTANT_LIMIT = readPositiveNumber(privateEnv.ASSISTANT_RATE_LIMIT, 40); // default: 40 assistant requests/hour
+const ASSISTANT_WINDOW_MS = readPositiveNumber(privateEnv.ASSISTANT_RATE_WINDOW_MS, 60 * 60 * 1000);
 
 /* ================= utils ================= */
 
@@ -389,6 +392,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const { session, user } = await locals.safeGetSession();
     if (!session || !user) {
       return new Response("Unauthorized", { status: 401 });
+    }
+
+    const rate = consumeRateLimit(`assistant:${user.id}`, { limit: ASSISTANT_LIMIT, windowMs: ASSISTANT_WINDOW_MS });
+    if (!rate.allowed) {
+      return new Response("The assistant needs a breather. Give it a little time before trying again.", {
+        status: 429,
+        headers: { "Retry-After": `${rate.retryAfterSeconds}` }
+      });
     }
 
     const supabase = locals.supabaseServiceRole as ServiceSupabase | undefined;
