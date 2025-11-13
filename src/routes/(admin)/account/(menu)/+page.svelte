@@ -101,7 +101,7 @@
 
   const billingDetail = $derived(
     !billingSummary
-      ? "You're on the Free tier. Upgrade to unlock manuals, quoting workflows, and priority chat."
+      ? "You're on the Free tier. Upgrade to unlock manuals, quoting workflows, and Smart Chat."
       : billingSummary.trialEnds
         ? `Trial ends ${formatDate(billingSummary.trialEnds)}.`
         : billingSummary.nextBill
@@ -112,99 +112,115 @@
 
 <svelte:head><title>Home</title></svelte:head>
 
-<section class="flex flex-col gap-6">
+<section class="max-w-6xl mx-auto px-4 py-10 space-y-8">
   <!-- Hero / welcome -->
-  <div class="card border bg-gradient-to-br from-base-100 via-base-100 to-base-200/80">
-    <div class="card-body space-y-5">
-      <div class="space-y-2">
-        <p class="text-sm opacity-70">{salutation}</p>
-        <h1 class="text-3xl font-semibold leading-tight">{greeting}</h1>
+  <header class="rounded-3xl bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border border-amber-200/70 px-6 py-8 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">{salutation}</p>
+    <h1 class="mt-2 text-3xl font-bold text-gray-900 leading-tight">{greeting}</h1>
+    <p class="mt-3 text-base text-gray-700 max-w-3xl">
+      Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas, client comms, or “how do I fix this?” You’ll get clear, friendly help in seconds.
+    </p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat</p>
+        <p class="mt-1 text-sm text-gray-800">Draft quotes, SMS, and safety notes with on-call trade copy.</p>
       </div>
-      <p class="text-base opacity-80">
-        Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas, client comms, or
-        “how do I fix this?” You’ll get clear, friendly help in seconds.
-      </p>
+      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Tradie Library</p>
+        <p class="mt-1 text-sm text-gray-800">Look up manuals, standards, and job guides without leaving site.</p>
+      </div>
     </div>
-  </div>
+  </header>
 
   <!-- Smart surface -->
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-    <a href="/account/chat" class="card bg-base-100 border border-base-300/80 transition hover:-translate-y-0.5 hover:shadow-xl">
-      <div class="card-body space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Conversations</p>
-        <h2 class="card-title">Smart Chat</h2>
-        <p class="text-sm opacity-70">Ask anything — write client messages, safety notes, checklists, or quick explainers. Ideal for clear communication and everyday advice.</p>
-      </div>
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <a
+      href="/account/chat"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Conversations</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Chat</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Ask for word-perfect comms, site-ready advice, or quick explainers. Ideal for clear, confident replies on the go.
+      </p>
     </a>
 
-    <a href="/account/assistant" class="card bg-base-100 border border-base-300/80 transition hover:-translate-y-0.5 hover:shadow-xl">
-      <div class="card-body space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Manuals & knowledge</p>
-        <h2 class="card-title">Smart Assistant</h2>
-        <p class="text-sm opacity-70">The technical brain of your setup — dive into codes, standards, guides, how-tos, manuals, and spec sheets from the Tradie Library for confident answers.</p>
-      </div>
+    <a
+      href="/account/assistant"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Manuals & knowledge</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Assistant</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Tap into the Tradie Library for technical references, standards, and how-tos so every answer cites the right material.
+      </p>
     </a>
 
-    <a href="/account/tools" class="card bg-base-100 border border-base-300/80 transition hover:-translate-y-0.5 hover:shadow-xl">
-      <div class="card-body space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Documents & pricing</p>
-        <h2 class="card-title">Smart Tools</h2>
-        <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client marketing docs. Built for tradies who’d rather be on the tools than in the office.</p>
-      </div>
+    <a
+      href="/account/tools"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Documents & pricing</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Tools</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Generate quotes, proposals, calculators, and marketing copy that feel on-brand so you spend less time in spreadsheets.
+      </p>
     </a>
   </div>
 
-  <!-- Billing summary -->
-  <div class="card border bg-base-100">
-    <div class="card-body gap-6 md:flex md:items-start md:justify-between">
-      <div class="space-y-1">
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Plan & billing</p>
-        <h3 class="text-xl font-semibold">{billingSummary ? billingSummary.planName : 'Free plan'}</h3>
-        <p class="text-sm opacity-70">{billingDetail}</p>
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div class="space-y-6">
+      <!-- Billing summary -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div class="space-y-1 text-gray-800">
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Plan & billing</p>
+            <h3 class="text-xl font-semibold">{billingSummary ? billingSummary.planName : 'Free plan'}</h3>
+            <p class="text-sm text-gray-600">{billingDetail}</p>
+          </div>
+          <div class="space-y-1 text-sm text-gray-700">
+            <p class="font-semibold">Status: {billingStatus}</p>
+            <a href="/account/billing" class="btn btn-outline w-full md:w-auto">Manage plan</a>
+          </div>
+        </div>
       </div>
-      <div class="space-y-1 text-sm">
-        <p class="font-semibold">Status: {billingStatus}</p>
-        <a href="/account/billing" class="btn btn-outline w-full md:w-auto">Manage plan</a>
+
+      <!-- Install helper -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Stay site-ready</p>
+            <h3 class="mt-1 text-xl font-semibold text-gray-900">Pin Tradie Assistant to your home screen</h3>
+            <p class="mt-1 text-sm text-gray-600">Save it beside your other field tools so the next quote, checklist, or manual is one tap away.</p>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button class="btn btn-neutral" onclick={() => (installModalOpen = true)}>Add to your phone</button>
+            <a href="/account/guide" class="btn btn-ghost">View guide</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <!-- Support / contact -->
+      <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-900">Need a hand?</h3>
+        <p class="mt-1 text-sm text-gray-600">Something not working or need a tip? We’re here to help.</p>
+        <a
+          href="/contact_us"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-outline mt-4"
+          aria-label="Open contact page in a new tab"
+        >Contact support ↗</a>
+      </div>
+
+      <!-- Footer note -->
+      <div class="rounded-2xl border border-dashed border-gray-200 px-5 py-4 text-xs text-gray-500">
+        Remember — AI’s here to save you time, not replace your know-how. Always review before sending to a client.
       </div>
     </div>
   </div>
-
-  <!-- Install helper -->
-  <div class="card bg-base-100 border">
-    <div class="card-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="space-y-1">
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Stay site-ready</p>
-        <h3 class="text-lg font-semibold">Pin Tradie Assistant to your home screen</h3>
-        <p class="text-sm opacity-70">Save it beside your other field tools so the next quote, checklist, or manual is one tap away.</p>
-      </div>
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <button class="btn btn-neutral" onclick={() => (installModalOpen = true)}>Add to your phone</button>
-        <a href="/account/guide" class="btn btn-ghost">View guide</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Support / contact -->
-  <div class="card bg-base-100 border">
-    <div class="card-body flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="space-y-1">
-        <h3 class="text-base font-semibold">Need a hand?</h3>
-        <p class="text-sm opacity-80">Something not working or need a tip? We’re here to help.</p>
-      </div>
-      <a
-        href="/contact_us"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-outline"
-        aria-label="Open contact page in a new tab"
-      >Contact support ↗</a>
-    </div>
-  </div>
-
-  <!-- Footer note -->
-  <p class="text-xs opacity-60">
-    Remember — AI’s here to save you time, not replace your know-how. Always review before sending to a client.
-  </p>
 </section>
 
 <!-- Checkout success banner (client-only, safe) -->

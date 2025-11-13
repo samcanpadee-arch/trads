@@ -31,36 +31,44 @@
     return 'paid';
   })();
 
+  const portalHref = data.portalUrl ?? null;
+
   const upsell = (() => {
     if (planTier === 'free') {
       return {
         title: 'Ready for site-ready AI?',
         body:
-          'Unlock Standard for smarter chat, or go Pro to add the Tradie Library, quoting workflows, and priority help.',
+          'Unlock Standard for Smart Chat, or jump to Pro for the Tradie Library plus quoting workflows built for busy tradies.',
         badges: ['Standard', 'Pro'],
         actions: [
           { label: 'Upgrade to Standard', href: `/account/subscribe/${STANDARD_MONTHLY}`, primary: true },
           { label: 'Go Pro', href: `/account/subscribe/${PRO_MONTHLY}`, primary: false }
         ],
         list: [
-          'Unlimited smart chat responses',
-          'Tradie Library answers with manuals & guides',
-          'Job-ready workflows for pricing & paperwork'
+          'Smart Chat for quotes, SMS, and site notes (Standard)',
+          'Job-ready workflows for proposals, pricing, and paperwork',
+          'Tradie Library answers with manuals, specs & guides (Pro)'
         ]
       };
     }
 
     if (planTier === 'standard') {
       return {
-        title: 'Pro keeps your whole crew in the know',
+        title: 'Need deeper references? Pro has you covered',
         body:
-          'Layer in manuals, specs, and the Tradie Library so every quote, SMS, and site note is backed by technical references.',
+          'Layer in the Tradie Library so every quote, SMS, and site note is backed by manuals, specs, and technical guides.',
         badges: ['Pro plan'],
-        actions: [{ label: 'Upgrade to Pro', href: `/account/subscribe/${PRO_MONTHLY}`, primary: true }],
+        actions: [
+          {
+            label: 'Upgrade to Pro',
+            href: portalHref ?? `/account/subscribe/${PRO_MONTHLY}`,
+            primary: true
+          }
+        ],
         list: [
-          'Priority Tradie Assistant chat replies',
-          'Tradie Library answers with manuals, specs & guides on tap',
-          'Advanced quoting + paperwork automations'
+          'Smart Assistant with manuals, specs & job guides on tap',
+          'Reference standards while you draft quotes and client comms',
+          'Bigger quoting & paperwork automations for complex jobs'
         ]
       };
     }
@@ -79,7 +87,7 @@
     <h1 class="mt-3 text-3xl font-bold text-gray-900">Keep your plan site-ready</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
       Review your current plan, check when the next invoice lands, and jump into Stripe to switch tiers,
-      update payment methods, download invoices, or manage seats. Everything lives in Stripe so changes are applied instantly.
+      update payment methods, download invoices, or tweak billing info. Everything lives in Stripe so changes are applied instantly.
     </p>
   </header>
 
@@ -121,10 +129,10 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-gray-900">Need to make a change?</h3>
-            <p class="text-sm text-gray-600">Stripe handles upgrades, downgrades, invoices, and payment info securely.</p>
+            <p class="text-sm text-gray-600">Use Manage subscription to update payment info, swap tiers, cancel, or download invoices — it all runs through Stripe.</p>
           </div>
           {#if data.portalUrl}
-            <a class="btn btn-primary" href={data.portalUrl}>Manage billing in Stripe</a>
+            <a class="btn btn-primary" href={data.portalUrl}>Manage subscription</a>
           {:else}
             <button class="btn" disabled>Portal unavailable</button>
           {/if}
@@ -136,7 +144,7 @@
           </li>
           <li class="flex items-start gap-2">
             <span class="mt-0.5 h-2 w-2 rounded-full bg-amber-500"></span>
-            Change plan tier, start a trial, or cancel
+            Change plan tier or cancel any time
           </li>
           <li class="flex items-start gap-2">
             <span class="mt-0.5 h-2 w-2 rounded-full bg-amber-500"></span>
@@ -179,7 +187,7 @@
       <aside class="rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-inner">
         <h3 class="text-lg font-semibold text-gray-900">You're all set</h3>
         <p class="mt-2 text-sm text-gray-600">
-          Pro plans already include the Tradie Library, workflows, and priority chat. Visit Stripe any time if you need to update billing.
+          Pro plans already include the Tradie Library, workflows, and Smart Chat. Visit Stripe any time if you need to update billing.
         </p>
         {#if data.portalUrl}
           <a class="btn btn-ghost mt-4" href={data.portalUrl}>Open billing portal</a>
