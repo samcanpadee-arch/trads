@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import { onMount } from "svelte";
 
   interface Props {
@@ -9,7 +10,44 @@
     };
   }
 
+  type InstallGuide = {
+    platform: string;
+    steps: string[];
+    extra?: string;
+  };
+
+  const installGuides: InstallGuide[] = [
+    {
+      platform: 'iPhone (Safari)',
+      steps: [
+        'Open Tradie Assistant in Safari.',
+        'Tap the Share icon (square with an up arrow).',
+        'Choose “Add to Home Screen” and hit Add.'
+      ],
+      extra: 'Launches like an app with your saved login.'
+    },
+    {
+      platform: 'Android (Chrome)',
+      steps: [
+        'Open Tradie Assistant in Chrome.',
+        'Tap the ⋮ menu in the top-right corner.',
+        'Select “Add to Home screen” then tap Add.'
+      ],
+      extra: 'If Chrome shows an Install banner, tap it and confirm.'
+    }
+  ];
+
   let { data }: Props = $props();
+
+  let detectedPlatform: string | null = null;
+  if (browser) {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      detectedPlatform = 'iPhone (Safari)';
+    } else if (/android/.test(userAgent)) {
+      detectedPlatform = 'Android (Chrome)';
+    }
+  }
 
   let localDisplayName = "";
   let hasVisited = false;
@@ -105,6 +143,53 @@
         <p class="text-sm opacity-70">Your everyday helpers for pricing jobs, drafting quotes, and writing polished client marketing docs. Quick, consistent, and made for tradies who’d rather be on the tools than in the office.</p>
       </div>
     </a>
+  </div>
+
+  <!-- Mobile install helper -->
+  <div class="card bg-base-100 border">
+    <div class="card-body grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
+      <div>
+        <p class="text-xs font-semibold tracking-wide text-primary uppercase">Add it to your phone</p>
+        <h2 class="text-xl font-semibold mt-2">One tap from the job site</h2>
+        <p class="text-sm opacity-80 mt-3">
+          Tradie Assistant is already mobile ready. Add it to your home screen now so the tools, chat, and manuals are one tap
+          away when you’re out on site.
+        </p>
+        {#if detectedPlatform}
+          <div class="mt-4 alert alert-info text-xs">
+            <div>
+              Looks like you’re on <strong>{detectedPlatform}</strong>. Follow those steps below to pin the app in about 10 seconds.
+            </div>
+          </div>
+        {:else}
+          <p class="mt-4 text-xs opacity-70">
+            Not on your phone right now? Screenshot these steps or send the link to yourself so you can add it later.
+          </p>
+        {/if}
+      </div>
+      <div class="space-y-3">
+        {#each installGuides as guide}
+          <div
+            class={`rounded-2xl border p-4 bg-base-200/70 text-sm transition-all ${
+              detectedPlatform === guide.platform ? 'border-primary bg-base-100 shadow' : 'border-base-300'
+            }`}
+          >
+            <h3 class="font-semibold flex items-center gap-2 text-sm">
+              <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
+              {guide.platform}
+            </h3>
+            <ol class="mt-2 space-y-1 list-decimal list-inside text-xs">
+              {#each guide.steps as step}
+                <li>{step}</li>
+              {/each}
+            </ol>
+            {#if guide.extra}
+              <p class="mt-2 text-[11px] opacity-70">{guide.extra}</p>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
   </div>
 
   <!-- Support / contact -->

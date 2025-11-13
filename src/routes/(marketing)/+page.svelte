@@ -1,5 +1,44 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
+
   const year = new Date().getFullYear();
+
+  type InstallGuide = {
+    platform: string;
+    steps: string[];
+    extra?: string;
+  };
+
+  const installGuides: InstallGuide[] = [
+    {
+      platform: 'iPhone (Safari)',
+      steps: [
+        'Open this site in Safari.',
+        'Tap the Share icon (square with an up arrow).',
+        'Choose “Add to Home Screen” and hit Add.'
+      ],
+      extra: 'Looks and launches like an app — no App Store needed.'
+    },
+    {
+      platform: 'Android (Chrome)',
+      steps: [
+        'Open this site in Chrome.',
+        'Tap the ⋮ menu in the top-right corner.',
+        'Select “Add to Home screen” then tap Add.'
+      ],
+      extra: 'If Chrome shows an Install banner, tap it and confirm.'
+    }
+  ];
+
+  let detectedPlatform: string | null = null;
+  if (browser) {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      detectedPlatform = 'iPhone (Safari)';
+    } else if (/android/.test(userAgent)) {
+      detectedPlatform = 'Android (Chrome)';
+    }
+  }
 </script>
 
 <svelte:head>
@@ -316,6 +355,53 @@
     <p class="mt-2 opacity-80">See plans and full details on our pricing page.</p>
     <div class="mt-6">
       <a href="/pricing" class="btn btn-primary">View Pricing</a>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL ON YOUR PHONE CALLOUT -->
+<section class="px-4 md:px-6 lg:px-10 py-10 bg-base-100">
+  <div class="max-w-5xl mx-auto grid md:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+    <div>
+      <p class="text-sm font-semibold tracking-wide text-primary uppercase">Use it like an app</p>
+      <h2 class="text-2xl md:text-3xl font-bold mt-2">Keep Tradie Assistant on your home screen</h2>
+      <p class="mt-3 opacity-80">
+        The site is already mobile optimised — all you need is the built-in “Add to Home Screen” option on your phone.
+        Takes a few taps and works on both iPhone and Android. Perfect for tradies who just want to tap an icon and go.
+      </p>
+      {#if detectedPlatform}
+        <div class="mt-4 alert alert-info text-sm">
+          <div>
+            Looks like you’re on <strong>{detectedPlatform}</strong>. Follow those steps below to pin the app in about 10 seconds.
+          </div>
+        </div>
+      {:else}
+        <p class="mt-4 text-sm opacity-80">
+          Visiting on desktop? Save these steps or print the card so you can show the crew how to set it up on site.
+        </p>
+      {/if}
+    </div>
+    <div class="space-y-4">
+      {#each installGuides as guide}
+        <div
+          class={`rounded-2xl border p-5 bg-base-200/70 transition-all ${
+            detectedPlatform === guide.platform ? 'border-primary bg-base-100 shadow-lg' : 'border-base-300'
+          }`}
+        >
+          <h3 class="text-lg font-semibold flex items-center gap-2">
+            <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
+            {guide.platform}
+          </h3>
+          <ol class="mt-3 space-y-2 list-decimal list-inside text-sm">
+            {#each guide.steps as step}
+              <li>{step}</li>
+            {/each}
+          </ol>
+          {#if guide.extra}
+            <p class="mt-3 text-xs opacity-80">{guide.extra}</p>
+          {/if}
+        </div>
+      {/each}
     </div>
   </div>
 </section>
