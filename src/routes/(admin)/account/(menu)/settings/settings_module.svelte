@@ -34,6 +34,7 @@
     editButtonTitle?: string | null
     editLink?: string | null
     saveButtonTitle?: string
+    className?: string
   }
 
   let {
@@ -48,6 +49,7 @@
     editButtonTitle = null,
     editLink = null,
     saveButtonTitle = "Save",
+    className = "mt-8",
   }: Props = $props()
 
   const handleSubmit: SubmitFunction = () => {
@@ -63,31 +65,39 @@
   }
 </script>
 
-<div class="card p-6 pb-7 mt-8 max-w-xl flex flex-col md:flex-row shadow-sm">
+<div
+  class={
+    `${className} rounded-2xl border shadow-sm w-full flex flex-col md:flex-row gap-5 p-6 ${dangerous
+      ? 'border-rose-200 bg-rose-50/80'
+      : 'border-gray-200 bg-white/80'}`
+  }
+>
   {#if title}
-    <div class="text-xl font-bold mb-3 w-48 md:pr-8 flex-none">{title}</div>
+    <div class="flex-none md:w-52 space-y-1">
+      <p
+        class={
+          `text-xs font-semibold uppercase tracking-widest ${dangerous
+            ? 'text-rose-500'
+            : 'text-amber-700'}`
+        }
+      >
+        {dangerous ? "Caution" : "Details"}
+      </p>
+      <div class="text-xl font-semibold text-gray-900">{title}</div>
+    </div>
   {/if}
 
   <div class="w-full min-w-48">
     {#if !showSuccess}
       {#if message}
-        <div class="mb-6 {dangerous ? 'alert alert-warning' : ''}">
-          {#if dangerous}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              /></svg
-            >
-          {/if}
-
-          <span>{message}</span>
+        <div
+          class={
+            `mb-5 rounded-2xl border px-4 py-3 text-sm ${dangerous
+              ? 'border-rose-200 bg-white/60 text-rose-900'
+              : 'border-amber-100 bg-amber-50 text-amber-900'}`
+          }
+        >
+          {message}
         </div>
       {/if}
       <form
@@ -99,7 +109,7 @@
         {#each fields as field}
           {#if field.label}
             <label for={field.id}>
-              <span class="text-sm text-gray-500">{field.label}</span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">{field.label}</span>
             </label>
           {/if}
           {#if editable}
@@ -116,7 +126,9 @@
               maxlength={field.maxlength ? field.maxlength : null}
             />
           {:else}
-            <div class="text-lg mb-3">{field.initialValue}</div>
+            <div class="text-base font-medium text-gray-900 mb-3">
+              {field.initialValue}
+            </div>
           {/if}
         {/each}
 
@@ -131,7 +143,7 @@
             <button
               type="submit"
               class="ml-auto btn btn-sm mt-3 min-w-[145px] {dangerous
-                ? 'btn-error'
+                ? 'btn-error btn-outline'
                 : 'btn-primary btn-outline'}"
               disabled={loading}
             >
