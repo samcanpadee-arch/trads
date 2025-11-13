@@ -10,7 +10,7 @@ function getClient() {
   return key ? new OpenAI({ apiKey: key }) : null;
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async () => {
   const client = getClient();
   const approvedId = privateEnv.PRIVATE_ASSISTANT_APPROVED_STORE_ID;
 

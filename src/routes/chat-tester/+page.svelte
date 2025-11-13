@@ -33,10 +33,13 @@
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     if (reader) {
-      while (true) {
+      let readComplete = false;
+      while (!readComplete) {
         const { value, done } = await reader.read();
-        if (done) break;
-        output += decoder.decode(value, { stream: true });
+        readComplete = Boolean(done);
+        if (value) {
+          output += decoder.decode(value, { stream: true });
+        }
       }
     } else {
       output = await res.text();

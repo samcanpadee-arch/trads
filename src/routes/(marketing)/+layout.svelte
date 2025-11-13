@@ -1,8 +1,3 @@
-<script lang="ts">
-// marketing layout only
-export let data;
-</script>
-
 <div class="min-h-screen flex flex-col bg-base-100">
 
   <!-- HEADER / NAVBAR -->
@@ -12,16 +7,16 @@ export let data;
       <div class="navbar-start items-center gap-2">
         <!-- Mobile menu -->
         <div class="dropdown">
-          <label tabindex="0" class="btn btn-ghost lg:hidden" aria-label="Open menu">
+          <button type="button" class="btn btn-ghost lg:hidden" aria-label="Open menu">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
-          </label>
-          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56">
-            <li><a href="/blog" sveltekit:prefetch>Blog</a></li>
-            <li><a href="/pricing" sveltekit:prefetch>Pricing</a></li>
-            <li><a href="/contact_us" sveltekit:prefetch>Contact</a></li>
+          </button>
+          <ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56">
+            <li><a href="/blog" data-sveltekit-preload-data>Blog</a></li>
+            <li><a href="/pricing" data-sveltekit-preload-data>Pricing</a></li>
+            <li><a href="/contact_us" data-sveltekit-preload-data>Contact</a></li>
             <li><a href="/account">Open App</a></li>
           </ul>
         </div>
@@ -36,7 +31,7 @@ export let data;
           <li>
             <a
               href="/blog"
-              sveltekit:prefetch
+              data-sveltekit-preload-data
               class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >Blog</a
             >
@@ -44,7 +39,7 @@ export let data;
           <li>
             <a
               href="/pricing"
-              sveltekit:prefetch
+              data-sveltekit-preload-data
               class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >Pricing</a
             >
@@ -52,7 +47,7 @@ export let data;
           <li>
             <a
               href="/contact_us"
-              sveltekit:prefetch
+              data-sveltekit-preload-data
               class="inline-flex items-center gap-1 px-1 py-2 transition-colors hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >Contact</a
             >

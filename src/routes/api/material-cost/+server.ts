@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 
 type ItemIn = { name?: string; unitCost?: number; quantity?: number; discountPct?: number };
 type Row = {
@@ -105,15 +105,22 @@ export const POST: RequestHandler = async ({ request }) => {
     const data = await r.json();
     const text = data?.choices?.[0]?.message?.content?.trim() || '';
     return json({ ...payload, summary: text });
-  } catch (e: any) {
-    return json({ ...payload, summary: fallbackSummary(rows, payload.totals), error: e?.message || 'LLM failed' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'LLM failed';
+    return json({ ...payload, summary: fallbackSummary(rows, payload.totals), error: message });
   }
 };
 
 // Helpers
-const num = (v: any) => {
-  const n = parseFloat(v);
-  return Number.isFinite(n) ? n : 0;
+const num = (v: unknown) => {
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return v;
+  }
+  if (typeof v === 'string') {
+    const parsed = parseFloat(v);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
 };
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const money = (n: number, ccy: string) => n.toLocaleString(undefined, { style: 'currency', currency: ccy });
@@ -133,10 +140,3 @@ function fallbackSummary(rows: Row[], t: { currency: string; markupPercent: numb
   return lines.join('\n');
 }
 
-function json(obj: any, init?: ResponseInit) {
-  return new Response(JSON.stringify(obj), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-    ...(init || {})
-  });
-}

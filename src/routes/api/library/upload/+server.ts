@@ -1,25 +1,32 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 import crypto from "node:crypto";
-// @ts-ignore
-import registry from "$lib/vectorstores.json";
+import registry from "$lib/vectorstores.json" assert { type: "json" };
 
 export const config = { runtime: "nodejs20.x" };
 
 async function sha256OfFile(file: File): Promise<string> {
   const hash = crypto.createHash("sha256");
-  // @ts-ignore Node 20 File.stream
   const reader = file.stream().getReader();
-  while (true) {
+  let finished = false;
+  while (!finished) {
     const { value, done } = await reader.read();
-    if (done) break;
+    finished = Boolean(done);
     if (value) hash.update(value);
   }
   return hash.digest("hex");
 }
 
-async function listAllFiles(apiKey: string): Promise<any[]> {
-  const out: any[] = [];
+type OpenAIFile = {
+  id: string;
+  file_id?: string;
+  filename?: string;
+  name?: string;
+  status?: string;
+};
+
+async function listAllFiles(apiKey: string): Promise<OpenAIFile[]> {
+  const out: OpenAIFile[] = [];
   let after: string | null = null;
   for (let i = 0; i < 50; i++) {
     const url = new URL("https://api.openai.com/v1/files");
@@ -27,7 +34,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
     const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
     if (!r.ok) throw new Error(`Files list failed: ${await r.text()}`);
     const j = await r.json();
-    const arr = Array.isArray(j.data) ? j.data : [];
+    const arr = Array.isArray(j.data) ? (j.data as OpenAIFile[]) : [];
     out.push(...arr);
     if (!j.has_more || !arr.length) break;
     after = arr[arr.length - 1]?.id;
@@ -37,7 +44,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
 
 async function findFileByStableName(apiKey: string, stableName: string): Promise<string | null> {
   const all = await listAllFiles(apiKey);
-  const f = all.find((x: any) => (x.filename || x.name) === stableName);
+  const f = all.find((x) => (x.filename || x.name) === stableName);
   return f?.id ?? null;
 }
 
@@ -72,9 +79,9 @@ async function waitForFileIndexing(apiKey: string, vectorStoreId: string, fileId
     });
     if (!r.ok) throw new Error(`Vector store poll failed: ${await r.text()}`);
     const j = await r.json();
-    const arr = (j.data || []) as any[];
-    const me = arr.find((x) => x.id === fileId);
-    if (me && me.status === "completed") return;
+    const arr = (j.data || []) as OpenAIFile[];
+    const me = arr.find((x) => (x.id || x.file_id) === fileId);
+    if (me && (me.status === "completed" || me.status === "succeeded")) return;
     await new Promise((res) => setTimeout(res, 800));
   }
 }
@@ -96,7 +103,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const files = form.getAll("files").filter((f) => f instanceof File) as File[];
     if (!files.length) return new Response(JSON.stringify({ error: "No files provided" }), { status: 400 });
 
-    const results: any[] = [];
+    const results: Array<{ name: string; file_id: string; action: string; attached_to: string[] }> = [];
 
     for (const f of files) {
       const hash = await sha256OfFile(f);
@@ -113,15 +120,20 @@ export const POST: RequestHandler = async ({ request }) => {
       for (const vsId of libs) {
         await attachFileToVectorStore(apiKey, vsId, fileId);
         // wait (best-effort) for indexing for this specific file
-        try { await waitForFileIndexing(apiKey, vsId, fileId, 20000); } catch {}
+        try {
+          await waitForFileIndexing(apiKey, vsId, fileId, 20000);
+        } catch (error) {
+          console.warn("waitForFileIndexing failed", error);
+        }
       }
 
       results.push({ name: f.name, file_id: fileId, action, attached_to: libs });
     }
 
     return new Response(JSON.stringify({ ok: true, results }), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch (e: any) {
-    console.error("Uploader error", e);
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), { status: 500, headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error("Uploader error", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 };

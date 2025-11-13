@@ -1,22 +1,14 @@
 <script lang="ts">
-	import type { WithElementRef } from '$lib/utils/types.js';
-	import type { SVGAttributes } from 'svelte/elements';
-
-	let {
-		size = 16,
-		ref = $bindable(null),
-		...rest
-	}: WithElementRef<SVGAttributes<SVGElement> & { size?: number }, SVGElement> = $props();
+export let size = 16;
 </script>
 
 <svg
-	height={size}
-	stroke-linejoin="round"
-	viewBox="0 0 16 16"
-	width={size}
-	style="color: currentColor;"
-	bind:this={ref}
-	{...rest}
+height={size}
+stroke-linejoin="round"
+viewBox="0 0 16 16"
+width={size}
+style="color: currentColor;"
+{...$$restProps}
 >
 	<path
 		fill-rule="evenodd"

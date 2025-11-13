@@ -56,8 +56,9 @@
   let loading = false;
 
   /************ Helpers ************/
-  function toNumber(n: any, d = 0) {
-    const x = Number(String(n).replace(/[^0-9.\-]/g, ""));
+  function toNumber(n: unknown, d = 0) {
+    const cleaned = typeof n === "string" ? n : String(n ?? "");
+    const x = Number(cleaned.replace(/[^0-9.-]/g, ""));
     return Number.isFinite(x) ? x : d;
   }
   const fmt = (n: number) =>
@@ -319,13 +320,18 @@ Keep content practical and specific; avoid generic fluff.`;
       if (res.ok && res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        while (true) {
+        let finished = false;
+        while (!finished) {
           const { done, value } = await reader.read();
-          if (done) break;
-          text += decoder.decode(value);
+          finished = Boolean(done);
+          if (value) {
+            text += decoder.decode(value);
+          }
         }
       }
-    } catch {}
+    } catch (error) {
+      console.error("job-estimation request failed", error);
+    }
 
     try {
       const j = JSON.parse(text);
@@ -346,14 +352,15 @@ Keep content practical and specific; avoid generic fluff.`;
           ? j.options.slice(0, 6).map(String)
           : [],
         labourSuggest: Array.isArray(j.labourSuggest)
-          ? j.labourSuggest.map((r: any) => ({
+          ? j.labourSuggest.map((r: Record<string, unknown>) => ({
               role: String(r.role || ""),
               hours: toNumber(r.hours, 0),
               rate: toNumber(r.rate, 0)
             }))
           : []
       };
-    } catch {
+    } catch (error) {
+      console.warn("job-estimation parse failed", error);
       return {
         overview: "",
         scope: [],
@@ -601,7 +608,9 @@ md += `Signature: __________________ Date: ________________\n`;
   function copyOut() {
     try {
       navigator.clipboard.writeText(output || "");
-    } catch {}
+    } catch (error) {
+      console.error("copy failed", error);
+    }
   }
 
   function useExample() {
@@ -697,7 +706,7 @@ Thank you for considering our services!`;
                   </tr>
                 </thead>
                 <tbody>
-                  {#each materials as m, i}
+                  {#each materials as m}
                     <tr>
                       <td><input class="input input-bordered input-xs w-56" bind:value={m.item}></td>
                       <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={m.unitCost} on:input={() => recomputeMaterial(m)}></td>

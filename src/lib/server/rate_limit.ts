@@ -1,6 +1,16 @@
-const globalStore = (globalThis as any).__appRateLimitStore || new Map<string, { count: number; reset: number }>();
-if (!(globalThis as any).__appRateLimitStore) {
-  (globalThis as any).__appRateLimitStore = globalStore;
+type RateLimitStore = Map<string, { count: number; reset: number }>;
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  interface AppRateLimitGlobal {
+    __appRateLimitStore?: RateLimitStore;
+  }
+}
+
+const globalWithStore = globalThis as typeof globalThis & AppRateLimitGlobal;
+const globalStore = globalWithStore.__appRateLimitStore || new Map<string, { count: number; reset: number }>();
+if (!globalWithStore.__appRateLimitStore) {
+  globalWithStore.__appRateLimitStore = globalStore;
 }
 
 export type RateLimitOptions = {

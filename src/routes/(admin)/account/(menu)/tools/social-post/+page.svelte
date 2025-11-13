@@ -127,10 +127,13 @@ Return ONLY strict JSON:
       let text = "";
       const r = res.body.getReader();
       const d = new TextDecoder();
-      while (true) {
+      let doneReading = false;
+      while (!doneReading) {
         const { done, value } = await r.read();
-        if (done) break;
-        text += d.decode(value);
+        doneReading = Boolean(done);
+        if (value) {
+          text += d.decode(value);
+        }
       }
       outputText = text || "";
 
@@ -147,10 +150,12 @@ Return ONLY strict JSON:
         mediaIdeas = Array.isArray(j.mediaIdeas)
           ? j.mediaIdeas.map(String)
           : [];
-      } catch {
+      } catch (parseError) {
+        console.warn("social-post parse failed", parseError);
         // leave caption empty to use raw fallback in preview
       }
-    } catch {
+    } catch (error) {
+      console.error("social-post request failed", error);
       outputText = "Network or server error. Please try again.";
     } finally {
       loading = false;
@@ -161,7 +166,9 @@ Return ONLY strict JSON:
     if (text)
       try {
         navigator.clipboard.writeText(text);
-      } catch {}
+      } catch (error) {
+        console.error("copy failed", error);
+      }
   }
 
   // ---------- Rich preview content (Main caption only; extras shown in collapsible) ----------
@@ -278,7 +285,7 @@ Return ONLY strict JSON:
                 type="checkbox"
                 class="checkbox"
                 checked={platforms.includes(p)}
-                on:change={(e: any) =>
+                on:change={(e: Event & { currentTarget: HTMLInputElement }) =>
                   togglePlatform(p, e.currentTarget.checked)}
               />
               <span class="label-text">{p}</span>

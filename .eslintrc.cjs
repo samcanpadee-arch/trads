@@ -41,6 +41,12 @@ module.exports = {
   },
   rules: {
     "no-undef": "off",
+    "svelte/valid-compile": [
+      "error",
+      {
+        ignoreWarnings: true
+      }
+    ]
     // no-undef has been turned off because of this:
     // basically, it causes issues and TS does those checks so it's redundant
     // https://typescript-eslint.io/linting/troubleshooting#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors

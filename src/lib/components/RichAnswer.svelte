@@ -17,5 +17,6 @@
   consider sanitizing `html` before injecting.
 -->
 <div class="prose max-w-none leading-relaxed text-base [&_h1]:text-xl [&_h2]:text-lg [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-base-200">
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html html}
 </div>

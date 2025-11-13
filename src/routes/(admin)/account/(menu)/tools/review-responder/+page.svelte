@@ -97,12 +97,16 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      while (true) {
+      let fullyRead = false;
+      while (!fullyRead) {
         const { done, value } = await reader.read();
-        if (done) break;
-        output += decoder.decode(value);
+        fullyRead = Boolean(done);
+        if (value) {
+          output += decoder.decode(value);
+        }
       }
-    } catch {
+    } catch (error) {
+      console.error("review responder failed", error);
       output = "Network error while generating. Please try again.";
     } finally {
       loading = false;
@@ -112,7 +116,9 @@ If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business 
   function copyOut() {
     try {
       navigator.clipboard.writeText(output || "");
-    } catch {}
+    } catch (error) {
+      console.error("copy failed", error);
+    }
   }
 
   // Rich preview source: use the generated output directly.

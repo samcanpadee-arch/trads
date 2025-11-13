@@ -2,8 +2,7 @@ import type { RequestHandler } from "@sveltejs/kit";
 import { env as privateEnv } from "$env/dynamic/private";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
-// @ts-ignore
-import registry from "$lib/vectorstores.json";
+import registry from "$lib/vectorstores.json" assert { type: "json" };
 import { consumeRateLimit } from "$lib/server/rate_limit";
 import type { Database } from "../../../DatabaseDefinitions";
 
@@ -25,18 +24,26 @@ const ASSISTANT_WINDOW_MS = readPositiveNumber(privateEnv.ASSISTANT_RATE_WINDOW_
 
 async function sha256OfFile(file: File): Promise<string> {
   const hash = crypto.createHash("sha256");
-  // @ts-ignore Node 20 File.stream
   const reader = file.stream().getReader();
-  while (true) {
+  let finished = false;
+  while (!finished) {
     const { value, done } = await reader.read();
-    if (done) break;
+    finished = Boolean(done);
     if (value) hash.update(value);
   }
   return hash.digest("hex");
 }
 
-async function listAllFiles(apiKey: string): Promise<any[]> {
-  const out: any[] = [];
+type OpenAIFile = {
+  id: string;
+  filename?: string;
+  name?: string;
+  file_id?: string;
+  status?: string;
+};
+
+async function listAllFiles(apiKey: string): Promise<OpenAIFile[]> {
+  const out: OpenAIFile[] = [];
   let after: string | null = null;
   for (let i = 0; i < 20; i++) {
     const url = new URL("https://api.openai.com/v1/files");
@@ -44,7 +51,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
     const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
     if (!r.ok) throw new Error(`Files list failed: ${await r.text()}`);
     const j = await r.json();
-    const arr = Array.isArray(j.data) ? j.data : [];
+    const arr = Array.isArray(j.data) ? (j.data as OpenAIFile[]) : [];
     out.push(...arr);
     if (!j.has_more || !arr.length) break;
     after = arr[arr.length - 1]?.id;
@@ -54,7 +61,7 @@ async function listAllFiles(apiKey: string): Promise<any[]> {
 
 async function findFileByStableName(apiKey: string, stableName: string): Promise<string | null> {
   const all = await listAllFiles(apiKey);
-  const match = all.find((f: any) => (f.filename || f.name) === stableName);
+  const match = all.find((f) => (f.filename || f.name) === stableName);
   return match?.id ?? null;
 }
 
@@ -213,8 +220,10 @@ async function attachFileToVectorStore(
   throw new Error(`Attach file to vector store failed: ${msg}`);
 }
 
-async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Promise<Array<{ file_id: string; status: string }>> {
-  const aggregated: Array<{ file_id: string; status: string }> = [];
+type VectorStoreFile = { file_id: string; status: string };
+
+async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Promise<VectorStoreFile[]> {
+  const aggregated: VectorStoreFile[] = [];
   let cursor: string | undefined;
 
   for (let page = 0; page < 20; page += 1) {
@@ -226,9 +235,9 @@ async function listVectorStoreFiles(apiKey: string, vectorStoreId: string): Prom
     });
     if (!resp.ok) throw new Error(`Vector store poll failed: ${await resp.text()}`);
     const json = await resp.json();
-    const files = Array.isArray(json.data) ? json.data : [];
+    const files: OpenAIFile[] = Array.isArray(json.data) ? (json.data as OpenAIFile[]) : [];
     aggregated.push(
-      ...files.map((f: any) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }))
+      ...files.map((f) => ({ file_id: f?.file_id || f?.id || "", status: f?.status || "" }))
     );
 
     if (!json?.has_more) break;
@@ -257,12 +266,19 @@ async function waitForIndexing(apiKey: string, vectorStoreId: string, expectedFi
   }
 }
 
-function extractTextFromResponses(resJson: any): string {
+type ResponseContent = {
+  output_text?: string;
+  output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+  content?: Array<{ text?: string }>;
+};
+
+function extractTextFromResponses(resJson: unknown): string {
+  const data = resJson as ResponseContent | null;
   if (!resJson) return "";
-  if (typeof resJson.output_text === "string" && resJson.output_text.trim()) return resJson.output_text;
-  if (Array.isArray(resJson.output)) {
+  if (typeof data?.output_text === "string" && data.output_text.trim()) return data.output_text;
+  if (Array.isArray(data?.output)) {
     const texts: string[] = [];
-    for (const item of resJson.output) {
+    for (const item of data.output) {
       const parts = item?.content || item?.contents || [];
       for (const p of parts) {
         if (p?.type === "output_text" && typeof p?.text === "string") texts.push(p.text);
@@ -271,8 +287,8 @@ function extractTextFromResponses(resJson: any): string {
     }
     if (texts.length) return texts.join("\n");
   }
-  if (Array.isArray(resJson.content)) {
-    const first = resJson.content.find((c: any) => typeof c?.text === "string");
+  if (Array.isArray(data?.content)) {
+    const first = data.content.find((c) => typeof c?.text === "string");
     if (first?.text) return first.text;
   }
   return "";
@@ -513,8 +529,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           if (attached === "attached") {
             waitFor.push(u.id);
           }
-        } catch (err: any) {
-          const msg = String(err?.message || err);
+          } catch (err) {
+          const msg = String(err instanceof Error ? err.message : err);
           if (/not\s+found/i.test(msg) || /no such file/i.test(msg)) {
             const up = await uploadToOpenAIWithStableName(u.file, API, u.filename);
             u.id = up.id;
@@ -552,17 +568,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
               name: u.originalName,
               status: result
             });
-          } catch (e: any) {
+          } catch (e) {
             console.warn("attach approved failed", e);
             shareResults.push({
               name: u.originalName,
               status: "failed",
-              message: e?.message ? String(e.message) : String(e)
+              message: e instanceof Error ? e.message : String(e)
             });
           }
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("share attachment failed", error);
+    }
 
     // Strict system rules
     const SYSTEM =
@@ -610,7 +628,8 @@ STYLE:
     const uniqueVsIds = Array.from(new Set(vsIds));
 
     // Tools config
-    const tools: any[] = [];
+    type ToolConfig = { type: "file_search"; vector_store_ids: string[] };
+    const tools: ToolConfig[] = [];
     if (uniqueVsIds.length) tools.push({ type: "file_search", vector_store_ids: uniqueVsIds });
 
     // Call Responses API
@@ -689,8 +708,9 @@ STYLE:
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-  } catch (outer: any) {
+  } catch (outer) {
     console.error("Unhandled /api/assistant error", outer);
-    return new Response(`Internal error: ${outer?.message || outer}`, { status: 500 });
+    const message = outer instanceof Error ? outer.message : String(outer);
+    return new Response(`Internal error: ${message}`, { status: 500 });
   }
 };

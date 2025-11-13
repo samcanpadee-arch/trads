@@ -9,7 +9,9 @@ export async function uploadSelectedFiles(files: File[], allowShare: boolean) {
   if (!res.ok) throw new Error(json?.error || "Upload failed");
 
   const ids = Array.isArray(json?.uploaded)
-    ? json.uploaded.map((u: any) => u.file_id).filter(Boolean)
+    ? json.uploaded
+        .map((u: { file_id?: string | null }) => u.file_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
     : [];
   return ids;
 }

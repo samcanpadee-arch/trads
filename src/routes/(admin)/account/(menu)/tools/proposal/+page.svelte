@@ -3,14 +3,6 @@
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
 
-  let __mdProposal: HTMLDivElement | null = null;
-  let __previewProposal = "";
-  $: __previewProposal = __mdProposal ? __mdProposal.innerText : "";
-
-  let __md: HTMLDivElement | null = null;
-  let __preview = "";
-  $: __preview = __md ? __md.innerText : "";
-
   let trade = "Electrical";
   let projectBrief = "";
   let businessName = "";
@@ -72,10 +64,13 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      while (true) {
+      let finished = false;
+      while (!finished) {
         const { done, value } = await reader.read();
-        if (done) break;
-        output += decoder.decode(value);
+        finished = Boolean(done);
+        if (value) {
+          output += decoder.decode(value);
+        }
       }
     } catch {
       output = "Network error while generating. Please try again.";
@@ -87,7 +82,9 @@ Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a wa
   function copyOut() {
     try {
       navigator.clipboard.writeText(output || "");
-    } catch {}
+    } catch (error) {
+      console.error("copy failed", error);
+    }
   }
 </script>
 

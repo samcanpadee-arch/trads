@@ -35,7 +35,7 @@
     // If user typed multiple short lines, turn those into a clean list for the model.
     return raw
       .split(/\r?\n/)
-      .map((l) => l.replace(/^[•\-\*\s]+/, "").trim())
+      .map((l) => l.replace(/^[-•*\s]+/, "").trim())
       .filter(Boolean);
   }
 
@@ -100,12 +100,16 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      while (true) {
+      let fullyRead = false;
+      while (!fullyRead) {
         const { done, value } = await reader.read();
-        if (done) break;
-        output += decoder.decode(value);
+        fullyRead = Boolean(done);
+        if (value) {
+          output += decoder.decode(value);
+        }
       }
-    } catch {
+    } catch (error) {
+      console.error("email template request failed", error);
       output = "Network error while generating. Please try again.";
     } finally {
       loading = false;
@@ -113,7 +117,11 @@ Return only the email body text (no preface, no quotes, no markdown).`;
   }
 
   function copyOut() {
-    try { navigator.clipboard.writeText(output || ""); } catch {}
+    try {
+      navigator.clipboard.writeText(output || "");
+    } catch (error) {
+      console.error("copy failed", error);
+    }
   }
 
   $: __rich = (output || "").trim();

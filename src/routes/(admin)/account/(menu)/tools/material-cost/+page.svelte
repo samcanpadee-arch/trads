@@ -18,17 +18,21 @@
   function removeRow(i: number) {
     items = items.filter((_, idx) => idx !== i);
   }
-  const num = (v: any) => {
-    const n = parseFloat(v);
-    return Number.isFinite(n) ? n : 0;
+  const toNumber = (value: unknown) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
   };
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
   const money = (n: number) => n.toLocaleString(undefined, { style: "currency", currency });
 
   $: breakdown = items.map((r) => {
-    const unit = num(r.unitCost);
-    const qty = clamp(num(r.quantity), 0, 1e9);
-    const disc = clamp(num(r.discountPct), 0, 100);
+    const unit = toNumber(r.unitCost);
+    const qty = clamp(toNumber(r.quantity), 0, 1e9);
+    const disc = clamp(toNumber(r.discountPct), 0, 100);
     const discountedUnit = unit * (1 - disc / 100);
     const before = unit * qty;
     const subtotal = discountedUnit * qty;
@@ -37,7 +41,7 @@
   });
 
   $: totalMaterial = breakdown.reduce((s, r) => s + r.subtotal, 0);
-  $: profit = totalMaterial * (num(markupPct) / 100);
+  $: profit = totalMaterial * (toNumber(markupPct) / 100);
   $: finalTotal = totalMaterial + profit;
 
   async function generateSummary() {
@@ -47,7 +51,7 @@
       const res = await fetch("/api/material-cost", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, markupPercent: num(markupPct), currency })
+        body: JSON.stringify({ items, markupPercent: toNumber(markupPct), currency })
       });
       if (!res.ok) {
         summary = "Server error: " + (await res.text());
@@ -55,8 +59,9 @@
       }
       const data = await res.json();
       summary = data.summary ?? "";
-    } catch (e: any) {
-      summary = "Request failed: " + (e?.message || e);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      summary = "Request failed: " + message;
     } finally {
       generating = false;
     }
