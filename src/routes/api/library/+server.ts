@@ -15,8 +15,9 @@ function sha256HexBuffer(buf: ArrayBuffer): string {
   return h.digest('hex');
 }
 
-export const POST: RequestHandler = async ({ request, locals: { supabaseServiceRole, safeGetSession } }) => {
-  const user = await requireUser({ safeGetSession } as any);
+export const POST: RequestHandler = async ({ request, locals }) => {
+  const user = await requireUser(locals);
+  const { supabaseServiceRole } = locals;
 
   const form = await request.formData();
   const file = form.get('file') as File | null;
@@ -64,7 +65,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabaseServiceR
 
     // Upload to Supabase Storage (bucket: 'library')
     // NOTE: You likely already have a storage client; here we call RPC or use Supabase JS
-    const { data: uploadRes, error: upErr } = await supabaseServiceRole.storage
+    const { error: upErr } = await supabaseServiceRole.storage
       .from('library')
       .upload(canonical_path.replace(/^library\//, ''), Buffer.from(buf), {
         contentType: mime_type || 'application/octet-stream',

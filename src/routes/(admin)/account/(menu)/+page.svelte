@@ -39,15 +39,18 @@
 
   let { data }: Props = $props();
 
-  let detectedPlatform: string | null = null;
-  if (browser) {
-    const userAgent = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(userAgent)) {
-      detectedPlatform = 'iPhone (Safari)';
-    } else if (/android/.test(userAgent)) {
-      detectedPlatform = 'Android (Chrome)';
-    }
-  }
+  const detectedPlatform: string | null = browser
+    ? (() => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        if (/iphone|ipad|ipod/.test(userAgent)) {
+          return 'iPhone (Safari)';
+        }
+        if (/android/.test(userAgent)) {
+          return 'Android (Chrome)';
+        }
+        return null;
+      })()
+    : null;
 
   let localDisplayName = "";
   let hasVisited = false;
@@ -64,7 +67,9 @@
           localStorage.getItem("profile_full_name") ||
           localStorage.getItem("name") ||
           "").trim();
-    } catch {}
+    } catch (error) {
+      console.warn("account landing localStorage unavailable", error);
+    }
   });
 
   const profileName = $derived((data?.profile?.full_name ?? "").trim());

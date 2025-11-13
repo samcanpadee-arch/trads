@@ -160,7 +160,7 @@
         fileStatuses = fileStatuses.map((fs) => ({ ...fs, status: "uploading" }));
       }
 
-      const text = await new Promise<{ raw: any; text: string }>((resolve, reject) => {
+      const text = await new Promise<{ raw: unknown; text: string }>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/assistant");
         xhr.responseType = "json";
@@ -225,7 +225,7 @@
 
       if (payload && typeof payload === "object" && Array.isArray(payload.shareActivity)) {
         shareActivity = payload.shareActivity
-          .map((item: any) => ({
+          .map((item: { name?: unknown; status?: unknown; message?: unknown }) => ({
             name: typeof item?.name === "string" ? item.name : "Unknown upload",
             status:
               item?.status === "attached" || item?.status === "already" || item?.status === "failed"

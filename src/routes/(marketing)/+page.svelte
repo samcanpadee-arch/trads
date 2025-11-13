@@ -1,8 +1,6 @@
 <script lang="ts">
   import { browser } from '$app/environment';
 
-  const year = new Date().getFullYear();
-
   type InstallGuide = {
     platform: string;
     steps: string[];

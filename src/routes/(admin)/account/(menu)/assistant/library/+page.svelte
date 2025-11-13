@@ -20,6 +20,11 @@
     e.preventDefault();
   }
 
+  type UploadResponse = {
+    results?: Array<{ name: string; file_id: string; action: string; attached_to: string[] }>;
+    error?: string;
+  };
+
   async function uploadAll(e: Event) {
     e.preventDefault();
     errorMsg = "";
@@ -30,11 +35,11 @@
       const fd = new FormData();
       for (const f of files) fd.append("files", f);
       const r = await fetch("/api/library/upload", { method: "POST", body: fd });
-      const j = await r.json();
+      const j = (await r.json()) as UploadResponse;
       if (!r.ok) throw new Error(j?.error || "Upload failed");
-      results = j.results || [];
-    } catch (err: any) {
-      errorMsg = err?.message || String(err);
+      results = j.results ?? [];
+    } catch (err) {
+      errorMsg = err instanceof Error ? err.message : String(err);
     } finally {
       uploading = false;
     }
@@ -69,6 +74,7 @@
         on:drop={onDrop}
         on:dragover={onDragOver}
         aria-label="Drag and drop files here"
+        role="region"
       >
         <p class="text-sm">Drag &amp; drop files here, or use the picker above.</p>
         {#if files.length}

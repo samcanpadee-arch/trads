@@ -1,5 +1,7 @@
 import Stripe from "stripe";
 import { PRIVATE_STRIPE_API_KEY } from "$env/static/private";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../DatabaseDefinitions";
 
 const stripe = PRIVATE_STRIPE_API_KEY
   ? new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" })
@@ -18,10 +20,12 @@ const TIER_BY_PRICE: Record<string, "free" | "standard" | "pro"> = {
 type Tier = "free" | "standard" | "pro";
 export type { Tier };
 
-async function ensureCustomerId(locals: {
-  supabaseServiceRole: any;
-  safeGetSession: () => Promise<{ session: any; user: { id: string; email?: string|null } | null }>;
-}): Promise<string | null> {
+type SupabaseLocals = {
+  supabaseServiceRole: SupabaseClient<Database>;
+  safeGetSession: () => Promise<{ session: unknown; user: { id: string; email?: string | null } | null }>;
+};
+
+async function ensureCustomerId(locals: SupabaseLocals): Promise<string | null> {
   const { session, user } = await locals.safeGetSession();
   if (!session || !user) return null;
 
@@ -62,15 +66,13 @@ async function ensureCustomerId(locals: {
       .eq("id", user.id);
 
     return customerId;
-  } catch {
+  } catch (error) {
+    console.error("ensureCustomerId failed", error);
     return null;
   }
 }
 
-export async function getUserTier(locals: {
-  safeGetSession: () => Promise<{ session: any; user: { id: string; email?: string|null } | null }>;
-  supabaseServiceRole: any;
-}): Promise<Tier> {
+export async function getUserTier(locals: SupabaseLocals): Promise<Tier> {
   if (!stripe) return "free";
 
   const customerId = await ensureCustomerId(locals);
@@ -104,7 +106,8 @@ export async function getUserTier(locals: {
 
     if (priceId && TIER_BY_PRICE[priceId]) return TIER_BY_PRICE[priceId];
     return "free";
-  } catch {
+  } catch (error) {
+    console.error("getUserTier failed", error);
     return "free";
   }
 }

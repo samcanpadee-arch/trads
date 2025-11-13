@@ -38,17 +38,10 @@
       if (!Array.isArray(parsed)) return null;
       const cleaned: Msg[] = [];
       for (const entry of parsed) {
-        if (
-          entry &&
-          typeof entry === 'object' &&
-          'role' in entry &&
-          'content' in entry &&
-          (entry as any).role !== 'system'
-        ) {
-          const role = (entry as any).role;
-          if (role === 'assistant' || role === 'user') {
-            cleaned.push({ role, content: String((entry as any).content ?? '') });
-          }
+        if (!entry || typeof entry !== 'object') continue;
+        const candidate = entry as { role?: unknown; content?: unknown };
+        if (candidate.role === 'assistant' || candidate.role === 'user') {
+          cleaned.push({ role: candidate.role, content: String(candidate.content ?? '') });
         }
       }
       if (!cleaned.length) return null;
@@ -137,9 +130,11 @@
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
-      while (true) {
+      let doneStreaming = false;
+      while (!doneStreaming) {
         const { value, done } = await reader.read();
-        if (done) break;
+        doneStreaming = Boolean(done);
+        if (!value) continue;
         const chunk = decoder.decode(value, { stream: true });
         if (chunk && streamingIndex !== null) {
           const current = messages[streamingIndex] ?? { role: 'assistant', content: '' };
@@ -162,8 +157,8 @@
         ];
         shouldStickToBottom = true;
       }
-    } catch (err: any) {
-      errorMsg = err?.message ?? 'Network error';
+    } catch (err) {
+      errorMsg = err instanceof Error ? err.message : 'Network error';
       if (streamingIndex !== null) {
         messages = messages.slice(0, -1);
       }
@@ -204,8 +199,9 @@
     </div>
 
     <div class="sm:ml-auto flex flex-wrap items-center gap-2">
-      <label class="text-sm opacity-80 w-full sm:w-auto">Model</label>
+      <label class="text-sm opacity-80 w-full sm:w-auto" for="chat-model">Model</label>
       <select
+        id="chat-model"
         class="select select-bordered w-full sm:w-auto sm:select-sm"
         bind:value={model}
         disabled={streaming}
@@ -255,7 +251,7 @@
       placeholder="Ask me anything… (Ctrl/Cmd+Enter to send)"
       bind:value={input}
       on:keydown={onKeydown}
-    />
+    ></textarea>
     <button class="btn btn-primary" disabled={streaming || !input.trim()}>
       {#if streaming}
         <span class="loading loading-spinner"></span>

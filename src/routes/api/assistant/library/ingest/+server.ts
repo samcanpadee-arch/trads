@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { Cookies, RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import registry from '$lib/vectorstores.json' assert { type: 'json' };
 
@@ -77,7 +77,9 @@ export const POST: RequestHandler = async ({ cookies, request }) => {
     // 2) first ID from $lib/vectorstores.json (library_store_ids)
     // 3) env.MASTER_VECTOR_STORE_ID
     const explicit = (form.get('vectorStoreId') as string)?.trim();
-    const fromRegistry = Array.isArray((registry as any)?.library_store_ids) && (registry as any).library_store_ids[0];
+    const fromRegistry = Array.isArray(registry?.library_store_ids)
+      ? registry.library_store_ids[0]
+      : undefined;
     const fallback = env.MASTER_VECTOR_STORE_ID;
     const vectorStoreId = explicit || fromRegistry || fallback;
 
@@ -104,9 +106,10 @@ export const POST: RequestHandler = async ({ cookies, request }) => {
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (e: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ ok: false, error: e?.message || String(e) }),
+      JSON.stringify({ ok: false, error: message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
