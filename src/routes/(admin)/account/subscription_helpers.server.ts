@@ -74,6 +74,30 @@ export const getOrCreateCustomerId = async ({
   return { customerId: customer.id }
 }
 
+export const getExistingCustomerId = async ({
+  supabaseServiceRole,
+  userId,
+}: {
+  supabaseServiceRole: SupabaseClient<Database>
+  userId: string
+}) => {
+  const { data: dbCustomer, error } = await supabaseServiceRole
+    .from("stripe_customers")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .single()
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // No existing customer record
+      return { customerId: null }
+    }
+    return { error }
+  }
+
+  return { customerId: dbCustomer?.stripe_customer_id ?? null }
+}
+
 export const fetchSubscription = async ({
   customerId,
 }: {

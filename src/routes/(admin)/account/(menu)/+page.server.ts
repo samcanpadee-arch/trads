@@ -2,7 +2,7 @@ import { PRIVATE_STRIPE_API_KEY } from "$env/static/private"
 import Stripe from "stripe"
 import type { PageServerLoad } from "./$types"
 import { redirect } from "@sveltejs/kit"
-import { getOrCreateCustomerId } from "../subscription_helpers.server"
+import { getExistingCustomerId } from "../subscription_helpers.server"
 
 const stripe = new Stripe(PRIVATE_STRIPE_API_KEY, { apiVersion: "2023-08-16" })
 
@@ -41,7 +41,10 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabaseS
     return { billingSummary: null }
   }
 
-  const { error: idError, customerId } = await getOrCreateCustomerId({ supabaseServiceRole, user })
+  const { error: idError, customerId } = await getExistingCustomerId({
+    supabaseServiceRole,
+    userId: user.id,
+  })
   if (idError || !customerId) {
     return { billingSummary: null }
   }
