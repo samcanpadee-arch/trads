@@ -122,12 +122,16 @@
     </p>
     <div class="mt-6 grid gap-4 sm:grid-cols-2">
       <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat</p>
-        <p class="mt-1 text-sm text-gray-800">Draft quotes, SMS, and safety notes with on-call trade copy.</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat tip</p>
+        <p class="mt-1 text-sm text-gray-800">
+          Drop in site photos or voice notes and the assistant will flag risks, compliance wording, and a ready-to-send reply.
+        </p>
       </div>
       <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Tradie Library</p>
-        <p class="mt-1 text-sm text-gray-800">Look up manuals, standards, and job guides without leaving site.</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Library spotlight</p>
+        <p class="mt-1 text-sm text-gray-800">
+          Star your go-to manuals, calculators, and checklists so they stay pinned for quick access on every job.
+        </p>
       </div>
     </div>
   </header>
@@ -187,15 +191,23 @@
 
       <!-- Install helper -->
       <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div class="flex-1 space-y-2">
             <p class="text-xs font-semibold uppercase tracking-wide text-primary">Stay site-ready</p>
-            <h3 class="mt-1 text-xl font-semibold text-gray-900">Pin Tradie Assistant to your home screen</h3>
-            <p class="mt-1 text-sm text-gray-600">Save it beside your other field tools so the next quote, checklist, or manual is one tap away.</p>
+            <h3 class="text-xl font-semibold text-gray-900">Pin Tradie Assistant to your home screen</h3>
+            <p class="text-sm text-gray-600">
+              Save it beside your other field tools so the next quote, checklist, or manual is one tap away.
+            </p>
+            <button class="btn btn-neutral mt-4 w-full sm:w-auto" onclick={() => (installModalOpen = true)}>
+              Add to your phone
+            </button>
           </div>
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <button class="btn btn-neutral" onclick={() => (installModalOpen = true)}>Add to your phone</button>
-            <a href="/account/guide" class="btn btn-ghost">View guide</a>
+          <div class="w-full max-w-sm rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 p-5 text-sm text-amber-900">
+            <p class="text-[11px] font-semibold uppercase tracking-wide">Tools guide</p>
+            <p class="mt-2 text-sm">
+              Need the big-picture walkthrough? The guide covers Smart Chat, the Tradie Library, and every Smart Tool workflow.
+            </p>
+            <a href="/account/guide" class="btn btn-ghost btn-sm mt-4 w-full">View tools guide</a>
           </div>
         </div>
       </div>
