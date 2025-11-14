@@ -354,81 +354,88 @@
     </div>
 
     <!-- Files -->
-        <div class="form-control gap-4 break-words">
-      <label for="files" class="label items-start">
-        <span class="label-text leading-snug">Bring your own docs (PDF, optional)</span>
-      </label>
-
-      <!-- Share with community consent -->
-          <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
-        <div class="form-control">
-          <label class="label cursor-pointer flex-wrap items-start gap-3">
-            <input
-              type="checkbox"
-              name="share"
-              value="yes"
-              class="checkbox mt-1 sm:checkbox-sm"
-              bind:checked={share}
-            />
-            <span class="label-text flex-1 text-base sm:text-sm leading-snug text-pretty break-words">
-              Share this upload to help other tradies (no files with personal data).
-            </span>
+    <div class="form-control gap-3 break-words">
+      <details class="collapse collapse-arrow rounded-2xl border border-gray-200 bg-gray-50/70">
+        <summary class="collapse-title cursor-pointer space-y-1 text-base font-medium leading-tight">
+          <span>Bring your own docs (PDF, optional)</span>
+          <span class="text-sm font-normal opacity-70">
+            Add a supporting PDF only when you're chasing a clause or project doc outside the shared library.
+          </span>
+        </summary>
+        <div class="collapse-content space-y-4">
+          <label for="files" class="label items-start gap-2">
+            <div>
+              <span class="label-text leading-snug">Attach supporting PDFs (optional)</span>
+              <p class="mt-1 text-sm sm:text-xs opacity-70 leading-snug">
+                Skip this unless you're referencing a doc outside the Tradie Library. Max 4&nbsp;MB each.
+              </p>
+            </div>
           </label>
-          <p class="text-sm sm:text-xs opacity-70 leading-snug text-pretty break-words">
-            If unticked, the file is used for this answer only and not added to the shared library.
-          </p>
-        </div>
 
-            <input
-          id="files"
-          class="file-input file-input-bordered w-full max-w-2xl"
-          type="file"
-          multiple
-          accept=".pdf,.txt,.md"
-          bind:this={fileInput}
-          on:change={handleFileChange}
-          disabled={loading}
-        />
-            {#if fileStatuses.length}
-              <div class="space-y-3">
-            {#if isUploadingFiles}
-              <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                <progress
-                  class="progress progress-primary flex-1 min-w-[8rem]"
-                  value={toPercent(totalUploadProgress)}
-                  max="100"
-                  aria-label="Upload progress"
-                ></progress>
-                <span class="tabular-nums text-xs sm:text-sm">{toPercent(totalUploadProgress)}%</span>
-              </div>
-            {:else if fileStatuses.some((fs) => fs.status === "error")}
-                <div class="text-xs font-medium text-error">Some files failed to upload.</div>
-            {/if}
-            <ul class="space-y-2">
-              {#each fileStatuses as fileStatus (fileStatus.id)}
-                <li class="rounded-md border border-base-200 bg-base-200/30 p-3 space-y-2">
-                  <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
-                    <span class="break-words">{fileStatus.name}</span>
-                    <span class="opacity-70">{formatFileSize(fileStatus.size)}</span>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-2 text-xs sm:text-[0.8rem]">
-                    <span class={`badge badge-sm ${statusBadgeClass(fileStatus.status)}`}>
-                      {statusMessages[fileStatus.status]}
-                    </span>
-                  </div>
-                </li>
-              {/each}
-            </ul>
-              </div>
-            {/if}
-            <div class="text-xs sm:text-sm opacity-80 leading-relaxed space-y-2 break-words">
-          <p>
-            Only upload when you need something outside our shared library of thousands of manuals—it’s still gold if you’re chasing a specific clause or project doc.
-          </p>
-          <p>Max 4 MB per file.</p>
-        </div>
+          <div class="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
+            <div class="form-control">
+            <label class="label cursor-pointer flex-wrap items-start gap-3 text-sm sm:text-xs">
+              <input
+                type="checkbox"
+                name="share"
+                value="yes"
+                class="checkbox mt-1 sm:checkbox-sm"
+                bind:checked={share}
+              />
+              <span class="label-text flex-1 leading-snug text-pretty">
+                Share this upload to help other tradies (no files with personal data).
+              </span>
+            </label>
+            <p class="text-xs opacity-70 leading-snug text-pretty">
+              If unticked, the file is used for this answer only and not added to the shared library.
+            </p>
           </div>
+
+          <input
+            id="files"
+            class="file-input file-input-bordered w-full max-w-2xl"
+            type="file"
+            multiple
+            accept=".pdf,.txt,.md"
+            bind:this={fileInput}
+            on:change={handleFileChange}
+            disabled={loading}
+          />
+          {#if fileStatuses.length}
+            <div class="space-y-3">
+              {#if isUploadingFiles}
+                <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                  <progress
+                    class="progress progress-primary flex-1 min-w-[8rem]"
+                    value={toPercent(totalUploadProgress)}
+                    max="100"
+                    aria-label="Upload progress"
+                  ></progress>
+                  <span class="tabular-nums text-xs sm:text-sm">{toPercent(totalUploadProgress)}%</span>
+                </div>
+              {:else if fileStatuses.some((fs) => fs.status === "error")}
+                <div class="text-xs font-medium text-error">Some files failed to upload.</div>
+              {/if}
+              <ul class="space-y-2">
+                {#each fileStatuses as fileStatus (fileStatus.id)}
+                  <li class="rounded-md border border-base-200 bg-base-200/30 p-3 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
+                      <span class="break-words">{fileStatus.name}</span>
+                      <span class="opacity-70">{formatFileSize(fileStatus.size)}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs sm:text-[0.8rem]">
+                      <span class={`badge badge-sm ${statusBadgeClass(fileStatus.status)}`}>
+                        {statusMessages[fileStatus.status]}
+                      </span>
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+            </div>
+          {/if}
         </div>
+      </details>
+    </div>
 
     <!-- Question -->
         <div class="form-control gap-2">
