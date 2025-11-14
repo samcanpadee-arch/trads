@@ -275,30 +275,31 @@
   <title>Smart Assistant</title>
 </svelte:head>
 
-<!-- Header -->
-<header class="mb-6 max-w-4xl mx-auto px-4 space-y-3">
-  <h1 class="text-3xl font-bold tracking-tight">Smart Assistant</h1>
-  <p class="text-base leading-relaxed opacity-80 break-words">
-    Fire off the curly install, compliance or fault-finding questions and the Assistant will pull answers from our stacked manuals
-    library plus the latest regs. Need to sanity-check a job? Feed it the setup and it’ll keep you moving without the run-around.
-  </p>
-</header>
+<section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
+  <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
+    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Manuals & knowledge</p>
+    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">Smart Assistant</h1>
+    <p class="mt-3 max-w-3xl text-base text-gray-700">
+      Ask the curly install, compliance, or troubleshooting questions and the Assistant will cite the Tradie Library’s manuals,
+      standards, and guides so you can make the call on site. Add files only when you need something outside the shared library.
+    </p>
+  </header>
 
-<form
-  class="assistant-form card bg-base-100 border w-full max-w-4xl mx-auto shadow-sm"
-  on:submit|preventDefault={onAsk}
->
-  <div class="card-body space-y-8 p-5 sm:p-8">
-    <div class="rounded-lg bg-base-200/70 p-4 text-sm leading-relaxed text-base-content/80 break-words">
-      <p class="font-medium text-base-content">Add colour for sharper answers</p>
-      <p class="mt-1">
-        The more you tell us up front, the tighter the response. Pick your trade, name the brand or drop the standards if you can
-        so the Assistant locks onto the right manual faster, but no stress&mdash;you can always type the details straight into your
-        question.
-      </p>
-    </div>
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <form
+      class="assistant-form rounded-3xl border border-gray-200 bg-white/95 shadow-sm"
+      on:submit|preventDefault={onAsk}
+    >
+      <div class="space-y-8 p-5 sm:p-8">
+        <div class="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm leading-relaxed text-amber-900/90">
+          <p class="font-semibold text-amber-900">Dial in the context</p>
+          <p class="mt-1">
+            Trade, brand, model, or relevant standard help the Assistant zero in on the right section of the library. Keep it in
+            your own words&mdash;we’ll still pull the regs behind the scenes.
+          </p>
+        </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <!-- Trade -->
       <div class="form-control gap-2">
         <label for="trade" class="label">
@@ -336,7 +337,7 @@
     </div>
 
     <!-- Focus (optional hint) -->
-    <div class="form-control max-w-md gap-2">
+        <div class="form-control max-w-md gap-2">
       <label for="focus" class="label">
         <span class="label-text">Focus (optional)</span>
       </label>
@@ -353,13 +354,13 @@
     </div>
 
     <!-- Files -->
-    <div class="form-control gap-4 break-words">
+        <div class="form-control gap-4 break-words">
       <label for="files" class="label items-start">
         <span class="label-text leading-snug">Bring your own docs (PDF, optional)</span>
       </label>
 
       <!-- Share with community consent -->
-      <div class="space-y-4 rounded-md border border-base-200/70 bg-base-200/40 p-3">
+          <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
         <div class="form-control">
           <label class="label cursor-pointer flex-wrap items-start gap-3">
             <input
@@ -378,7 +379,7 @@
           </p>
         </div>
 
-        <input
+            <input
           id="files"
           class="file-input file-input-bordered w-full max-w-2xl"
           type="file"
@@ -388,8 +389,8 @@
           on:change={handleFileChange}
           disabled={loading}
         />
-        {#if fileStatuses.length}
-          <div class="space-y-3">
+            {#if fileStatuses.length}
+              <div class="space-y-3">
             {#if isUploadingFiles}
               <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                 <progress
@@ -401,7 +402,7 @@
                 <span class="tabular-nums text-xs sm:text-sm">{toPercent(totalUploadProgress)}%</span>
               </div>
             {:else if fileStatuses.some((fs) => fs.status === "error")}
-              <div class="text-xs font-medium text-error">Some files failed to upload.</div>
+                <div class="text-xs font-medium text-error">Some files failed to upload.</div>
             {/if}
             <ul class="space-y-2">
               {#each fileStatuses as fileStatus (fileStatus.id)}
@@ -418,19 +419,19 @@
                 </li>
               {/each}
             </ul>
-          </div>
-        {/if}
-        <div class="text-xs sm:text-sm opacity-80 leading-relaxed space-y-2 break-words">
+              </div>
+            {/if}
+            <div class="text-xs sm:text-sm opacity-80 leading-relaxed space-y-2 break-words">
           <p>
             Only upload when you need something outside our shared library of thousands of manuals—it’s still gold if you’re chasing a specific clause or project doc.
           </p>
           <p>Max 4 MB per file.</p>
         </div>
-      </div>
-    </div>
+          </div>
+        </div>
 
     <!-- Question -->
-    <div class="form-control gap-2">
+        <div class="form-control gap-2">
       <label for="message" class="label">
         <span class="label-text">Question</span>
       </label>
@@ -443,7 +444,7 @@
       ></textarea>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 sm:justify-end">
+        <div class="flex flex-wrap items-center gap-3 sm:justify-end">
       <button
         type="button"
         class="btn btn-outline w-full sm:w-auto sm:btn-sm"
@@ -487,8 +488,8 @@
       </button>
     </div>
 
-    {#if shareActivity.length}
-      <div class="alert alert-info flex flex-col gap-2 whitespace-pre-wrap break-words text-sm">
+        {#if shareActivity.length}
+          <div class="alert alert-info flex flex-col gap-2 whitespace-pre-wrap break-words text-sm">
         <span class="font-semibold">Library sharing summary</span>
         <ul class="space-y-1">
           {#each shareActivity as activity, idx (activity.name + idx)}
@@ -503,19 +504,19 @@
             </li>
           {/each}
         </ul>
-      </div>
-    {/if}
+          </div>
+        {/if}
 
     <!-- Answer -->
-    {#if loading}
-      <div class="flex items-center gap-2 opacity-80">
+        {#if loading}
+          <div class="flex items-center gap-2 opacity-80">
         <span class="loading loading-spinner loading-sm"></span>
         Thinking…
       </div>
-    {:else if errorMsg}
-      <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
-    {:else if answer && answer.length > 0}
-      <div class="flex flex-wrap items-center justify-end gap-2 mb-2">
+        {:else if errorMsg}
+          <div class="alert alert-error whitespace-pre-wrap break-words">{errorMsg}</div>
+        {:else if answer && answer.length > 0}
+          <div class="mb-2 flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
           class="btn btn-outline w-full sm:w-auto sm:btn-xs"
@@ -525,14 +526,34 @@
           {#if copied}Copied!{:else}Copy{/if}
         </button>
       </div>
-      <RichAnswer text={answer} />
-    {/if}
+          <RichAnswer text={answer} />
+        {/if}
     <!-- /Answer -->
+      </div>
+    </form>
+
+    <aside class="space-y-4">
+      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/60 to-rose-50/60 p-5 shadow-sm backdrop-blur">
+        <p class="text-sm font-semibold text-gray-900">What you get</p>
+        <ul class="mt-2 space-y-2 text-sm text-gray-700">
+          <li>• Answers quote manuals, standards, or job guides so you can cite the source.</li>
+          <li>• Perfect for “show me the clause” or “what’s the clearance” moments on site.</li>
+          <li>• Summaries stay in the thread so you can copy and drop into notes later.</li>
+        </ul>
+      </div>
+      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
+        <p class="text-sm font-semibold text-gray-900">Need inspo?</p>
+        <p class="mt-1 text-sm text-gray-600">Try:
+          <em>“Show me the AS/NZS clause for bonding a pool pump enclosure and what to check before inspection.”</em>
+        </p>
+        <button type="button" class="btn btn-outline btn-sm mt-4" on:click={fillExample}>Fill with an example</button>
+      </div>
+    </aside>
   </div>
-</form>
+</section>
 
 <style>
-  :global(.assistant-form .card-body) {
+  :global(.assistant-form) {
     overflow-wrap: anywhere;
   }
 
