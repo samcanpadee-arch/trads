@@ -76,63 +76,73 @@
   <title>Sign up</title>
 </svelte:head>
 
-<div class="w-full max-w-lg md:max-w-xl mx-auto px-4 py-10">
-  <form class="space-y-6" method="post" onsubmit={handleSubmit}>
-    <div class="space-y-4">
-      <div class="form-control">
-        <label class="label" for="email">
-          <span class="label-text">Email address</span>
-        </label>
-        <input
-          id="email"
-          class="input input-bordered w-full"
-          type="email"
-          name="email"
-          bind:value={email}
-          autocomplete="email"
-          required
-        />
-      </div>
+<div class="bg-gradient-to-b from-amber-50 via-white to-slate-50 min-h-screen flex items-center px-4 py-16 text-slate-900">
+  <div class="w-full max-w-4xl mx-auto grid gap-8 md:grid-cols-[1.1fr_0.9fr] items-center">
+    <div class="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-lg">
+      <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Sign up</p>
+      <h1 class="text-3xl font-semibold mt-2">Create your Tradie Assistant account</h1>
+      <p class="text-sm text-slate-600">Same trusted flow as before — just wrapped in a nicer card.</p>
+      <form class="mt-6 space-y-6" method="post" onsubmit={handleSubmit}>
+        <div class="space-y-4">
+          <div class="form-control">
+            <label class="label" for="email">
+              <span class="label-text">Email address</span>
+            </label>
+            <input
+              id="email"
+              class="input input-bordered w-full"
+              type="email"
+              name="email"
+              bind:value={email}
+              autocomplete="email"
+              required
+            />
+          </div>
 
-      <div class="form-control">
-        <label class="label" for="password">
-          <span class="label-text">Create a password</span>
-        </label>
-        <input
-          id="password"
-          class="input input-bordered w-full"
-          type="password"
-          name="password"
-          bind:value={password}
-          autocomplete="new-password"
-          required
-        />
-      </div>
+          <div class="form-control">
+            <label class="label" for="password">
+              <span class="label-text">Create a password</span>
+            </label>
+            <input
+              id="password"
+              class="input input-bordered w-full"
+              type="password"
+              name="password"
+              bind:value={password}
+              autocomplete="new-password"
+              required
+            />
+          </div>
+        </div>
+
+        {#if error}
+          <div class="alert alert-error">
+            <span>{error}</span>
+          </div>
+        {/if}
+
+        {#if message}
+          <div class="alert alert-success">
+            <span>{message}</span>
+          </div>
+        {/if}
+
+        <button class="btn btn-primary w-full" type="submit" disabled={loading}>
+          {#if loading}
+            Signing up...
+          {:else}
+            Create account
+          {/if}
+        </button>
+
+        <p class="text-sm text-center text-slate-600">
+          Already have an account?
+          <a class="link" href={SIGNIN}>Sign in</a>.
+        </p>
+      </form>
     </div>
-
-    {#if error}
-      <div class="alert alert-error">
-        <span>{error}</span>
-      </div>
-    {/if}
-
-    {#if message}
-      <div class="alert alert-success">
-        <span>{message}</span>
-      </div>
-    {/if}
-
-    <button class="btn btn-primary w-full" type="submit" disabled={loading}>
-      {#if loading}
-        Signing up...
-      {:else}
-        Create account
-      {/if}
-    </button>
-
-    <p class="text-sm text-center">
-      Already have an account?
-      <a class="link" href={SIGNIN}>Sign in</a>.
-    </p>
-  </form>
+    <div class="rounded-[32px] border border-dashed border-amber-200 bg-white/80 p-10 text-center text-sm font-medium text-amber-500">
+      Placeholder for onboarding illustration
+    </div>
+  </div>
 </div>

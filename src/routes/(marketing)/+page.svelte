@@ -83,17 +83,20 @@
             <a class="btn btn-outline border-slate-300 text-slate-900" href="/pricing">See pricing</a>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-            <div class="rounded-2xl border border-amber-100 bg-white/80 shadow-sm p-4">
-              <p class="text-2xl font-semibold text-slate-900">6</p>
-              <p class="text-slate-600">job-ready Smart Tools</p>
+            <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
+              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Tools</p>
+              <p class="text-2xl font-semibold text-slate-900 mt-1">6 instant workflows</p>
+              <p class="text-slate-600 mt-1">Quotes, proposals, reviews, socials, SMS, and cost calculators ready before smoko.</p>
             </div>
-            <div class="rounded-2xl border border-amber-100 bg-white/80 shadow-sm p-4">
-              <p class="text-2xl font-semibold text-slate-900">1,200+</p>
-              <p class="text-slate-600">manuals & technical guides</p>
+            <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
+              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Tradie Library</p>
+              <p class="text-2xl font-semibold text-slate-900 mt-1">1,200+ manuals & guides</p>
+              <p class="text-slate-600 mt-1">Wiring rules, HVAC install books, plumbing codes, SDS, and spec sheets on tap.</p>
             </div>
-            <div class="rounded-2xl border border-amber-100 bg-white/80 shadow-sm p-4">
-              <p class="text-2xl font-semibold text-slate-900">Seconds</p>
-              <p class="text-slate-600">to get a polished response</p>
+            <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
+              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Speed</p>
+              <p class="text-2xl font-semibold text-slate-900 mt-1">Answers in seconds</p>
+              <p class="text-slate-600 mt-1">Polished responses land before you’ve packed the ute — even on patchy site Wi-Fi.</p>
             </div>
           </div>
         </div>
@@ -103,18 +106,18 @@
           </div>
           <div class="rounded-3xl border border-slate-200 bg-white/90 shadow-xl p-6">
             <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Chat</p>
-            <p class="mt-3 text-base text-slate-900">“Need an access reminder for 8am tomorrow.”</p>
-            <p class="mt-2 text-sm text-slate-600">Sorted — here’s a tidy SMS and email follow-up ready to send.</p>
+            <p class="mt-3 text-base text-slate-900">“Can you tee up an 8am access reminder that sounds like me?”</p>
+            <p class="mt-2 text-sm text-slate-600">Smart Chat fires back a tidy SMS, optional email, and a gentle follow-up nudge before you’ve left the driveway.</p>
           </div>
           <div class="rounded-3xl border border-slate-200 bg-white/90 shadow-xl p-6">
             <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Tools</p>
-            <p class="mt-3 text-base text-slate-900">Material & Cost Calculator, Proposal Generator, Review replies.</p>
-            <p class="mt-2 text-sm text-slate-600">All keep your tone Aussie and client-ready.</p>
+            <p class="mt-3 text-base text-slate-900">Deck quotes, solar proposals, review replies, socials, email kits.</p>
+            <p class="mt-2 text-sm text-slate-600">Each workflow keeps your Aussie tone, adds markup maths, and stays client-ready.</p>
           </div>
           <div class="rounded-3xl border border-slate-200 bg-white/90 shadow-xl p-6">
             <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Tradie Library</p>
-            <p class="mt-3 text-base text-slate-900">Get answers from wiring rules, HVAC manuals, plumbing guides, SDS, and spec sheets.</p>
-            <p class="mt-2 text-sm text-slate-600">Responses call out references where possible.</p>
+            <p class="mt-3 text-base text-slate-900">Thousands of manuals, codes, SDS, spec sheets, and install guides.</p>
+            <p class="mt-2 text-sm text-slate-600">Answers cite where the info came from so you can show the inspector on the spot.</p>
           </div>
         </div>
       </div>
@@ -254,6 +257,14 @@
             </p>
           </div>
         </div>
+        <div class="mt-8 grid gap-4 md:grid-cols-2">
+          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium text-slate-500">
+            Drop a site photo or product hero render here
+          </div>
+          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium text-slate-500">
+            Drop a Tradie Library screenshot or testimonial collage here
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -302,8 +313,6 @@
           <div class="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50/80 p-4 text-sm text-amber-900">
             Looks like you’re on <strong>{detectedPlatform}</strong>. Follow those steps below to pin the app in about 10 seconds.
           </div>
-        {:else}
-          <p class="mt-4 text-sm text-slate-500">Visiting on desktop? Save these steps or show the crew on site.</p>
         {/if}
       </div>
       <div class="space-y-4">
@@ -335,38 +344,88 @@
 
   <!-- FAQ -->
   <section class="py-16 bg-gradient-to-b from-white to-slate-100/60">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-6">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-8">
         <p class="text-sm uppercase tracking-[0.3em] text-amber-600">FAQs</p>
-        <h2 class="text-3xl font-bold mt-3">Straight answers</h2>
+        <h2 class="text-3xl font-bold mt-3">Straight answers for busy tradies</h2>
       </div>
-      <div class="space-y-4">
+      <div class="space-y-3">
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
           <div class="collapse-title text-base font-medium text-slate-900">How do you look after my data and privacy?</div>
           <div class="collapse-content text-sm text-slate-600">
             <p>
-              We treat your info like it’s locked in the ute. Your account sits in our secure setup, and we don’t read your chats or files unless you explicitly share them with support.
-              When we call OpenAI to generate answers, request/response data may be retained for 30 days for abuse checks then deleted. API data isn’t used to train OpenAI’s models by default.
-              See our Privacy and Terms for the lot.
+              We treat your info like it’s locked in the ute. Your account sits in our secure setup, and we don’t read your chats, generated outputs, or files unless you explicitly share something with support.
+              When we call OpenAI to generate answers, request/response data may be retained for up to 30 days for abuse/safety checks, then deleted unless required by law. API data isn’t used to train OpenAI’s models by default. See our Privacy and Terms for details.
             </p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Does it work on site with patchy reception?</div>
+          <div class="collapse-title text-base font-medium text-slate-900">What happens to manuals or files I upload?</div>
           <div class="collapse-content text-sm text-slate-600">
             <p>
-              Yep. Everything is tuned for phones and tablets, so it’s light and quick. If you drop out mid-chat, it’ll pick up where you left off once you’re back online.
+              By default, uploads stay private to your account. We index them so the Assistant can pull short, relevant snippets and include those in the prompt to get you a targeted answer. If you tick “Share this upload to help other tradies”, you’re giving us permission to add a sanitised copy into a shared, read-only library so others can benefit from common manuals/standards. OpenAI may retain API logs for up to 30 days for security/abuse monitoring; that retention isn’t used for training by default.
             </p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">What if I need to change plans or cancel?</div>
+          <div class="collapse-title text-base font-medium text-slate-900">Can I cancel my subscription at any time?</div>
           <div class="collapse-content text-sm text-slate-600">
             <p>
-              All billing runs through Stripe. Head to <a class="link" href="/account/billing">Account → Billing</a> anytime to upgrade, downgrade, cancel, or update payment details.
+              Too easy. Go <strong>Account → Billing → Manage subscription</strong> to open your secure Stripe portal. Cancel any time; your plan stays active until the end of the current period. We don’t store card details — Stripe handles payments and is PCI DSS Level 1 compliant.
+            </p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">Can I use Tradie Assistant on multiple devices?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Yep. It’s a web app — use it on your phone on site, laptop in the shed, or tablet in the ute. Same login, same workspace.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">How accurate are the answers?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>AI is brilliant at speed and wording, but it’s not a licensed tradie. For anything safety-critical or standards-driven, check the cited page and use your judgement.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">How often do you update the app?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>We ship small tweaks most weeks and bigger improvements regularly. Keep an eye on the Blog for notable changes.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">Do you offer a free plan or trial?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Yes. You can use the Smart Tools on a free account. To try Smart Chat and Smart Assistant, start a 14-day free trial — cancel any time from Billing. See the <a class="link" href="/pricing">Pricing</a> page for details.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">Do I need to be tech-savvy?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Nope. It’s built for tradies: step-by-step screens, plain language, and job-ready outputs. Type what you need, pick a tool, done.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">How is this different to ChatGPT?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Tradie Assistant is built for trades — much easier to use, privacy-focused, and backed by a large library of manuals, Australian standards, and guides so you can verify answers. And it’s better value for the jobs you do every day.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium text-slate-900">Need help?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>
+              Hit <a class="link" href="/contact_us">Contact</a> or email <a class="link" href="mailto:support@tradieassistant.app">support@tradieassistant.app</a> — we’ll get you sorted.
             </p>
           </div>
         </div>

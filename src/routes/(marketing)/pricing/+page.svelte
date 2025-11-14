@@ -28,7 +28,11 @@
   }
 
   function toggleBtn(active: boolean) {
-    return `btn btn-sm rounded-full ${active ? 'bg-white text-slate-900 shadow' : 'bg-transparent text-white/80'}`;
+    return `btn btn-sm rounded-full transition ${
+      active
+        ? 'bg-amber-500 text-white shadow-lg'
+        : 'bg-white/40 text-slate-700 hover:bg-white/70'
+    }`;
   }
 </script>
 
@@ -59,7 +63,9 @@
           Yearly
         </button>
         {#if isYearly()}
-          <span class="text-xs text-amber-600 px-3">2 months free</span>
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 whitespace-nowrap">
+            2 months free
+          </span>
         {/if}
       </div>
       <p class="text-xs text-slate-500">
@@ -106,7 +112,9 @@
               <span class="text-sm text-slate-500 font-normal">/ {billingInterval}</span>
             </h3>
             {#if isYearly()}
-              <span class="badge badge-outline badge-sm border-amber-300 text-amber-600">{savings('standard')}</span>
+              <span class="inline-flex items-center rounded-full border border-amber-300 bg-white/80 px-3 py-1 text-xs font-semibold text-amber-600 whitespace-nowrap">
+                {savings('standard')}
+              </span>
             {/if}
           </div>
           <p class="text-sm text-slate-700">Everything in Free plus Smart Chat.</p>
@@ -136,7 +144,9 @@
               <span class="text-sm text-slate-500 font-normal">/ {billingInterval}</span>
             </h3>
             {#if isYearly()}
-              <span class="badge badge-outline badge-sm border-slate-300 text-slate-600">{savings('pro')}</span>
+              <span class="inline-flex items-center rounded-full border border-slate-300 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                {savings('pro')}
+              </span>
             {/if}
           </div>
           <p class="text-sm text-slate-700">Unlock the Tradie Library + Smart Assistant.</p>
@@ -158,13 +168,124 @@
     </div>
   </section>
 
-  <!-- STRIPE NOTE -->
-  <section class="py-12 bg-gradient-to-b from-white to-slate-100/70">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-      <h2 class="text-2xl font-semibold text-slate-900">Manage everything through Stripe</h2>
-      <p class="text-sm text-slate-600">
-        Change plan tier, update billing info, download invoices, or cancel any time via the secure Stripe portal. Head to <a class="link" href="/account/billing">Account → Billing</a> to open it.
-      </p>
+  <!-- WHAT'S INCLUDED -->
+  <section class="py-12 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-semibold text-center text-slate-900">What’s included</h2>
+      <p class="text-sm text-center text-slate-600 mt-2">Same content as before — now in a cleaner table so it’s easier to scan.</p>
+      <div class="mt-6 overflow-x-auto rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-900">
+              <th class="py-4 px-4 text-left font-semibold">Feature</th>
+              <th class="py-4 px-4 text-center font-semibold">Free</th>
+              <th class="py-4 px-4 text-center font-semibold">Standard</th>
+              <th class="py-4 px-4 text-center font-semibold">Pro</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <tr>
+              <td class="py-3 px-4">Unlimited usage</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">6 Smart Tools (quotes, proposals, calculators, reviews, captions, emails)</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">Smart Chat (AI answers & drafting)</td>
+              <td class="text-center">—</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">Smart Assistant (manual library + your uploads)</td>
+              <td class="text-center">—</td>
+              <td class="text-center">—</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">Works on mobile, tablet & desktop</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">Self-serve upgrades, downgrades & cancellations</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">14-day free trial</td>
+              <td class="text-center">—</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">GST invoices & Stripe billing</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING FAQ -->
+  <section class="py-16 bg-gradient-to-b from-white to-slate-100/70">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-semibold text-center text-slate-900">Pricing FAQs</h2>
+      <div class="mt-6 space-y-3">
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">Can I cancel anytime?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Yep. Go <strong>Account → Billing → Manage subscription</strong> to open your Stripe portal. Cancel any time; your plan stays active until the end of the current period (no pro-rata refunds).</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">What happens after the 14-day trial?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>If you don’t cancel during the trial, your plan starts automatically on the selected tier. You can switch or cancel from Billing at any time.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">Do you store my card details?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>No. Stripe handles payments and is PCI DSS Level 1 compliant. We don’t store card numbers.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">Do you issue GST invoices?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Yes. Stripe receipts include GST details suitable for bookkeeping.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">What’s different about Pro?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Pro includes Smart Assistant with our manuals/standards library, uploads of your own PDFs & notes (private by default), and higher usage limits.</p>
+          </div>
+        </div>
+        <div class="collapse collapse-arrow rounded-2xl border border-slate-200 bg-white">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-medium">Can I use it on multiple devices?</div>
+          <div class="collapse-content text-sm text-slate-600">
+            <p>Absolutely. Sign in on your phone, tablet, or desktop — same login, same workspace.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </div>
