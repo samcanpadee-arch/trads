@@ -354,15 +354,20 @@
     </div>
 
     <!-- Files -->
-        <div class="form-control gap-4 break-words">
-      <label for="files" class="label items-start">
-        <span class="label-text leading-snug">Bring your own docs (PDF, optional)</span>
+        <div class="form-control gap-3 break-words">
+      <label for="files" class="label items-start gap-2">
+        <div>
+          <span class="label-text leading-snug">Attach supporting PDFs (optional)</span>
+          <p class="mt-1 text-sm sm:text-xs opacity-70 leading-snug">
+            Skip this unless you're referencing a doc outside the Tradie Library. Max 4&nbsp;MB each.
+          </p>
+        </div>
       </label>
 
       <!-- Share with community consent -->
-          <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
+          <div class="space-y-3 rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
         <div class="form-control">
-          <label class="label cursor-pointer flex-wrap items-start gap-3">
+          <label class="label cursor-pointer flex-wrap items-start gap-3 text-sm sm:text-xs">
             <input
               type="checkbox"
               name="share"
@@ -370,12 +375,12 @@
               class="checkbox mt-1 sm:checkbox-sm"
               bind:checked={share}
             />
-            <span class="label-text flex-1 text-base sm:text-sm leading-snug text-pretty break-words">
-              Share this upload to help other tradies (no files with personal data).
+            <span class="label-text flex-1 leading-snug text-pretty">
+              Allow Tradie Library to reuse this file (keep personal info out).
             </span>
           </label>
-          <p class="text-sm sm:text-xs opacity-70 leading-snug text-pretty break-words">
-            If unticked, the file is used for this answer only and not added to the shared library.
+          <p class="text-xs opacity-70 leading-snug text-pretty">
+            Leave unchecked to keep the upload private to this answer.
           </p>
         </div>
 
