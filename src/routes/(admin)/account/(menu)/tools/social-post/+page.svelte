@@ -54,6 +54,15 @@
     contactPrefilled = true;
   }
 
+  const pillBaseClass =
+    "inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-sm font-medium transition focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400";
+  const pillClass = (active: boolean) =>
+    `${pillBaseClass} ${
+      active
+        ? "border-amber-500 bg-amber-50 text-amber-800 shadow-sm"
+        : "border-gray-200 text-gray-600 hover:border-gray-300"
+    }`;
+
   function togglePlatform(p: string, checked: boolean) {
     if (checked) {
       if (!platforms.includes(p)) platforms = [...platforms, p];
@@ -219,7 +228,7 @@ Return ONLY strict JSON:
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-5" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-7" on:submit={generate}>
     <!-- Brief -->
     <label class="form-control">
       <span class="label-text">Quick brief (1–3 sentences)</span>
@@ -230,7 +239,7 @@ Return ONLY strict JSON:
       ></textarea>
     </label>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 pt-1 lg:grid-cols-3 lg:gap-6">
       <!-- Category -->
       <label class="form-control">
         <span class="label-text">Category</span>
@@ -295,19 +304,24 @@ Return ONLY strict JSON:
 
     <!-- Platforms -->
     <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-      <div class="space-y-3 p-5 sm:p-6">
-        <h2 class="text-lg font-semibold">Platforms</h2>
-        <div class="flex flex-wrap gap-3">
+      <div class="space-y-4 p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold">Platforms</h2>
+            <p class="text-sm text-gray-500">Pick all the places you want to post.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
           {#each ["Instagram", "Facebook", "LinkedIn", "Google Business Profile", "TikTok"] as p}
-            <label class="label cursor-pointer gap-2">
+            <label class={pillClass(platforms.includes(p))}>
               <input
                 type="checkbox"
-                class="checkbox"
+                class="sr-only"
                 checked={platforms.includes(p)}
                 on:change={(e: Event & { currentTarget: HTMLInputElement }) =>
                   togglePlatform(p, e.currentTarget.checked)}
               />
-              <span class="label-text">{p}</span>
+              <span>{p}</span>
             </label>
           {/each}
         </div>
@@ -315,36 +329,39 @@ Return ONLY strict JSON:
     </div>
 
     <!-- Options -->
-    <div class="flex flex-wrap gap-x-6 gap-y-3">
-      <label class="label cursor-pointer gap-2">
-        <input
-          type="checkbox"
-          class="checkbox"
-          bind:checked={keepUnderPlatformLimits}
-        />
-        <span class="label-text text-sm">Keep under platform limits</span>
-      </label>
-      <label class="label cursor-pointer gap-2">
-        <input type="checkbox" class="checkbox" bind:checked={includeEmojis} />
-        <span class="label-text text-sm">Include up to 2 emojis</span>
-      </label>
-      <label class="label cursor-pointer gap-2">
-        <input
-          type="checkbox"
-          class="checkbox"
-          bind:checked={includeHashtags}
-        />
-        <span class="label-text text-sm">Include hashtags</span>
-      </label>
-      <label class="label cursor-pointer gap-2">
-        <input
-          type="checkbox"
-          class="checkbox"
-          bind:checked={prettyLineBreaks}
-        />
-        <span class="label-text text-sm">Readable line breaks</span>
-      </label>
-    </div>
+    <fieldset class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <legend class="px-5 pt-5 text-lg font-semibold sm:px-6">Extras</legend>
+      <div class="flex flex-wrap gap-2 px-5 pb-5 pt-3 sm:px-6">
+        <label class={pillClass(keepUnderPlatformLimits)}>
+          <input
+            type="checkbox"
+            class="sr-only"
+            bind:checked={keepUnderPlatformLimits}
+          />
+          <span>Keep under platform limits</span>
+        </label>
+        <label class={pillClass(includeEmojis)}>
+          <input type="checkbox" class="sr-only" bind:checked={includeEmojis} />
+          <span>Include up to 2 emojis</span>
+        </label>
+        <label class={pillClass(includeHashtags)}>
+          <input
+            type="checkbox"
+            class="sr-only"
+            bind:checked={includeHashtags}
+          />
+          <span>Include hashtags</span>
+        </label>
+        <label class={pillClass(prettyLineBreaks)}>
+          <input
+            type="checkbox"
+            class="sr-only"
+            bind:checked={prettyLineBreaks}
+          />
+          <span>Readable line breaks</span>
+        </label>
+      </div>
+    </fieldset>
 
     <!-- Actions -->
     <div class="flex flex-wrap items-center gap-3">
