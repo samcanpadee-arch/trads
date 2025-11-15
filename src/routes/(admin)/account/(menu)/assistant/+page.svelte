@@ -377,50 +377,6 @@
     </p>
   </header>
 
-  <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm space-y-4">
-    <div class="flex flex-wrap items-center gap-3">
-      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant prompts</p>
-      <p class="text-sm text-gray-600">Loads the trade, manual, and focus fields for you.</p>
-    </div>
-    <button
-      type="button"
-      class="btn btn-ghost btn-sm justify-between border border-amber-200/70 bg-amber-50/60 px-4 font-semibold text-amber-800"
-      on:click={() => (assistantPromptsOpen = !assistantPromptsOpen)}
-      aria-expanded={assistantPromptsOpen}
-    >
-      <span>{assistantPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
-      <span>{assistantPromptsOpen ? '–' : '+'}</span>
-    </button>
-    {#if assistantPromptsOpen}
-      <div class="space-y-3">
-        {#each assistantPrompts as prompt}
-          <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{prompt.trade}</p>
-            <h3 class="text-base font-semibold text-gray-900">{prompt.title}</h3>
-            <p class="mt-1 text-sm text-gray-600">{prompt.summary}</p>
-            <div class="mt-3 text-xs text-amber-800">
-              <p class="font-semibold uppercase tracking-wide">Cites</p>
-              <ul class="mt-1 space-y-0.5">
-                {#each prompt.references as ref}
-                  <li>• {ref}</li>
-                {/each}
-              </ul>
-            </div>
-            <button
-              type="button"
-              class="btn btn-primary btn-xs mt-3"
-              on:click={() => applyAssistantPrompt(prompt)}
-            >
-              Use this prompt
-            </button>
-          </article>
-        {/each}
-      </div>
-    {:else}
-      <p class="text-sm text-gray-500">Prompts stay tucked away until you need them.</p>
-    {/if}
-  </div>
-
   <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
     <form
       class="assistant-form rounded-3xl border border-gray-200 bg-white/95 shadow-sm"
@@ -684,12 +640,48 @@
           <li>• Summaries stay in the thread so you can copy and drop into notes later.</li>
         </ul>
       </div>
-      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
-        <p class="text-sm font-semibold text-gray-900">Need inspo?</p>
-        <p class="mt-1 text-sm text-gray-600">Try:
-          <em>“Show me the AS/NZS clause for bonding a pool pump enclosure and what to check before inspection.”</em>
-        </p>
-        <button type="button" class="btn btn-outline btn-sm mt-4" on:click={fillExample}>Fill with an example</button>
+      <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant prompts</p>
+          <p class="text-sm text-gray-600">Loads the trade, manual, and focus fields for you.</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm justify-between border border-amber-200/70 bg-amber-50/60 px-4 font-semibold text-amber-800"
+          on:click={() => (assistantPromptsOpen = !assistantPromptsOpen)}
+          aria-expanded={assistantPromptsOpen}
+        >
+          <span>{assistantPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
+          <span>{assistantPromptsOpen ? '–' : '+'}</span>
+        </button>
+        {#if assistantPromptsOpen}
+          <div class="space-y-3">
+            {#each assistantPrompts as prompt}
+              <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{prompt.trade}</p>
+                <h3 class="text-base font-semibold text-gray-900">{prompt.title}</h3>
+                <p class="mt-1 text-sm text-gray-600">{prompt.summary}</p>
+                <div class="mt-3 text-xs text-amber-800">
+                  <p class="font-semibold uppercase tracking-wide">Cites</p>
+                  <ul class="mt-1 space-y-0.5">
+                    {#each prompt.references as ref}
+                      <li>• {ref}</li>
+                    {/each}
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-xs mt-3"
+                  on:click={() => applyAssistantPrompt(prompt)}
+                >
+                  Use this prompt
+                </button>
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-gray-500">Prompts stay tucked away until you need them.</p>
+        {/if}
       </div>
     </aside>
   </div>

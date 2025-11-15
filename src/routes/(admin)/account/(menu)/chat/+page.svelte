@@ -252,20 +252,26 @@
           <p class="text-xs font-semibold uppercase tracking-wide text-primary">Live thread</p>
           <p class="text-sm text-gray-600">Chat history saves locally so you can pick up where you left off.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <label class="text-xs font-semibold uppercase tracking-wide text-gray-500" for="chat-model">Model</label>
-          <select
-            id="chat-model"
-            class="select select-bordered w-full sm:w-auto sm:select-sm"
-            bind:value={model}
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500" for="chat-model">Model</label>
+            <select
+              id="chat-model"
+              class="select select-bordered w-full sm:w-auto sm:select-sm"
+              bind:value={model}
+              disabled={streaming}
+            >
+              {#each models as m}
+                <option value={m.id}>{m.label}</option>
+              {/each}
+            </select>
+          </div>
+          <button
+            class="btn btn-outline btn-error btn-sm w-full sm:w-auto"
+            on:click={clearChat}
             disabled={streaming}
           >
-            {#each models as m}
-              <option value={m.id}>{m.label}</option>
-            {/each}
-          </select>
-          <button class="btn btn-ghost w-full sm:w-auto sm:btn-sm" on:click={clearChat} disabled={streaming}>
-            Clear
+            Clear chat
           </button>
         </div>
       </div>
