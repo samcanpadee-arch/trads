@@ -44,6 +44,7 @@
 
   type ParsedEntry = { label: string; amount: number };
   type PercentAdj = { label: string; percent: number; context?: string };
+  type PricingRow = { label: string; amount: number; detail?: string };
   type ParsedBlock = { entries: ParsedEntry[]; percentAdjustments: PercentAdj[]; notes: string[] };
 
   function toNumber(n: unknown, d = 0) {
@@ -281,6 +282,90 @@
   let parsedCosts: ParsedBlock = { entries: [], percentAdjustments: [], notes: [] };
   $: parsedCosts = parseCostContext(costsText);
 
+  function tokenize(value: string | undefined | null) {
+    return (value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length >= 3);
+  }
+
+  function matchEntriesByContext(context: string | undefined, entries: ParsedEntry[]) {
+    const ctxTokens = new Set(tokenize(context));
+    if (!ctxTokens.size) return [];
+    return entries.filter((entry) => {
+      const tokens = tokenize(entry.label);
+      if (!tokens.length) return false;
+      return tokens.some((token) => ctxTokens.has(token));
+    });
+  }
+
+  function convertPercentAdjustment(adjustment: PercentAdj, entries: ParsedEntry[]): PricingRow | null {
+    if (!Number.isFinite(adjustment.percent) || adjustment.percent === 0) {
+      return null;
+    }
+    const matches = matchEntriesByContext(adjustment.context || adjustment.label, entries);
+    const targetEntries = matches.length ? matches : entries;
+    const baseTotal = targetEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+    if (!baseTotal) return null;
+    const amount = (adjustment.percent / 100) * baseTotal;
+    if (!Number.isFinite(amount) || amount === 0) return null;
+    const labelBase = beautifyLabel(adjustment.label) || "Markup";
+    const label = `${labelBase} (${fmtPercent(adjustment.percent)}%)`;
+    const detail = matches.length
+      ? `Applied to ${matches.map((entry) => entry.label).join(", ")}`
+      : adjustment.context;
+    return {
+      label,
+      amount,
+      detail: detail?.trim()
+    };
+  }
+
+  function buildFallbackPricingRows(block: ParsedBlock): PricingRow[] {
+    const currencyRows: PricingRow[] = block.entries
+      .filter((entry) => Number.isFinite(entry.amount) && entry.amount > 0)
+      .map((entry) => ({
+        label: entry.label || "Allowance",
+        amount: entry.amount,
+        detail: undefined
+      }));
+    const percentRows = block.percentAdjustments
+      .map((adj) => convertPercentAdjustment(adj, block.entries))
+      .filter((row): row is PricingRow => Boolean(row));
+    return [...currencyRows, ...percentRows];
+  }
+
+  type NormaliseOptions = { cleanLabels?: boolean };
+
+  function normaliseRows(rows: PricingRow[], options: NormaliseOptions = {}) {
+    const { cleanLabels = false } = options;
+    const output: PricingRow[] = [];
+    const index = new Map<string, number>();
+    rows.forEach((row) => {
+      const amount = Number(row.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      const label = cleanLabels ? beautifyLabel(row.label || "") || "Allowance" : row.label || "Allowance";
+      const detail = row.detail?.trim();
+      if (index.has(label)) {
+        const idx = index.get(label) as number;
+        output[idx].amount += amount;
+        if (detail && !output[idx].detail) {
+          output[idx].detail = detail;
+        }
+        return;
+      }
+      output.push({ label, amount, detail });
+      index.set(label, output.length - 1);
+    });
+    return output;
+  }
+
+  let fallbackPricingRows: PricingRow[] = [];
+  let parsedPricingRows: PricingRow[] = [];
+  $: fallbackPricingRows = buildFallbackPricingRows(parsedCosts);
+  $: parsedPricingRows = normaliseRows(fallbackPricingRows);
+
   $: {
     const pct = Math.min(100, Math.max(0, Number(gstRateInput) || 0));
     if (pct !== gstRateInput) {
@@ -289,7 +374,7 @@
     gstRate = pct / 100;
   }
 
-  $: baseCostsTotal = parsedCosts.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  $: baseCostsTotal = parsedPricingRows.reduce((sum, entry) => sum + (entry.amount || 0), 0);
   $: clientSubtotal = baseCostsTotal;
   const exampleCosts = `Materials & equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
 Labour effort: Two techs on site for 3 full days @ $95/hr each, apprentice support on day two for 6 hrs.
@@ -385,6 +470,17 @@ Rules:
       })
       .join("\n");
     const notesBlock = parsedCosts.notes.map((note) => `- ${note}`).join("\n");
+    const structuredPricing = parsedPricingRows.length
+      ? JSON.stringify(
+          {
+            lineItems: parsedPricingRows,
+            subtotal: parsedPricingRows.reduce((sum, entry) => sum + (entry.amount || 0), 0)
+          },
+          null,
+          2
+        )
+      : "";
+
     const user =
       `Trade: ${trade}\n` +
       `Tradie name: ${tradieName || "N/A"}\n` +
@@ -398,6 +494,9 @@ Rules:
       (parsedCostLines ? `Detected dollar figures (cleaned):\n${parsedCostLines}\n\n` : "") +
       (markupLines ? `Detected markups/contingencies:\n${markupLines}\n\n` : "") +
       (notesBlock ? `Non-dollar context to weave into pricing:\n${notesBlock}\n\n` : "") +
+      (structuredPricing
+        ? `Structured pricing summary (JSON, cleaned):\n${structuredPricing}\n\n`
+        : "") +
       `Current subtotal before GST (from user figures): ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
       (brandContext ? `\nBusiness context:\n${brandContext}` : "");
 
@@ -491,12 +590,9 @@ Rules:
     const aiCostRowsClean = aiCostRows.filter(
       (row) => (row.amount || 0) > 0 && !/(subtotal|total|gst|tax)/i.test(row.label || "")
     );
-    const parsedPricingRows: AICostItem[] = parsedCosts.entries.map((entry) => ({
-      label: entry.label,
-      amount: entry.amount,
-      detail: undefined
-    }));
-    const pricingSource: AICostItem[] = aiCostRowsClean.length ? aiCostRowsClean : parsedPricingRows;
+    const parsedPricingRowsForTable: AICostItem[] = parsedPricingRows;
+    const aiPricingRows = normaliseRows(aiCostRowsClean, { cleanLabels: true });
+    const pricingSource: AICostItem[] = aiPricingRows.length ? aiPricingRows : parsedPricingRowsForTable;
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
