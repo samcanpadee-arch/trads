@@ -124,7 +124,7 @@
       <!-- Free -->
       <article class="rounded-[32px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
         <header class="space-y-1">
-          <p class="text-sm uppercase tracking-[0.3em] text-slate-500">Free</p>
+          <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Free</p>
           <h3 class="text-3xl font-semibold text-slate-900">A$0</h3>
           <p class="text-sm text-slate-600">Stay nimble while you test the waters.</p>
         </header>
@@ -179,7 +179,7 @@
       <!-- Pro -->
       <article class="rounded-[32px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
         <header class="space-y-1">
-          <p class="text-sm uppercase tracking-[0.3em] text-slate-500">Pro</p>
+          <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Pro</p>
           <div class="flex items-center justify-between">
             <h3 class="text-3xl font-semibold text-slate-900">
               {isYearly() ? PRICE.pro.year : PRICE.pro.month}

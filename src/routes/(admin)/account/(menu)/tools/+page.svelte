@@ -30,7 +30,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Compliance</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
             <h2 class="text-lg font-semibold">Terms & Conditions Generator</h2>
           </div>
         </div>
@@ -54,7 +54,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Scope Guard</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Scope Guard</p>
             <h2 class="text-lg font-semibold">Day Log</h2>
           </div>
         </div>
@@ -76,7 +76,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Pricing</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Pricing</p>
             <h2 class="text-lg font-semibold">Proposal & Estimate Builder</h2>
           </div>
         </div>
@@ -98,7 +98,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Reputation</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Reputation</p>
             <h2 class="text-lg font-semibold">Review Responder</h2>
           </div>
         </div>
@@ -120,7 +120,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Marketing</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Marketing</p>
             <h2 class="text-lg font-semibold">Social Media Post Generator</h2>
           </div>
         </div>
@@ -142,7 +142,7 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Comms</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Comms</p>
             <h2 class="text-lg font-semibold">Email Template Generator</h2>
           </div>
         </div>

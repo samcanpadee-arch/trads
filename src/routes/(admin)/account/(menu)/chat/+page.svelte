@@ -325,7 +325,7 @@
     <aside class="space-y-4">
       <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white via-amber-50/70 to-white p-5 shadow-sm backdrop-blur space-y-4">
         <div class="flex flex-wrap items-center gap-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Chat prompts</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Chat prompts</p>
           <p class="text-sm text-gray-600">Insert a proven scenario without typing it all out.</p>
         </div>
         <button

@@ -633,7 +633,7 @@
 
     <aside class="space-y-4">
       <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/60 to-rose-50/60 p-5 shadow-sm backdrop-blur">
-        <p class="text-sm font-semibold text-gray-900">What you get</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">WHAT YOU GET</p>
         <ul class="mt-2 space-y-2 text-sm text-gray-700">
           <li>• Answers quote manuals, standards, or job guides so you can cite the source.</li>
           <li>• Perfect for “show me the clause” or “what’s the clearance” moments on site.</li>

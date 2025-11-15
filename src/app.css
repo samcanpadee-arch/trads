@@ -270,7 +270,7 @@ button[disabled].authBtn::before {
     letter-spacing: 0.3em;
     font-size: 0.75rem;
     font-weight: 600;
-    color: color-mix(in srgb, var(--brand-color-accent) 80%, white 20%);
+    color: var(--brand-color-eyebrow-strong);
   }
 
   .brand-eyebrow--pill {
@@ -286,7 +286,8 @@ button[disabled].authBtn::before {
   .brand-eyebrow--subtle {
     letter-spacing: 0.25em;
     font-size: 0.7rem;
-    opacity: 0.85;
+    opacity: 0.95;
+    color: var(--brand-color-eyebrow-subtle);
   }
 }
 
