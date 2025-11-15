@@ -1,4 +1,4 @@
-<!-- /account/tools/job-estimation (v3.2 — detailed sections, robust import, editable discounts) -->
+<!-- /account/tools/job-estimation (v4.0 — streamlined text-first estimator) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
@@ -6,11 +6,20 @@
   export let data: { profile?: ProfileBasics | null };
   const profile = data?.profile ?? null;
   const brandContext = profileBrandContext(profile);
+  const cleanStr = (value: string | null | undefined) => (value ?? "").trim();
+  const defaultTradieName = cleanStr(profile?.full_name);
+  const defaultBusinessName = cleanStr(profile?.company_name);
+  const defaultBusinessPhone = "";
+  const defaultBusinessWebsite = cleanStr(profile?.website);
 
-  /***** Minimal inputs *****/
+  let tradieName = defaultTradieName;
+  let businessName = defaultBusinessName;
+  let businessPhone = defaultBusinessPhone;
+  let businessWebsite = defaultBusinessWebsite;
   let clientName = "";
   let siteAddress = "";
   let projectBrief = ""; // drives AI (overview/scope/assumptions/risks/timeline)
+  let costsText = "";
 
   type Trade =
     | "General"
@@ -25,42 +34,19 @@
     | "Other";
   let trade: Trade = "General";
 
-  // Pricing controls (whole numbers in UI)
-  let overheadPctWhole = 10;
-  let marginPctWhole = 10;
-  let contingencyPctWhole = 0;
   let includeGST = true;
-  let gstRate = 0.10;
+  let gstRate = 0.1;
+  let gstRateInput = 10;
   let validityDays = 30;
 
-  // Materials (paste → import); client-facing columns + editable % discount
-  type MaterialRow = {
-    item: string;
-    unitCost: number;   // editable
-    qty: number;        // editable
-    discountPct: number; // editable
-    costBefore: number; // derived
-    discountAmt: number; // derived
-    subtotal: number;    // derived
-  };
-  let materialsText = "";
-  let materials: MaterialRow[] = [];
-  let parseFeedback = "";
-
-  // Labour (optional)
-  type LabourRow = { role: string; hours: number; rate: number };
-  let labour: LabourRow[] = [];
-
-  // Optional costs
-  type SimpleCost = { label: string; amount: number };
-  let subcontractors: SimpleCost[] = [];
-  let equipment: SimpleCost[] = [];
-
-  // Output
   let output = "";
   let loading = false;
 
-  /************ Helpers ************/
+  type ParsedEntry = { label: string; amount: number };
+  type PercentAdj = { label: string; percent: number; context?: string };
+  type PricingRow = { label: string; amount: number; detail?: string };
+  type ParsedBlock = { entries: ParsedEntry[]; percentAdjustments: PercentAdj[]; notes: string[] };
+
   function toNumber(n: unknown, d = 0) {
     const cleaned = typeof n === "string" ? n : String(n ?? "");
     const x = Number(cleaned.replace(/[^0-9.-]/g, ""));
@@ -72,6 +58,10 @@
       currency: "AUD",
       maximumFractionDigits: 2
     }).format(n || 0);
+  const fmtPercent = (value: number) => {
+    if (!Number.isFinite(value)) return "";
+    return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  };
 
   function randomRef() {
     const d = new Date();
@@ -89,7 +79,6 @@
     const firstSentence = clean.split(/(?<=[.!?])\s+/)[0] || clean;
     const words = firstSentence.split(" ");
     let out = words.slice(0, 20).join(" ");
-    // ensure any open paren gets closed or extend up to 28 words
     let opens = (out.match(/\(/g) || []).length;
     let closes = (out.match(/\)/g) || []).length;
     let i = 20;
@@ -101,179 +90,339 @@
     return out.replace(/[.!?]+$/, "");
   }
 
-  // Keep derived columns synced when user edits unitCost/qty/discountPct
-  function recomputeMaterial(m: MaterialRow) {
-    const before = (toNumber(m.unitCost) || 0) * (toNumber(m.qty) || 0);
-    const discAmt = before * (toNumber(m.discountPct) / 100);
-    m.costBefore = before;
-    m.discountAmt = discAmt;
-    m.subtotal = before - discAmt;
+  const currencyRe =
+    /((?:AUD\s*)?(?:A\$|\$)\s*\d[\d,]*(?:\.\d{1,2})?(?:\s?[kK])?|\b\d[\d,]{2,}(?:\.\d{1,2})?\b|\b\d[\d,]*(?:\.\d{1,2})?\s?[kK]\b)/gi;
+  const percentRe = /(\d+(?:\.\d+)?)\s*%/gi;
+  const HOURS_PER_DAY = 8;
+  const wordNumberMap: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12
+  };
+
+  function cleanLabel(label: string) {
+    if (!label) return "";
+    let out = label;
+    const colonIdx = out.indexOf(":");
+    if (colonIdx !== -1) {
+      out = out.slice(0, colonIdx);
+    }
+    out = out
+      .replace(/\([^()]*\)\s*$/g, "")
+      .replace(/\b(allowance|approx|approximately|around|about|allowing|allow)\b$/gi, "")
+      .replace(/[–—-]+$/g, "")
+      .replace(/\d+(?:\.\d+)?\s*%/g, "")
+      .replace(/\b(is|are|at|for|approx|around|about|to|more|extra)\b$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return out;
   }
-  $: materials = materials.map((m) => {
-    // ensure derived fields stay in sync
-    const before = (toNumber(m.unitCost) || 0) * (toNumber(m.qty) || 0);
-    const discAmt = before * (toNumber(m.discountPct) / 100);
-    return {
-      ...m,
-      costBefore: before,
-      discountAmt: discAmt,
-      subtotal: before - discAmt
-    };
-  });
 
-  // ---------- Import from “Costing Summary” table ----------
-  // Expected header (order-insensitive mapping by names):
-  // | Item | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
-  function importFromCostingSummary() {
-    materials = [];
-    parseFeedback = "";
+  const smallWords = new Set(["and", "or", "of", "the", "a", "an", "for", "with", "on", "at", "to", "by", "in"]);
 
-    const text = (materialsText || "").trim();
-    if (!text) {
-      parseFeedback = "Nothing to import — paste the Costing Summary table first.";
-      return;
+  function beautifyLabel(label: string) {
+    const cleaned = cleanLabel(label);
+    if (!cleaned) return "";
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    const formatted = words
+      .map((word, index) => {
+        if (/^[A-Z0-9&]+$/.test(word)) return word.toUpperCase();
+        if (word.length <= 3 && /^[a-z]+$/i.test(word)) {
+          return word.toUpperCase();
+        }
+        const lower = word.toLowerCase();
+        if (index !== 0 && smallWords.has(lower)) {
+          return lower;
+        }
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+    return formatted.replace(/\bHvac\b/g, "HVAC").replace(/\bAc\b/g, "AC");
+  }
+
+  function toAmount(raw: string) {
+    const hasK = /k$/i.test(raw.trim());
+    const cleaned = raw.replace(/[^0-9.-]/g, "").replace(/k$/i, "");
+    const n = toNumber(cleaned, NaN);
+    if (!Number.isFinite(n)) return NaN;
+    return hasK ? n * 1000 : n;
+  }
+
+  function toQuantity(fragment: string | undefined | null) {
+    if (!fragment) return null;
+    const cleaned = fragment.trim().toLowerCase();
+    if (cleaned in wordNumberMap) {
+      return wordNumberMap[cleaned];
     }
+    const numeric = Number(cleaned.replace(/[^0-9.]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
 
-    // Quick robust normalisation
-    const lines = text
+  type DurationUnit = "hour" | "day";
+
+  function detectLabourAllowance(line: string): ParsedEntry | null {
+    if (!line) return null;
+    const rateMatch = line.match(
+      /(?:@\s*)?(?:about\s+|approx(?:\.|\s+))?(\$[\d,]+(?:\.\d+)?)(?:\s*(?:\/|per)\s*)(hour|hr|hrs?|day|days|shift)/i
+    );
+    if (!rateMatch) return null;
+    const rate = toAmount(rateMatch[1]);
+    if (!Number.isFinite(rate) || rate <= 0) return null;
+    const rateUnit: DurationUnit = /day|shift/i.test(rateMatch[2]) ? "day" : "hour";
+    const workerMatch = line.match(
+      /(\d+(?:\.\d+)?|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b)\s*(?:techs?|technicians?|trad(?:es)?people|installers?|sparkies|electricians?|plumbers?|crew|workers?|team|staff)/i
+    );
+    const workerQty = toQuantity(workerMatch?.[1]) ?? 1;
+    const durationMatch = line.match(
+      /(\d+(?:\.\d+)?|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b)\s*(?:full\s+|business\s+|working\s+)?(days?|day|hours?|hrs?|h)/i
+    );
+    let durationValue = durationMatch ? toQuantity(durationMatch[1]) ?? 1 : 1;
+    let durationUnit: DurationUnit = durationMatch
+      ? (/day/i.test(durationMatch[2]) ? "day" : "hour")
+      : rateUnit;
+    if (!durationMatch && rateUnit === "hour") {
+      durationValue = HOURS_PER_DAY;
+      durationUnit = "hour";
+    }
+    let totalUnits = durationValue;
+    if (durationUnit === "day" && rateUnit === "hour") {
+      totalUnits = durationValue * HOURS_PER_DAY;
+    } else if (durationUnit === "hour" && rateUnit === "day") {
+      totalUnits = durationValue / HOURS_PER_DAY;
+    }
+    const amount = workerQty * totalUnits * rate;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const label = beautifyLabel(line) || "Labour allowance";
+    return { label, amount };
+  }
+
+  function listToParagraph(items: string[]) {
+    return items
+      .map((item) => item.replace(/^[-•\s]+/, "").trim())
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  function parseCostContext(text: string): ParsedBlock {
+    const entries: ParsedEntry[] = [];
+    const percentAdjustments: PercentAdj[] = [];
+    const notes: string[] = [];
+
+    (text || "")
       .split(/\r?\n/)
-      .map((l) => l.replace(/\u00A0/g, " ").trim()); // strip non-breaking spaces
+      .map((line) => line.trim())
+      .forEach((line) => {
+        if (!line) return;
+        let matchedAmount = false;
+        const labourAllowance = detectLabourAllowance(line);
+        if (labourAllowance) {
+          entries.push(labourAllowance);
+          matchedAmount = true;
+        }
+        const matches = labourAllowance ? [] : [...line.matchAll(currencyRe)];
+        matches.forEach((match) => {
+          if (!match[0]) return;
+          const raw = match[0];
+          const start = match.index ?? 0;
+          const amount = toAmount(raw);
+          if (!Number.isFinite(amount)) {
+            return;
+          }
+          const nextChar = line[start + raw.length];
+          const hasCurrencySymbol = /\$|AUD|A\$/i.test(raw);
+          if (!hasCurrencySymbol && amount < 100) {
+            return;
+          }
+          if (nextChar && nextChar.trim().startsWith("%")) {
+            return;
+          }
+          const around = line
+            .slice(Math.max(0, start - 8), Math.min(line.length, start + raw.length + 8))
+            .toLowerCase();
+          const looksUnitRate =
+            /(per\s|\/|@)\s*(hour|hr|day|week|shift)/i.test(around) || /\b(hr|hour|day|days)\b/.test(around);
+          if (looksUnitRate && !/total|sum|allowance|visit|call|mobilisation|materials|supply|install|markup/i.test(line)) {
+            return;
+          }
+          const before = beautifyLabel(line.slice(0, start));
+          const after = beautifyLabel(line.slice(start + raw.length));
+          const label = before || after || beautifyLabel(line) || "Allowance";
+          entries.push({ label, amount });
+          matchedAmount = true;
+        });
 
-    // find header row (contains pipes and required labels in some order)
-    const headerIdx = lines.findIndex((l) => /\|/.test(l) && /item/i.test(l) && /unit\s*cost/i.test(l) && /quantity/i.test(l) && /(before\s*discount|cost\s*before)/i.test(l) && /discount\s*%/i.test(l) && /discount\s*amount/i.test(l) && /subtotal/i.test(l));
-    if (headerIdx === -1) {
-      parseFeedback =
-        "Couldn’t find a Costing Summary pipe-table. In the Material & Cost Calculator, copy the table **with | separators** and paste here.";
-      return;
-    }
+        const percentMatches = [...line.matchAll(percentRe)];
+        if (percentMatches.length) {
+          percentMatches.forEach((p) => {
+            const pct = toNumber(p[1], NaN);
+            if (!Number.isFinite(pct)) return;
+            const label = beautifyLabel(line) || `${pct}% allowance`;
+            percentAdjustments.push({ label, percent: pct, context: line });
+          });
+          matchedAmount = true;
+        }
 
-    // parse header cells & build column index map
-    const headerCells = lines[headerIdx]
-      .split("|")
-      .map((c) => c.trim().replace(/^\*\*|\*\*$/g, ""))
-      .filter(Boolean);
-
-    const idx = (name: RegExp) =>
-      headerCells.findIndex((c) => name.test(c));
-
-    const col = {
-      item: idx(/^item$/i),
-      unitCost: idx(/unit\s*cost/i),
-      qty: idx(/^qty|quantity$/i),
-      before: idx(/(before\s*discount|cost\s*before)/i),
-      discPct: idx(/discount\s*%/i),
-      discAmt: idx(/discount\s*amount/i),
-      subtotal: idx(/^subtotal$/i)
-    };
-
-    // sanity check
-    if (Object.values(col).some((v) => v === -1)) {
-      parseFeedback = "Costing Summary header is missing required columns.";
-      return;
-    }
-
-    // find separator row like |---|---|
-    let sepIdx = -1;
-    for (let i = headerIdx + 1; i < lines.length; i++) {
-      if (/^\s*\|\s*-+\s*\|/.test(lines[i])) {
-        sepIdx = i;
-        break;
-      }
-    }
-    if (sepIdx === -1) {
-      parseFeedback = "Table looks malformed (no separator row).";
-      return;
-    }
-
-    // iterate body rows until a non-pipe line
-    let ok = 0;
-    for (let i = sepIdx + 1; i < lines.length; i++) {
-      const raw = lines[i];
-      if (!/^\|/.test(raw)) break;
-      const cells = raw
-        .split("|")
-        .map((c) => c.trim().replace(/^\*\*|\*\*$/g, ""))
-        .filter((_, j, arr) => !(j === 0 || j === arr.length - 1)); // drop outer empties
-
-      // minimum columns check
-      if (cells.length < headerCells.length) continue;
-
-      const grab = (pos: number) => (pos >= 0 && pos < cells.length ? cells[pos] : "");
-
-      const itemStr = grab(col.item);
-      // Skip total rows
-      if (!itemStr || /^total/i.test(itemStr)) continue;
-
-      const unitCost = toNumber(grab(col.unitCost));
-      const qty = toNumber(grab(col.qty), 1);
-      const before = toNumber(grab(col.before));
-      const discPct = toNumber(grab(col.discPct));
-      const discAmt = toNumber(grab(col.discAmt));
-      const subtotal = toNumber(grab(col.subtotal));
-
-      // Prefer deriving from editable inputs (unitCost, qty, discPct) when available
-      const derivedBefore = unitCost * qty;
-      const pct = Number.isFinite(discPct) ? discPct : (derivedBefore ? (discAmt / derivedBefore) * 100 : 0);
-      const derivedDiscAmt = derivedBefore * (pct / 100);
-      const derivedSubtotal = derivedBefore - derivedDiscAmt;
-
-      materials.push({
-        item: itemStr,
-        unitCost,
-        qty,
-        discountPct: isFinite(pct) ? Math.max(0, pct) : 0,
-        costBefore: derivedBefore || before,
-        discountAmt: isFinite(derivedDiscAmt) ? derivedDiscAmt : discAmt,
-        subtotal: isFinite(derivedSubtotal) ? derivedSubtotal : subtotal
+        if (!matchedAmount) {
+          notes.push(line);
+        }
       });
-      ok++;
-    }
 
-    parseFeedback =
-      ok > 0
-        ? `Imported ${ok} item${ok === 1 ? "" : "s"} from Costing Summary.`
-        : "Found a table but no line items (totals/blank rows were skipped).";
+    return { entries, percentAdjustments, notes };
+  }
+
+  let parsedCosts: ParsedBlock = { entries: [], percentAdjustments: [], notes: [] };
+  $: parsedCosts = parseCostContext(costsText);
+
+  function tokenize(value: string | undefined | null) {
+    return (value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length >= 3);
+  }
+
+  function matchEntriesByContext(context: string | undefined, entries: ParsedEntry[]) {
+    const ctxTokens = new Set(tokenize(context));
+    if (!ctxTokens.size) return [];
+    return entries.filter((entry) => {
+      const tokens = tokenize(entry.label);
+      if (!tokens.length) return false;
+      return tokens.some((token) => ctxTokens.has(token));
+    });
+  }
+
+  function convertPercentAdjustment(adjustment: PercentAdj, entries: ParsedEntry[]): PricingRow | null {
+    if (!Number.isFinite(adjustment.percent) || adjustment.percent === 0) {
+      return null;
+    }
+    const matches = matchEntriesByContext(adjustment.context || adjustment.label, entries);
+    const targetEntries = matches.length ? matches : entries;
+    const baseTotal = targetEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+    if (!baseTotal) return null;
+    const amount = (adjustment.percent / 100) * baseTotal;
+    if (!Number.isFinite(amount) || amount === 0) return null;
+    const labelBase = beautifyLabel(adjustment.label) || "Markup";
+    const label = `${labelBase} (${fmtPercent(adjustment.percent)}%)`;
+    const detail = matches.length
+      ? `Applied to ${matches.map((entry) => entry.label).join(", ")}`
+      : adjustment.context;
+    return {
+      label,
+      amount,
+      detail: detail?.trim()
+    };
+  }
+
+  function buildFallbackPricingRows(block: ParsedBlock): PricingRow[] {
+    const currencyRows: PricingRow[] = block.entries
+      .filter((entry) => Number.isFinite(entry.amount) && entry.amount > 0)
+      .map((entry) => ({
+        label: entry.label || "Allowance",
+        amount: entry.amount,
+        detail: undefined
+      }));
+    const percentRows = block.percentAdjustments
+      .map((adj) => convertPercentAdjustment(adj, block.entries))
+      .filter((row): row is PricingRow => Boolean(row));
+    return [...currencyRows, ...percentRows];
+  }
+
+  type NormaliseOptions = { cleanLabels?: boolean };
+
+  function normaliseRows(rows: PricingRow[], options: NormaliseOptions = {}) {
+    const { cleanLabels = false } = options;
+    const output: PricingRow[] = [];
+    const index = new Map<string, number>();
+    rows.forEach((row) => {
+      const amount = Number(row.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      const label = cleanLabels ? beautifyLabel(row.label || "") || "Allowance" : row.label || "Allowance";
+      const detail = row.detail?.trim();
+      if (index.has(label)) {
+        const idx = index.get(label) as number;
+        output[idx].amount += amount;
+        if (detail && !output[idx].detail) {
+          output[idx].detail = detail;
+        }
+        return;
+      }
+      output.push({ label, amount, detail });
+      index.set(label, output.length - 1);
+    });
+    return output;
+  }
+
+  let fallbackPricingRows: PricingRow[] = [];
+  let parsedPricingRows: PricingRow[] = [];
+  $: fallbackPricingRows = buildFallbackPricingRows(parsedCosts);
+  $: parsedPricingRows = normaliseRows(fallbackPricingRows);
+
+  $: {
+    const pct = Math.min(100, Math.max(0, Number(gstRateInput) || 0));
+    if (pct !== gstRateInput) {
+      gstRateInput = pct;
+    }
+    gstRate = pct / 100;
+  }
+
+  $: baseCostsTotal = parsedPricingRows.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  $: clientSubtotal = baseCostsTotal;
+  const exampleCosts = `Materials & equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
+Labour effort: Two techs on site for 3 full days @ $95/hr each, apprentice support on day two for 6 hrs.
+Program & supervision: 15% markup to cover design checks, procurement and warranty handling.
+Access / cranage: Allowance of $1,100 for traffic control and crane if parking is limited.
+Risks: Labour may increase if the existing switchboard needs upgrades or ceiling access is restricted.`;
+
+  function useExample() {
+    clientName = "Jordan Moore";
+    siteAddress = "12 Rivergum Rd, Brunswick VIC 3056";
+    trade = "Electrical";
+    tradieName = "Taylor Reid";
+    businessName = "Reid Electrical & Air";
+    businessPhone = "0400 123 678";
+    businessWebsite = "reidelectrical.au";
+    projectBrief =
+      "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard tidy-up. Patch penetrations and leave clean.";
+    costsText = exampleCosts;
   }
 
   function resetAll() {
+    tradieName = defaultTradieName;
+    businessName = defaultBusinessName;
+    businessPhone = defaultBusinessPhone;
+    businessWebsite = defaultBusinessWebsite;
     clientName = "";
     siteAddress = "";
     projectBrief = "";
-    overheadPctWhole = 10;
-    marginPctWhole = 10;
-    contingencyPctWhole = 0;
+    costsText = "";
+    trade = "General";
     includeGST = true;
-    gstRate = 0.1;
+    gstRateInput = 10;
     validityDays = 30;
-
-    materialsText = "";
-    materials = [];
-    parseFeedback = "";
-    labour = [];
-    subcontractors = [];
-    equipment = [];
     output = "";
   }
 
-  // Derived totals (client-facing folds internal costs)
-  $: materialsSubtotal = materials.reduce((s, m) => s + (m.subtotal || 0), 0);
-  $: labourSubtotal = labour.reduce(
-    (s, l) => s + toNumber(l.hours) * toNumber(l.rate),
-    0
-  );
-  $: subsTotal = subcontractors.reduce((s, x) => s + toNumber(x.amount), 0);
-  $: equipTotal = equipment.reduce((s, x) => s + toNumber(x.amount), 0);
+  function copyOut() {
+    try {
+      navigator.clipboard.writeText(output || "");
+    } catch (error) {
+      console.error("copy failed", error);
+    }
+  }
 
-  // Internal folding of overhead/contingency/margin (NOT shown as separate lines)
-  $: baseBeforeBusiness = materialsSubtotal + labourSubtotal + subsTotal + equipTotal;
-  $: withOverhead = baseBeforeBusiness * (1 + toNumber(overheadPctWhole) / 100);
-  $: withContingency =
-    withOverhead * (1 + toNumber(contingencyPctWhole) / 100);
-  $: clientSubtotal = withContingency * (1 + toNumber(marginPctWhole) / 100);
-  $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
-  $: grandTotal = clientSubtotal + gst;
+  type LabourRow = { role: string; hours: number; rate: number };
+  type AICostItem = { label: string; amount: number; detail?: string };
 
-  // ---------- AI sections (JSON-only, *detailed*) ----------
+  /************ AI helper ************/
   async function aiSections(): Promise<{
     overview: string;
     scope: string[];
@@ -281,33 +430,74 @@
     exclusions: string[];
     risks: string[];
     timeline: string[];
-    options: string[]; // additional options (not included)
+    options: string[];
     labourSuggest: LabourRow[];
+    costSummary: AICostItem[];
+    pricingNotes: string[];
   }> {
     const SYSTEM = `You are an AI assistant for Australian tradies. Reply in Australian English.
-Return ONLY JSON with keys and *detailed* content:
-- overview: string (≈150–220 words; friendly, client-facing; mention specifics from the brief; explain approach, quality and compliance)
-- scope: string[] (8–12 bullets; each a full, concrete sentence tailored to the trade & brief; describe what will be done and why it matters)
+Return ONLY JSON with keys and detailed content:
+- overview: string (≈150–220 words; client-facing; reference the brief, site realities and trade expertise)
+- scope: string[] (8–12 bullets; each a concrete service activity tailored to the trade)
 - assumptions: string[] (6–10 realistic assumptions)
 - exclusions: string[] (4–8 clear boundaries)
-- risks: string[] (4–8 items; flag unknowns and site-dependent factors)
-- timeline: string[] (4–6 milestones; each with a short helpful description)
-- options: string[] (3–6 value-adding items NOT included; e.g., preventative maintenance, minor upgrades, extended warranty)
-- labourSuggest: {role,hours,rate}[] (only if useful; else [])
-Keep content practical and specific; avoid generic fluff.`;
+- risks: string[] (4–8 site/brief-dependent risks to monitor)
+- timeline: string[] (4–6 milestone-style bullets, each with a timeframe or dependency)
+- options: string[] (3–6 upsell ideas NOT included)
+- labourSuggest: {role,hours,rate}[] (only when helpful)
+- costSummary: {label:string, amount:number, detail?:string}[] (convert the provided cost context into line items, combine similar allowances, calculate labour totals from hours/day rates if information is there, and include markups or contingencies as their own rows)
+- pricingNotes: string[] (call out any special caveats, exclusions or assumptions tied to pricing)
+Rules:
+- Analyse the free-form pricing context and detected figures to produce professional totals rather than echoing the text.
+- If labour rates are provided (e.g. two techs for 3 days @ $95/hr), multiply them out and explain the assumption in the detail field.
+ - If only percentages are given (e.g. 15% markup), apply them to the detected allowance they reference ("this AC", "call-out", etc.); only default to the total base cost when the sentence clearly says it covers the whole job.
+ - Clean up spelling, casing and grammar of any user-provided allowance names before outputting them in tables so headings read like a polished proposal.
+ - Convert any percentage surcharges or call-out loadings into dollar figures using the detected base costs so totals remain accurate.
+ - Merge duplicated items (e.g. repeated labour descriptions) and round to sensible currency values.
+ - Always produce a timeline, even if you must infer it from trade best practice.
+- Prefer practical Australian trade language.
+- Never copy the user's raw cost sentences verbatim—rewrite allowances, markups and caveats in polished, client-facing language.
+- Pricing notes should summarise the key assumptions or caveats from the brief instead of repeating the same sentences.`;
+
+    const parsedCostLines = parsedCosts.entries
+      .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
+      .join("\n");
+    const markupLines = parsedCosts.percentAdjustments
+      .map((entry) => {
+        const pct = fmtPercent(entry.percent);
+        const context = entry.context ? ` — from: ${entry.context}` : "";
+        return `${entry.label || `${pct}% allowance`}: ${pct}%${context}`;
+      })
+      .join("\n");
+    const notesBlock = parsedCosts.notes.map((note) => `- ${note}`).join("\n");
+    const structuredPricing = parsedPricingRows.length
+      ? JSON.stringify(
+          {
+            lineItems: parsedPricingRows,
+            subtotal: parsedPricingRows.reduce((sum, entry) => sum + (entry.amount || 0), 0)
+          },
+          null,
+          2
+        )
+      : "";
 
     const user =
-      "Trade: " +
-      trade +
-      "\n" +
-      "Brief: " +
-      (projectBrief || "N/A") +
-      "\n" +
-      "HaveMaterials: " +
-      (materials.length > 0 ? "Yes" : "No") +
-      "\n" +
-      "HaveLabour: " +
-      (labour.length > 0 ? "Yes" : "No") +
+      `Trade: ${trade}\n` +
+      `Tradie name: ${tradieName || "N/A"}\n` +
+      `Business: ${businessName || "N/A"}\n` +
+      `Business phone: ${businessPhone || "N/A"}\n` +
+      `Business website: ${businessWebsite || "N/A"}\n` +
+      `Brief: ${projectBrief || "N/A"}\n` +
+      `Client: ${clientName || "N/A"}\n` +
+      `Site: ${siteAddress || "N/A"}\n\n` +
+      `Cost context (raw):\n${costsText || "N/A"}\n\n` +
+      (parsedCostLines ? `Detected dollar figures (cleaned):\n${parsedCostLines}\n\n` : "") +
+      (markupLines ? `Detected markups/contingencies:\n${markupLines}\n\n` : "") +
+      (notesBlock ? `Non-dollar context to weave into pricing:\n${notesBlock}\n\n` : "") +
+      (structuredPricing
+        ? `Structured pricing summary (JSON, cleaned):\n${structuredPricing}\n\n`
+        : "") +
+      `Current subtotal before GST (from user figures): ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
       (brandContext ? `\nBusiness context:\n${brandContext}` : "");
 
     let text = "";
@@ -363,7 +553,15 @@ Keep content practical and specific; avoid generic fluff.`;
               hours: toNumber(r.hours, 0),
               rate: toNumber(r.rate, 0)
             }))
-          : []
+          : [],
+        costSummary: Array.isArray(j.costSummary)
+          ? j.costSummary.map((row: Record<string, unknown>) => ({
+              label: String(row.label || ""),
+              amount: toNumber(row.amount, 0),
+              detail: row.detail ? String(row.detail) : undefined
+            }))
+          : [],
+        pricingNotes: Array.isArray(j.pricingNotes) ? j.pricingNotes.map(String) : []
       };
     } catch (error) {
       console.warn("job-estimation parse failed", error);
@@ -375,7 +573,9 @@ Keep content practical and specific; avoid generic fluff.`;
         risks: [],
         timeline: [],
         options: [],
-        labourSuggest: []
+        labourSuggest: [],
+        costSummary: [],
+        pricingNotes: []
       };
     }
   }
@@ -385,30 +585,47 @@ Keep content practical and specific; avoid generic fluff.`;
     loading = true;
 
     const ai = await aiSections();
-    const usingAISuggestedLabour = labour.length === 0 && ai.labourSuggest.length > 0;
-    if (usingAISuggestedLabour) labour = ai.labourSuggest;
-
+    const usingAISuggestedLabour = ai.labourSuggest.length > 0;
+    const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
+    const aiCostRowsClean = aiCostRows.filter(
+      (row) => (row.amount || 0) > 0 && !/(subtotal|total|gst|tax)/i.test(row.label || "")
+    );
+    const parsedPricingRowsForTable: AICostItem[] = parsedPricingRows;
+    const aiPricingRows = normaliseRows(aiCostRowsClean, { cleanLabels: true });
+    const pricingSource: AICostItem[] = aiPricingRows.length ? aiPricingRows : parsedPricingRowsForTable;
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
-    // Build Markdown for RichAnswer (detailed)
-    let md = "";
-    md += `# Job Estimate (Quote)\n\n`;
-    md += `**Quote Ref:** ${quoteRef}  \n`;
-    md += `**To:** ${clientName || "_Client_"}  \n`;
-    md += `**Site:** ${siteAddress || "_Site Address_"}  \n`;
-    md += `**Project:** ${title}  \n`;
-    md += `**Estimate Valid For:** ${validityDays} days\n\n`;
+    const assumptions =
+      ai.assumptions && ai.assumptions.length
+        ? ai.assumptions
+        : [
+            "Standard working hours Mon–Fri; clear access assumed.",
+            "Work to current Australian Standards; licenses as required.",
+            "Quoted items and quantities are based on the brief and may be adjusted at site verification.",
+            "Customer to confirm colours, finishes and final placement before works commence.",
+            "Any hidden conditions may affect scope, timing and price.",
+            "Waste removal limited to trade-related offcuts and packaging unless noted."
+          ];
+    const exclusions =
+      ai.exclusions && ai.exclusions.length
+        ? ai.exclusions
+        : [
+            "Structural alterations unless specified.",
+            "Asbestos testing/removal.",
+            "Painting or patching beyond small penetrations caused by our works.",
+            "Council permits or engineering unless listed."
+          ];
+    const timeline =
+      ai.timeline && ai.timeline.length
+        ? ai.timeline
+        : [
+            "Scheduling & prep — confirm selections, access and set-down areas.",
+            "Core works — carry out installation and coordinate any dependencies.",
+            "Testing & tidy — verify performance, safety and finish; clean the site.",
+            "Handover — brief operation/maintenance and confirm you’re happy."
+          ];
 
-    // Overview (detailed)
-    md += `## Overview\n\n`;
-    if (ai.overview) {
-      md += ai.overview.trim() + `\n\n`;
-    } else {
-      md += `We propose to complete the requested works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate outlines a detailed scope, indicative timeline and pricing, subject to final site verification.\n\n`;
-    }
-
-    // Scope (8–12 full sentences)
     const baseTasks: Record<Trade, string[]> = {
       General: [
         "Prepare the work area safely and confirm access details with you before starting.",
@@ -481,10 +698,28 @@ Keep content practical and specific; avoid generic fluff.`;
         "Provide a short handover and care notes."
       ]
     };
-    const scopeList =
-      ai.scope && ai.scope.length
-        ? ai.scope
-        : baseTasks[trade];
+    const scopeList = ai.scope && ai.scope.length ? ai.scope : baseTasks[trade];
+
+    let md = "";
+    md += `# Proposal & Estimate\n\n`;
+    md += `**Quote Ref:** ${quoteRef}  \n`;
+    md += `**To:** ${clientName || "_Client_"}  \n`;
+    md += `**Site:** ${siteAddress || "_Site Address_"}  \n`;
+    md += `**Project:** ${title}  \n`;
+    md += `**Estimate Valid For:** ${validityDays} days  \n`;
+    const preparedByPieces = [tradieName, businessName].filter((value) => value && value.trim().length);
+    md += `**Prepared by:** ${
+      preparedByPieces.length ? preparedByPieces.join(" — ") : "_Add your name or business before sending_"
+    }  \n`;
+    const contactPieces = [businessPhone, businessWebsite].filter((value) => value && value.trim().length);
+    md += `**Contacts:** ${contactPieces.length ? contactPieces.join(" · ") : "_Add phone or website_"}\n\n`;
+
+    md += `## Overview\n\n`;
+    if (ai.overview) {
+      md += ai.overview.trim() + `\n\n`;
+    } else {
+      md += `We propose to complete the requested works as described in your brief, focusing on compliance, tidy workmanship and clear communication. This estimate doubles as your full proposal with a detailed scope, indicative timeline and pricing, subject to final site verification.\n\n`;
+    }
 
     md += `## Scope / Services\n\n`;
     md += `| # | Task Description |\n|---|------------------|\n`;
@@ -493,371 +728,245 @@ Keep content practical and specific; avoid generic fluff.`;
     });
     md += `\n`;
 
-    // Materials (client view; Item, Unit Cost, Quantity, Before, Discount Amt, Subtotal)
-    md += `## Materials\n\n`;
-    if (materials.length) {
-      md += `| Item | Unit Cost | Quantity | Cost Before Discount | Discount Amount | Subtotal |\n|------|----------:|---------:|---------------------:|---------------:|---------:|\n`;
-      materials.forEach((m) => {
-        md += `| ${m.item || "-"} | ${fmt(m.unitCost || 0)} | ${m.qty || 0} | ${fmt(m.costBefore || 0)} | ${fmt(m.discountAmt || 0)} | ${fmt(m.subtotal || 0)} |\n`;
+    md += `## Pricing Summary\n\n`;
+    if (pricingSource.length) {
+      md += `| Item | Amount (AUD) | Notes |\n|------|--------------:|-------|\n`;
+      pricingSource.forEach((entry) => {
+        const note = "detail" in entry && entry.detail ? entry.detail : "";
+        md += `| ${entry.label || "Allowance"} | ${fmt(entry.amount || 0)} | ${note} |\n`;
       });
-      md += `\n**Materials Subtotal:** ${fmt(materialsSubtotal)}\n\n`;
+      const sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+      md += `| **Subtotal** | **${fmt(sourceSubtotal)}** |  |\n`;
+      if (includeGST) {
+        const gstLine = sourceSubtotal * (gstRate || 0);
+        md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gstLine)}** |  |\n`;
+      }
+      const totalLine = includeGST ? sourceSubtotal * (1 + (gstRate || 0)) : sourceSubtotal;
+      md += `| **Client total (AUD)** | **${fmt(totalLine)}** |  |\n\n`;
     } else {
-      md += `_No materials entered._\n\n`;
+      md += `_Add any pricing context above (materials, labour, markups) so we can summarise it here._\n\n`;
+    }
+    const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : [];
+    if (contextNotes.length) {
+      md += `**Pricing assumptions & reminders**\n\n`;
+      md += `${listToParagraph(contextNotes)}\n\n`;
     }
 
-    // Labour
-    md += `## Labour\n\n`;
-    if (labour.length) {
-      md += `| Role | Hours | Rate | Total |\n|------|------:|-----:|------:|\n`;
-      labour.forEach((l) => {
-        const total = toNumber(l.hours) * toNumber(l.rate);
-        md += `| ${l.role || "-"} | ${toNumber(l.hours) || 0} | ${fmt(toNumber(l.rate) || 0)} | ${fmt(total)} |\n`;
-      });
-      md += `\n**Labour Subtotal:** ${fmt(labourSubtotal)}\n\n`;
-    } else {
-      md += `_No labour entered._\n\n`;
+    if (usingAISuggestedLabour && ai.labourSuggest.length) {
+      const labourNarrative = ai.labourSuggest
+        .map((row) => {
+          const role = row.role ? row.role.trim() : "Crew";
+          const hoursVal = Number(row.hours);
+          const hoursLabel = Number.isFinite(hoursVal) && hoursVal > 0
+            ? `${hoursVal % 1 === 0 ? hoursVal.toFixed(0) : hoursVal.toFixed(1)} hours`
+            : "hours as required";
+          const rateLabel = Number(row.rate) > 0 ? ` (allow ${fmt(row.rate)} for this crew type)` : "";
+          return `${role} — approx ${hoursLabel}${rateLabel}.`;
+        })
+        .filter(Boolean);
+      if (labourNarrative.length) {
+        md += `## Crew & labour outlook\n\n`;
+        md += labourNarrative.join(" ") + `\n\n`;
+      }
     }
 
-    // Subs / Equipment
-    if (subcontractors.length || equipment.length) md += `## Subcontractors / Equipment\n\n`;
-    if (subcontractors.length) {
-      md += `**Subcontractors**\n\n| Item | Cost |\n|------|-----:|\n`;
-      subcontractors.forEach((s) => {
-        md += `| ${s.label || "-"} | ${fmt(toNumber(s.amount) || 0)} |\n`;
-      });
-      md += `\n`;
+    md += `## Project considerations\n\n`;
+    md += `**Working assumptions to confirm**\n\n${listToParagraph(assumptions)}\n\n`;
+    if (ai.risks && ai.risks.length) {
+      md += `**Site risks & watchpoints**\n\n${listToParagraph(ai.risks)}\n\n`;
     }
-    if (equipment.length) {
-      md += `**Equipment / Hire**\n\n| Item | Cost |\n|------|-----:|\n`;
-      equipment.forEach((s) => {
-        md += `| ${s.label || "-"} | ${fmt(toNumber(s.amount) || 0)} |\n`;
-      });
-      md += `\n`;
-    }
+    md += `**Exclusions / outside this estimate**\n\n${listToParagraph(exclusions)}\n\n`;
 
-    // Assumptions & Exclusions (detailed)
-    const assumptions =
-      ai.assumptions && ai.assumptions.length
-        ? ai.assumptions
-        : [
-            "Standard working hours Mon–Fri; clear access assumed.",
-            "Work to current Australian Standards; licenses as required.",
-            "Quoted items and quantities are based on the brief and may be adjusted at site verification.",
-            "Customer to confirm colours, finishes and final placement before works commence.",
-            "Any hidden conditions may affect scope, timing and price.",
-            "Waste removal limited to trade-related offcuts and packaging unless noted."
-          ];
-    const exclusions =
-      ai.exclusions && ai.exclusions.length
-        ? ai.exclusions
-        : [
-            "Structural alterations unless specified.",
-            "Asbestos testing/removal.",
-            "Painting or patching beyond small penetrations caused by our works.",
-            "Council permits or engineering unless listed."
-          ];
-
-    md += `## Assumptions & Exclusions\n\n`;
-    md += `**Assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
-    md += `**Exclusions**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
-
-    // Additional Options (not included)
     if (ai.options && ai.options.length) {
-      md += `## Additional Options (not included)\n\n`;
+      md += `## Optional upgrades (quoted separately)\n\n`;
       md += ai.options.map((o) => `- ${o}`).join("\n") + `\n\n`;
     }
 
-    // Risks
-    if (ai.risks && ai.risks.length) {
-      md += `## Risks & Notes (review)\n\n`;
-      md += ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
-    }
+    md += `## Program & next steps\n\n`;
+    md += timeline.map((t, idx) => `${idx + 1}. ${t}`).join("\n") + `\n\n`;
+    md += `_Timeline is indicative and may shift after site verification or supplier lead times are confirmed._\n\n`;
 
-    // Timeline (detailed milestones)
-    const timeline =
-      ai.timeline && ai.timeline.length
-        ? ai.timeline
-        : [
-            "Scheduling & prep — confirm selections, access and set-down areas.",
-            "Core works — carry out installation and coordinate any dependencies.",
-            "Testing & tidy — verify performance, safety and finish; clean the site.",
-            "Handover — brief operation/maintenance and confirm you’re happy."
-          ];
-    md += `## Timeline (indicative)\n\n`;
-    md += timeline.map((t) => `- ${t}`).join("\n") + `\n\n`;
-
-    // Cost Summary (client view only; folded)
-    md += `## Cost Summary\n\n`;
-    md += `| Description | Amount |\n|-------------|-------:|\n`;
-    md += `| Materials Subtotal | ${fmt(materialsSubtotal)} |\n`;
-    md += `| Labour Subtotal | ${fmt(labourSubtotal)} |\n`;
-    md += `| Subcontractors | ${fmt(subsTotal)} |\n`;
-    md += `| Equipment / Hire | ${fmt(equipTotal)} |\n`;
-    md += `| **Subtotal** | **${fmt(clientSubtotal)}** |\n`;
-    if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
-    md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
-
-    // Payment Terms & Acceptance
-md += `## Payment Terms & Acceptance\n\n`;
-md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
-md += `**Payment terms:** A deposit is required to confirm your booking and secure materials. The remaining balance is payable once the job is completed, unless other arrangements have been agreed to in writing. Payment can be made by bank transfer, EFT, or another approved method.  \n`;
-md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n`;
-md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
-md += `Signature: __________________ Date: ________________\n`;
-
-    // Remove “Thank You / Contact” per your request.
+    md += `## Payment Terms & Acceptance\n\n`;
+    md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
+    md += `**Payment terms:** A deposit is required to confirm your booking and secure materials. The remaining balance is payable once the job is completed, unless other arrangements have been agreed to in writing. Payment can be made by bank transfer, EFT, or another approved method.  \n`;
+    md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n`;
+    md += `**Business contact:** ${
+      preparedByPieces.length ? preparedByPieces.join(" — ") : "Add your name and business"
+    }${contactPieces.length ? ` · ${contactPieces.join(" · ")}` : ""}  \n`;
+    md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
+    md += `Signature: __________________ Date: ________________\n`;
 
     output = md;
     loading = false;
   }
-
-  function copyOut() {
-    try {
-      navigator.clipboard.writeText(output || "");
-    } catch (error) {
-      console.error("copy failed", error);
-    }
-  }
-
-  function useExample() {
-    clientName = "Jordan Moore";
-    siteAddress = "12 Rivergum Rd, Brunswick VIC 3056";
-    trade = "Electrical";
-    projectBrief =
-      "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard work if required. Patch small penetrations; tidy finish.";
-
-    // Example materials: paste your Costing Summary block, then click Import
-    materialsText = `**Quote Summary**
-
-**Currency:** AUD
-
-| Item       | Unit Cost | Quantity | Cost Before Discount | Discount % | Discount Amount | Subtotal |
-|------------|-----------|----------|----------------------|------------|-----------------|----------|
-| Wiring     | $20       | 2        | $40                  | 10%        | $4              | $36      |
-| Cabling    | $10       | 1        | $10                  | 0%         | $0              | $10      |
-| **Total Material Cost** |           |          |                      |            |                 | **$46**  |
-
-**Profit from Markup (20%)**: $9.20  
-**Final Total**: $55.20
-
-Thank you for considering our services!`;
-
-    labour = [
-      { role: "Electrician", hours: 12, rate: 90 },
-      { role: "Apprentice", hours: 6, rate: 55 }
-    ];
-    subcontractors = [];
-    equipment = [{ label: "Vacuum pump hire", amount: 45 }];
-  }
 </script>
 
-<svelte:head><title>Job Estimation Wizard</title></svelte:head>
+<svelte:head><title>Proposal & Estimate Builder</title></svelte:head>
 
 <section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
     <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-      <div class="space-y-3">
-        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Pricing</p>
-        <h1 class="text-3xl font-bold leading-tight text-gray-900">Job Estimation Wizard</h1>
-        <p class="max-w-3xl text-base text-gray-700">
-          Fire in the job details, pull materials straight from the Cost Calculator, and get a sharp, client-ready estimate that proves you’ve done the maths.
-        </p>
+      <div class="space-y-4">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Pricing & proposals</p>
+          <h1 class="text-3xl font-bold leading-tight text-gray-900">Proposal & Estimate Builder</h1>
+          <p class="mt-2 max-w-3xl text-base text-gray-800">
+            Draft a tradie-ready proposal and price summary from one screen. Add the project brief and cost assumptions, then let the AI flesh out the detailed scope, inclusions, and terms.
+          </p>
+        </div>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm space-y-8 sm:p-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <label class="form-control gap-3"><span class="label-text">Client name</span><input class="input input-bordered" bind:value={clientName} /></label>
-      <label class="form-control gap-3"><span class="label-text">Site address</span><input class="input input-bordered" bind:value={siteAddress} /></label>
-      <label class="form-control gap-3 md:col-span-2">
+      <label class="form-control gap-2">
+        <span class="label-text">Client name</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={clientName}
+          placeholder="Who’s the quote for or the main site contact?"
+        />
+      </label>
+      <label class="form-control gap-2">
+        <span class="label-text">Site address</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={siteAddress}
+          placeholder="Street, suburb and state so the AI references the right site."
+        />
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <label class="form-control gap-2">
+        <span class="label-text">Tradie or estimator name</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={tradieName}
+          placeholder="Who is preparing this estimate?"
+        />
+      </label>
+      <label class="form-control gap-2">
+        <span class="label-text">Business name</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessName}
+          placeholder="Trading or company name shown on the proposal."
+        />
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <label class="form-control gap-2">
+        <span class="label-text">Business phone</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessPhone}
+          placeholder="Best phone number for client follow-ups."
+        />
+      </label>
+      <label class="form-control gap-2">
+        <span class="label-text">Website or booking link</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessWebsite}
+          placeholder="URL where clients can read more or book in (optional)."
+        />
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <label class="form-control gap-2">
         <span class="label-text">Project brief (1–3 sentences)</span>
         <textarea
-          class="textarea textarea-bordered h-24"
+          class="textarea textarea-bordered h-32 w-full"
           bind:value={projectBrief}
-          placeholder="Describe the job in your words. We’ll draft a detailed overview, tailored scope, assumptions, risks and timeline."
+          placeholder="Describe what's being supplied/installed, the rooms or areas involved, and any standards or timing constraints."
+        ></textarea>
+      </label>
+
+      <label class="form-control gap-2">
+        <div class="space-y-2">
+          <span class="label-text">Cost &amp; pricing context</span>
+          <p class="text-xs leading-relaxed text-gray-500">
+            Write costs in natural sentences (e.g. equipment, crew effort, call-out fees, markups, allowances, risks). We detect any
+            $ or % figures automatically and total them before drafting the AI proposal.
+          </p>
+        </div>
+        <textarea
+          class="textarea textarea-bordered h-56 w-full"
+          bind:value={costsText}
+          placeholder="Example: ‘Panasonic ducted kit supplied/installed about $20k; two techs for 3 days and apprentice support (labour ≈$4,500); crane + traffic mgmt $1.1k if required; add 15% supervision/variations buffer.’"
         ></textarea>
       </label>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <!-- Materials -->
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="space-y-4 p-5 sm:p-6">
-          <h2 class="text-lg font-semibold">Materials (paste → Import)</h2>
-          <textarea
-            class="textarea textarea-bordered h-28"
-            bind:value={materialsText}
-            placeholder="Paste the Costing Summary table from the Material & Cost Calculator (with | columns), then click Import now."
-          ></textarea>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" class="btn btn-sm btn-outline" on:click={importFromCostingSummary}>Import now</button>
-            <button type="button" class="btn btn-sm" on:click={useExample}>Use example</button>
-            <button type="button" class="btn btn-ghost btn-sm" on:click={() => { materialsText=''; materials=[]; parseFeedback=''; }}>Clear materials</button>
-            {#if parseFeedback}<span class="text-xs opacity-70">{parseFeedback}</span>{/if}
-          </div>
-
-          <div class="overflow-x-auto">
-            {#if materials.length}
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th class="text-right">Unit Cost</th>
-                    <th class="text-right">Quantity</th>
-                    <th class="text-right">Discount %</th>
-                    <th class="text-right">Cost Before</th>
-                    <th class="text-right">Discount Amount</th>
-                    <th class="text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each materials as m}
-                    <tr>
-                      <td><input class="input input-bordered input-xs w-56" bind:value={m.item}></td>
-                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={m.unitCost} on:input={() => recomputeMaterial(m)}></td>
-                      <td class="text-right"><input type="number" step="0.01" class="input input-bordered input-xs w-24 text-right" bind:value={m.qty} on:input={() => recomputeMaterial(m)}></td>
-                      <td class="text-right"><input type="number" step="0.1" class="input input-bordered input-xs w-24 text-right" bind:value={m.discountPct} on:input={() => recomputeMaterial(m)}></td>
-                      <td class="text-right">{fmt(m.costBefore)}</td>
-                      <td class="text-right">{fmt(m.discountAmt)}</td>
-                      <td class="text-right font-semibold">{fmt(m.subtotal)}</td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            {:else}
-              <div class="text-xs opacity-70">No materials imported yet.</div>
-            {/if}
-          </div>
-        </div>
-      </div>
-
-      <!-- Labour / Subs / Equip (optional) -->
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="space-y-4 p-5 sm:p-6">
-          <h2 class="text-lg font-semibold">Labour (optional)</h2>
-          <div class="overflow-x-auto">
-            <table class="table table-sm">
-              <thead><tr><th>Role</th><th>Hours</th><th>Rate</th><th>Total</th><th></th></tr></thead>
-              <tbody>
-                {#each labour as l, i}
-                  <tr>
-                    <td><input class="input input-bordered input-xs w-40" bind:value={l.role}></td>
-                    <td><input type="number" min="0" class="input input-bordered input-xs w-20" bind:value={l.hours}></td>
-                    <td><input type="number" step="0.01" class="input input-bordered input-xs w-24" bind:value={l.rate}></td>
-                    <td class="text-right">{fmt((Number(l.hours) || 0) * (Number(l.rate) || 0))}</td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (labour = labour.filter((_, idx) => idx !== i))}>✕</button></td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-sm" on:click={() => (labour = [...labour, { role: "", hours: 0, rate: 0 }])}>+ Add labour row</button>
-
-          <div class="divider my-2"></div>
-
-          <h2 class="text-lg font-semibold">Subs / Equipment (optional)</h2>
-          <div class="overflow-x-auto">
-            <table class="table table-sm">
-              <thead><tr><th>Subcontractor</th><th class="text-right">Amount</th><th></th></tr></thead>
-              <tbody>
-                {#each subcontractors as s, i}
-                  <tr>
-                    <td><input class="input input-bordered input-xs w-48" bind:value={s.label}></td>
-                    <td><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={s.amount}></td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (subcontractors = subcontractors.filter((_, idx) => idx !== i))}>✕</button></td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-sm" on:click={() => (subcontractors = [...subcontractors, { label: "", amount: 0 }])}>+ Add subcontractor</button>
-
-          <div class="overflow-x-auto mt-3">
-            <table class="table table-sm">
-              <thead><tr><th>Equipment/Hire</th><th class="text-right">Amount</th><th></th></tr></thead>
-              <tbody>
-                {#each equipment as s, i}
-                  <tr>
-                    <td><input class="input input-bordered input-xs w-48" bind:value={s.label}></td>
-                    <td><input type="number" step="0.01" class="input input-bordered input-xs w-28 text-right" bind:value={s.amount}></td>
-                    <td><button type="button" class="btn btn-xs btn-ghost" on:click={() => (equipment = equipment.filter((_, idx) => idx !== i))}>✕</button></td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          <button type="button" class="btn btn-sm" on:click={() => (equipment = [...equipment, { label: "", amount: 0 }])}>+ Add equipment</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Advanced (collapsible) -->
     <details class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-      <summary class="cursor-pointer space-y-2 p-5 sm:p-6">
-        <h2 class="text-lg font-semibold">Advanced (optional) <span class="opacity-60 text-xs">(click to expand)</span></h2>
+      <summary class="cursor-pointer space-y-1 p-5 sm:p-6">
+        <h2 class="text-lg font-semibold">Advanced controls</h2>
+        <p class="text-sm text-gray-500">Set trade focus, GST and validity. Leave closed for a fast, default estimate.</p>
       </summary>
-      <div class="px-4 pb-4">
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <label class="form-control gap-3"><span class="label-text">Overhead %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={overheadPctWhole} /></label>
-          <label class="form-control gap-3"><span class="label-text">Margin %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={marginPctWhole} /></label>
-          <label class="form-control gap-3"><span class="label-text">Contingency %</span><input type="number" min="0" max="100" step="1" class="input input-bordered" bind:value={contingencyPctWhole} /></label>
+      <div class="space-y-4 px-5 pb-5 sm:px-6">
+        <label class="form-control gap-3">
+          <span class="label-text">Trade focus</span>
+          <select class="select select-bordered" bind:value={trade}>
+            <option value="General">General</option>
+            <option value="HVAC">HVAC</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Carpentry">Carpentry</option>
+            <option value="Tiling">Tiling</option>
+            <option value="Construction">Construction</option>
+            <option value="Landscaping">Landscaping</option>
+            <option value="Painting">Painting</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <label class="form-control gap-2">
+            <span class="label-text">Include GST?</span>
+            <label class="label cursor-pointer justify-start gap-2">
+              <input type="checkbox" class="checkbox" bind:checked={includeGST} />
+              <span class="label-text">Yes, apply {gstRateInput.toFixed(0)}%</span>
+            </label>
+          </label>
+          <label class="form-control gap-2">
+            <span class="label-text">GST rate (%)</span>
+            <input type="number" min="0" max="100" step="0.1" class="input input-bordered" bind:value={gstRateInput} />
+          </label>
+          <label class="form-control gap-2">
+            <span class="label-text">Validity (days)</span>
+            <input type="number" min="7" max="120" class="input input-bordered" bind:value={validityDays} />
+          </label>
         </div>
       </div>
     </details>
 
-    <!-- Totals + Actions -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="space-y-4 p-5 sm:p-6">
-          <h2 class="text-lg font-semibold">Totals</h2>
-          <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
-            <div><div class="opacity-60">Materials</div><div class="font-semibold">{fmt(materialsSubtotal)}</div></div>
-            <div><div class="opacity-60">Labour</div><div class="font-semibold">{fmt(labourSubtotal)}</div></div>
-            <div><div class="opacity-60">Subs</div><div class="font-semibold">{fmt(subsTotal)}</div></div>
-            <div><div class="opacity-60">Equipment</div><div class="font-semibold">{fmt(equipTotal)}</div></div>
-            <div><div class="opacity-60">Subtotal</div><div class="font-semibold">{fmt(clientSubtotal)}</div></div>
-            {#if includeGST}
-              <div><div class="opacity-60">GST</div><div class="font-semibold">{fmt(gst)}</div></div>
-            {/if}
-            <div><div class="opacity-60">Total (AUD)</div><div class="font-semibold">{fmt(grandTotal)}</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="flex flex-wrap items-center gap-4 p-5 sm:p-6">
-          <button class="btn btn-primary" type="submit" disabled={loading}>
-            {#if loading}<span class="loading loading-dots"></span>{/if}
-            <span>Generate Quote</span>
-          </button>
-          <button type="button" class="btn" on:click={useExample}>Use example</button>
-          <label class="label cursor-pointer justify-start gap-2">
-            <input type="checkbox" class="checkbox" bind:checked={includeGST} />
-            <span class="label-text">Include GST ({(gstRate * 100).toFixed(0)}%)</span>
-          </label>
-          <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-          <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="p-5 sm:p-6">
-          <p class="text-xs opacity-70">
-            Tip: Copy the <em>Costing Summary</em> table from the
-            <a href="/account/tools/material-cost" class="link link-primary">Material &amp; Cost Calculator</a>, then paste above and click <strong>Import now</strong>.
-          </p>
-        </div>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3 p-5 sm:p-6">
+        <button class="btn btn-primary" type="submit" disabled={loading}>
+          {#if loading}<span class="loading loading-dots"></span>{/if}
+          <span>Generate proposal</span>
+        </button>
+        <button type="button" class="btn" on:click={useExample}>Use example</button>
+        <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
+        <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
+        <p class="text-xs leading-relaxed text-gray-500">
+          <span class="font-semibold text-gray-600">Reminder:</span>
+          Plain-English cost notes are fine—we’ll detect any $ or % figures automatically. All pricing and timelines are AI-generated
+          from your inputs, so double-check before presenting to a client.
+        </p>
       </div>
     </div>
   </form>
 
-  <!-- Rich Answer (final rendered quote) -->
   {#if output.trim().length}
     <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-4">
       <div class="p-5 sm:p-6">
         <RichAnswer text={output} />
+        <p class="mt-3 text-xs text-gray-500">AI-generated content—review the pricing and timeline before sharing externally.</p>
       </div>
     </div>
   {/if}
