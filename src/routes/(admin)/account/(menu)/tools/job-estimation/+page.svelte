@@ -45,7 +45,6 @@
   type ParsedEntry = { label: string; amount: number };
   type PercentAdj = { label: string; percent: number; context?: string };
   type ParsedBlock = { entries: ParsedEntry[]; percentAdjustments: PercentAdj[]; notes: string[] };
-  type MarkupEntry = { label: string; percent: number; amount: number; context?: string };
 
   function toNumber(n: unknown, d = 0) {
     const cleaned = typeof n === "string" ? n : String(n ?? "");
@@ -120,10 +119,33 @@
       .replace(/\([^()]*\)\s*$/g, "")
       .replace(/\b(allowance|approx|approximately|around|about|allowing|allow)\b$/gi, "")
       .replace(/[–—-]+$/g, "")
+      .replace(/\d+(?:\.\d+)?\s*%/g, "")
       .replace(/\b(is|are|at|for|approx|around|about|to|more|extra)\b$/i, "")
       .replace(/\s+/g, " ")
       .trim();
     return out;
+  }
+
+  const smallWords = new Set(["and", "or", "of", "the", "a", "an", "for", "with", "on", "at", "to", "by", "in"]);
+
+  function beautifyLabel(label: string) {
+    const cleaned = cleanLabel(label);
+    if (!cleaned) return "";
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    const formatted = words
+      .map((word, index) => {
+        if (/^[A-Z0-9&]+$/.test(word)) return word.toUpperCase();
+        if (word.length <= 3 && /^[a-z]+$/i.test(word)) {
+          return word.toUpperCase();
+        }
+        const lower = word.toLowerCase();
+        if (index !== 0 && smallWords.has(lower)) {
+          return lower;
+        }
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+    return formatted.replace(/\bHvac\b/g, "HVAC").replace(/\bAc\b/g, "AC");
   }
 
   function toAmount(raw: string) {
@@ -178,7 +200,7 @@
     }
     const amount = workerQty * totalUnits * rate;
     if (!Number.isFinite(amount) || amount <= 0) return null;
-    const label = cleanLabel(line) || "Labour allowance";
+    const label = beautifyLabel(line) || "Labour allowance";
     return { label, amount };
   }
 
@@ -230,9 +252,9 @@
           if (looksUnitRate && !/total|sum|allowance|visit|call|mobilisation|materials|supply|install|markup/i.test(line)) {
             return;
           }
-          const before = cleanLabel(line.slice(0, start));
-          const after = cleanLabel(line.slice(start + raw.length));
-          const label = before || after || cleanLabel(line) || "Allowance";
+          const before = beautifyLabel(line.slice(0, start));
+          const after = beautifyLabel(line.slice(start + raw.length));
+          const label = before || after || beautifyLabel(line) || "Allowance";
           entries.push({ label, amount });
           matchedAmount = true;
         });
@@ -242,7 +264,7 @@
           percentMatches.forEach((p) => {
             const pct = toNumber(p[1], NaN);
             if (!Number.isFinite(pct)) return;
-            const label = cleanLabel(line) || `${pct}% allowance`;
+            const label = beautifyLabel(line) || `${pct}% allowance`;
             percentAdjustments.push({ label, percent: pct, context: line });
           });
           matchedAmount = true;
@@ -268,15 +290,7 @@
   }
 
   $: baseCostsTotal = parsedCosts.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  let markupEntries: MarkupEntry[] = [];
-  $: markupEntries = parsedCosts.percentAdjustments.map((adj) => ({
-    label: adj.label,
-    context: adj.context,
-    percent: adj.percent,
-    amount: baseCostsTotal * ((adj.percent || 0) / 100)
-  }));
-  $: markupTotal = markupEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  $: clientSubtotal = baseCostsTotal + markupTotal;
+  $: clientSubtotal = baseCostsTotal;
   const exampleCosts = `Materials & equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
 Labour effort: Two techs on site for 3 full days @ $95/hr each, apprentice support on day two for 6 hrs.
 Program & supervision: 15% markup to cover design checks, procurement and warranty handling.
@@ -351,9 +365,10 @@ Return ONLY JSON with keys and detailed content:
 Rules:
 - Analyse the free-form pricing context and detected figures to produce professional totals rather than echoing the text.
 - If labour rates are provided (e.g. two techs for 3 days @ $95/hr), multiply them out and explain the assumption in the detail field.
- - If only percentages are given (e.g. 15% markup), apply them to the detected base costs to estimate the amount.
- - Clean up spelling, casing and grammar of any user-provided allowance names before outputting them in tables.
+ - If only percentages are given (e.g. 15% markup), apply them to the detected allowance they reference ("this AC", "call-out", etc.); only default to the total base cost when the sentence clearly says it covers the whole job.
+ - Clean up spelling, casing and grammar of any user-provided allowance names before outputting them in tables so headings read like a polished proposal.
  - Convert any percentage surcharges or call-out loadings into dollar figures using the detected base costs so totals remain accurate.
+ - Merge duplicated items (e.g. repeated labour descriptions) and round to sensible currency values.
  - Always produce a timeline, even if you must infer it from trade best practice.
 - Prefer practical Australian trade language.
 - Never copy the user's raw cost sentences verbatim—rewrite allowances, markups and caveats in polished, client-facing language.
@@ -362,8 +377,12 @@ Rules:
     const parsedCostLines = parsedCosts.entries
       .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
       .join("\n");
-    const markupLines = markupEntries
-      .map((entry) => `${entry.label} → +${fmt(entry.amount)}`)
+    const markupLines = parsedCosts.percentAdjustments
+      .map((entry) => {
+        const pct = fmtPercent(entry.percent);
+        const context = entry.context ? ` — from: ${entry.context}` : "";
+        return `${entry.label || `${pct}% allowance`}: ${pct}%${context}`;
+      })
       .join("\n");
     const notesBlock = parsedCosts.notes.map((note) => `- ${note}`).join("\n");
     const user =
@@ -376,7 +395,7 @@ Rules:
       `Client: ${clientName || "N/A"}\n` +
       `Site: ${siteAddress || "N/A"}\n\n` +
       `Cost context (raw):\n${costsText || "N/A"}\n\n` +
-      (parsedCostLines ? `Detected dollar figures:\n${parsedCostLines}\n\n` : "") +
+      (parsedCostLines ? `Detected dollar figures (cleaned):\n${parsedCostLines}\n\n` : "") +
       (markupLines ? `Detected markups/contingencies:\n${markupLines}\n\n` : "") +
       (notesBlock ? `Non-dollar context to weave into pricing:\n${notesBlock}\n\n` : "") +
       `Current subtotal before GST (from user figures): ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
@@ -477,25 +496,7 @@ Rules:
       amount: entry.amount,
       detail: undefined
     }));
-    const pricingSource: AICostItem[] = [];
-    const seenLabels = new Set<string>();
-    parsedPricingRows.forEach((row) => {
-      const key = (row.label || "").toLowerCase();
-      if (key) {
-        seenLabels.add(key);
-      }
-      pricingSource.push(row);
-    });
-    if (pricingSource.length && aiCostRowsClean.length) {
-      aiCostRowsClean.forEach((row) => {
-        const key = (row.label || "").toLowerCase();
-        if (!key || seenLabels.has(key) || !(row.amount || 0)) return;
-        seenLabels.add(key);
-        pricingSource.push(row);
-      });
-    } else if (!pricingSource.length && aiCostRowsClean.length) {
-      pricingSource.push(...aiCostRowsClean);
-    }
+    const pricingSource: AICostItem[] = aiCostRowsClean.length ? aiCostRowsClean : parsedPricingRows;
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
@@ -638,13 +639,7 @@ Rules:
         const note = "detail" in entry && entry.detail ? entry.detail : "";
         md += `| ${entry.label || "Allowance"} | ${fmt(entry.amount || 0)} | ${note} |\n`;
       });
-      let sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-      if (markupEntries.length && baseCostsTotal > 0) {
-        markupEntries.forEach((adj) => {
-          md += `| ${adj.label || "Markup"} | ${fmt(adj.amount)} | ${adj.percent ? `${fmtPercent(adj.percent)}% allowance on base costs` : "Markup applied"} |\n`;
-        });
-        sourceSubtotal += markupTotal;
-      }
+      const sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
       md += `| **Subtotal** | **${fmt(sourceSubtotal)}** |  |\n`;
       if (includeGST) {
         const gstLine = sourceSubtotal * (gstRate || 0);
