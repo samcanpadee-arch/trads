@@ -34,8 +34,9 @@
   let loading = false;
 
   type ParsedEntry = { label: string; amount: number };
-  type PercentAdj = { label: string; percent: number };
+  type PercentAdj = { label: string; percent: number; context?: string };
   type ParsedBlock = { entries: ParsedEntry[]; percentAdjustments: PercentAdj[]; notes: string[] };
+  type MarkupEntry = { label: string; percent: number; amount: number; context?: string };
 
   function toNumber(n: unknown, d = 0) {
     const cleaned = typeof n === "string" ? n : String(n ?? "");
@@ -48,6 +49,10 @@
       currency: "AUD",
       maximumFractionDigits: 2
     }).format(n || 0);
+  const fmtPercent = (value: number) => {
+    if (!Number.isFinite(value)) return "";
+    return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  };
 
   function randomRef() {
     const d = new Date();
@@ -80,11 +85,20 @@
   const percentRe = /(\d+(?:\.\d+)?)\s*%/gi;
 
   function cleanLabel(label: string) {
-    return label
+    if (!label) return "";
+    let out = label;
+    const colonIdx = out.indexOf(":");
+    if (colonIdx !== -1) {
+      out = out.slice(0, colonIdx);
+    }
+    out = out
+      .replace(/\([^()]*\)\s*$/g, "")
+      .replace(/\b(allowance|approx|approximately|around|about|allowing|allow)\b$/gi, "")
       .replace(/[–—-]+$/g, "")
       .replace(/\b(is|are|at|for|approx|around|about|to)\b$/i, "")
       .replace(/\s+/g, " ")
       .trim();
+    return out;
   }
 
   function toAmount(raw: string) {
@@ -118,7 +132,7 @@
           }
           const before = cleanLabel(line.slice(0, start));
           const after = cleanLabel(line.slice(start + raw.length));
-          const label = before || after || "Allowance";
+          const label = before || after || cleanLabel(line) || "Allowance";
           entries.push({ label, amount });
           matchedAmount = true;
         });
@@ -128,7 +142,8 @@
           percentMatches.forEach((p) => {
             const pct = toNumber(p[1], NaN);
             if (!Number.isFinite(pct)) return;
-            percentAdjustments.push({ label: line, percent: pct });
+            const label = cleanLabel(line) || `${pct}% allowance`;
+            percentAdjustments.push({ label, percent: pct, context: line });
           });
           matchedAmount = true;
         }
@@ -153,9 +168,11 @@
   }
 
   $: baseCostsTotal = parsedCosts.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  let markupEntries: ParsedEntry[] = [];
+  let markupEntries: MarkupEntry[] = [];
   $: markupEntries = parsedCosts.percentAdjustments.map((adj) => ({
     label: adj.label,
+    context: adj.context,
+    percent: adj.percent,
     amount: baseCostsTotal * ((adj.percent || 0) / 100)
   }));
   $: markupTotal = markupEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
@@ -342,6 +359,8 @@ Rules:
     const usingAISuggestedLabour = ai.labourSuggest.length > 0;
     const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
     const aiCostRowsClean = aiCostRows.filter((row) => !/(subtotal|total|gst|tax)/i.test(row.label || ""));
+    const parsedPricingRows = parsedCosts.entries.length ? parsedCosts.entries : [];
+    const pricingSource = parsedPricingRows.length ? parsedPricingRows : aiCostRowsClean;
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
@@ -471,12 +490,7 @@ Rules:
     });
     md += `\n`;
 
-    const fallbackCostRows: AICostItem[] = parsedCosts.entries.map((entry) => ({
-      label: entry.label,
-      amount: entry.amount
-    }));
     md += `## Pricing Summary\n\n`;
-    const pricingSource = aiCostRowsClean.length ? aiCostRowsClean : fallbackCostRows;
     if (pricingSource.length) {
       md += `| Item | Amount (AUD) | Notes |\n|------|--------------:|-------|\n`;
       pricingSource.forEach((entry) => {
@@ -484,9 +498,9 @@ Rules:
         md += `| ${entry.label || "Allowance"} | ${fmt(entry.amount || 0)} | ${note} |\n`;
       });
       let sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-      if (!aiCostRows.length && markupEntries.length) {
+      if (parsedPricingRows.length && markupEntries.length) {
         markupEntries.forEach((adj) => {
-          md += `| ${adj.label || "Markup"} | ${fmt(adj.amount)} | Applied as % of base costs |\n`;
+          md += `| ${adj.label || "Markup"} | ${fmt(adj.amount)} | ${adj.percent ? `${fmtPercent(adj.percent)}% allowance on base costs` : "Markup applied"} |\n`;
         });
         sourceSubtotal += markupTotal;
       }
@@ -497,12 +511,14 @@ Rules:
       }
       const totalLine = includeGST ? sourceSubtotal * (1 + (gstRate || 0)) : sourceSubtotal;
       md += `| **Client total (AUD)** | **${fmt(totalLine)}** |  |\n\n`;
+      md += `_AI-assisted estimate based on your cost notes — confirm allowances and GST before issuing to the client._\n\n`;
     } else {
       md += `_Add any pricing context above (materials, labour, markups) so we can summarise it here._\n\n`;
     }
-    const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : parsedCosts.notes;
+    const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : [];
     if (contextNotes.length) {
-      md += `**Pricing assumptions & reminders:**\n` + contextNotes.map((n) => `- ${n}`).join("\n") + `\n\n`;
+      md += `**Pricing assumptions & reminders**\n\n`;
+      md += contextNotes.map((n) => `- ${n}`).join("\n") + `\n\n`;
     }
 
     if (usingAISuggestedLabour && ai.labourSuggest.length) {
@@ -514,27 +530,27 @@ Rules:
       md += `\n`;
     }
 
-    md += `## Assumptions & Exclusions\n\n`;
-    md += `**Assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
-    md += `**Exclusions**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `## Project considerations\n\n`;
+    md += `**Key assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    if (ai.risks && ai.risks.length) {
+      md += `**Risks & watch points**\n\n` + ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
+    }
+    md += `**Exclusions / not included**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
 
     if (ai.options && ai.options.length) {
-      md += `## Additional Options (not included)\n\n`;
+      md += `## Optional upgrades (quoted separately)\n\n`;
       md += ai.options.map((o) => `- ${o}`).join("\n") + `\n\n`;
     }
 
-    if (ai.risks && ai.risks.length) {
-      md += `## Risks & Notes (review)\n\n`;
-      md += ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
-    }
-
-    md += `## Timeline (indicative)\n\n`;
-    md += timeline.map((t) => `- ${t}`).join("\n") + `\n\n`;
+    md += `## Program & next steps\n\n`;
+    md += timeline.map((t, idx) => `${idx + 1}. ${t}`).join("\n") + `\n\n`;
+    md += `_Timeline is indicative and may shift after site verification or supplier lead times are confirmed._\n\n`;
 
     md += `## Payment Terms & Acceptance\n\n`;
     md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
     md += `**Payment terms:** A deposit is required to confirm your booking and secure materials. The remaining balance is payable once the job is completed, unless other arrangements have been agreed to in writing. Payment can be made by bank transfer, EFT, or another approved method.  \n`;
-    md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n\n`;
+    md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n`;
+    md += `**AI disclaimer:** Scope, pricing and timing are generated from your brief—double-check before sharing with a client.  \n\n`;
     md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
     md += `Signature: __________________ Date: ________________\n`;
 
@@ -602,7 +618,7 @@ Rules:
         <textarea
           class="textarea textarea-bordered h-56 w-full"
           bind:value={costsText}
-          placeholder="Example: Materials & equipment allowance, labour mix and hours, site access costs, markup % to cover supervision, risk or contingency notes, and anything that could sway the price."
+          placeholder="Outline key purchases, labour effort, markups and risk allowances (e.g. ‘Supply Panasonic ducted package ≈$20k; two techs for 3 days @ $95/hr; allow crane & traffic mgmt $1.1k; add 15% supervision/variations markup’)."
         ></textarea>
       </label>
     </div>
@@ -662,10 +678,15 @@ Rules:
                 {#each markupEntries as adj}
                   <div class="flex flex-col text-xs text-gray-600">
                     <div class="flex items-center justify-between text-sm">
-                      <span class="opacity-70">Markup/contingency</span>
+                      <span class="opacity-70">
+                        {adj.label || "Markup"}
+                        {#if adj.percent}
+                          ({fmtPercent(adj.percent)}%)
+                        {/if}
+                      </span>
                       <span class="font-semibold">{fmt(adj.amount)}</span>
                     </div>
-                    <span>{cleanLabel(adj.label)}</span>
+                    {#if adj.context}<span>{adj.context}</span>{/if}
                   </div>
                 {/each}
               {/if}
