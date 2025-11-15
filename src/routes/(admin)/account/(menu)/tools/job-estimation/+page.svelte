@@ -118,15 +118,15 @@
   $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
   $: grandTotal = clientSubtotal + gst;
 
-  const exampleCosts = `Materials: $9,850
-Labour: $6,400
-Plant hire: $950
-Discount: -$350
+  const exampleCosts = `Materials supply: $10,500
+Labour crew (40 hrs): $6,400
+Equipment hire: $950
+Contingency: $750
 Markup: 12%`;
 
-  const exampleAdjustments = `Provisional sum: $750
-Risk allowance: $400
-Note: Allow 10 working days for access via rear lane`;
+  const exampleAdjustments = `Provisional sum — switchboard tidy: $650
+Risk allowance — hidden services: $400
+Client note: Access via rear lane only for deliveries`;
 
   function useExample() {
     clientName = "Jordan Moore";
@@ -501,52 +501,57 @@ Keep content practical and specific; avoid generic fluff.`;
             Draft a tradie-ready proposal and price summary from one screen. Add the project brief and cost assumptions, then let the AI flesh out the detailed scope, inclusions, and terms.
           </p>
         </div>
-        <p class="text-sm text-amber-900/90">
-          This streamlined estimator now replaces the old Material &amp; Cost Calculator and Sales Proposal Generator—you get both outcomes in a single run.
-        </p>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm space-y-8" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <label class="form-control gap-3"><span class="label-text">Client name</span><input class="input input-bordered" bind:value={clientName} /></label>
-      <label class="form-control gap-3"><span class="label-text">Site address</span><input class="input input-bordered" bind:value={siteAddress} /></label>
+      <label class="form-control gap-3">
+        <span class="label-text">Client name</span>
+        <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan Moore" />
+      </label>
+      <label class="form-control gap-3">
+        <span class="label-text">Site address</span>
+        <input class="input input-bordered w-full" bind:value={siteAddress} placeholder="e.g. 12 Rivergum Rd, Brunswick" />
+      </label>
     </div>
 
     <label class="form-control gap-3">
       <span class="label-text">Project brief (1–3 sentences)</span>
       <textarea
-        class="textarea textarea-bordered h-28"
+        class="textarea textarea-bordered h-28 w-full"
         bind:value={projectBrief}
-        placeholder="Describe the job, key locations, finishes, standards or constraints."
+        placeholder="Describe what's being supplied/installed, the rooms or areas involved, and any standards or timing constraints."
       ></textarea>
     </label>
 
-    <label class="form-control gap-3">
-      <div>
-        <span class="label-text">Costs &amp; Allowances</span>
-        <p class="text-xs text-gray-500">Use simple lines like “Materials: 9850” or “Markup: 12%”. We’ll parse label: amount rows and include any free-form context.</p>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-40"
-        bind:value={costsText}
-        placeholder="Materials: $9,850\nLabour: $6,400\nDiscount: -$350\nMarkup: 12%\nAnything else worth noting…"
-      ></textarea>
-    </label>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <label class="form-control gap-3">
+        <div class="space-y-1">
+          <span class="label-text">Costs &amp; allowances</span>
+          <p class="text-xs text-gray-500">List each allowance on its own line (e.g. "Materials supply: 10500"). We'll total any line that includes a colon and numbers.</p>
+        </div>
+        <textarea
+          class="textarea textarea-bordered h-48 w-full"
+          bind:value={costsText}
+          placeholder="Materials supply: $10,500\nLabour crew (40 hrs): $6,400\nEquipment hire: $950\nContingency: $750\nMarkup: 12%"
+        ></textarea>
+      </label>
 
-    <label class="form-control gap-3">
-      <div class="flex items-center justify-between">
-        <span class="label-text">Adjustments &amp; Notes (optional)</span>
-        <span class="text-xs text-gray-500">Use “label: amount” if you want numbers included.</span>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-32"
-        bind:value={adjustmentsText}
-        placeholder="Provisional sum: $750\nRisk allowance: $400\nNote: Access via rear lane only"
-      ></textarea>
-    </label>
+      <label class="form-control gap-3">
+        <div class="space-y-1">
+          <span class="label-text">Adjustments &amp; notes (optional)</span>
+          <p class="text-xs text-gray-500">Use this for provisional sums, risks, or client reminders. Add a colon before any figure so it's included in the totals.</p>
+        </div>
+        <textarea
+          class="textarea textarea-bordered h-48 w-full"
+          bind:value={adjustmentsText}
+          placeholder="Provisional sum — switchboard tidy: $650\nRisk allowance — hidden services: $400\nClient note: Access via rear lane only for deliveries"
+        ></textarea>
+      </label>
+    </div>
 
     <details class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
       <summary class="cursor-pointer space-y-1 p-5 sm:p-6">
@@ -614,9 +619,7 @@ Keep content practical and specific; avoid generic fluff.`;
           <button type="button" class="btn" on:click={useExample}>Use example</button>
           <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
           <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-          <p class="text-xs text-gray-500">
-            Tip: Paste figures straight from spreadsheets—anything in a “label: amount” format is totalled before the AI call.
-          </p>
+          <p class="text-xs text-gray-500">Tip: Paste rows straight from spreadsheets or emails—if a line reads "Thing: 1234" we'll crunch it before calling the AI.</p>
         </div>
       </div>
     </div>
