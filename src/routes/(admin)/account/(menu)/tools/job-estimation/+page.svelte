@@ -90,8 +90,24 @@
     return out.replace(/[.!?]+$/, "");
   }
 
-  const currencyRe = /(?:AUD\s*)?(?:A\$|\$)?\s*\d[\d,]*(?:\.\d{1,2})?(?:\s?[kK])?/gi;
+  const currencyRe =
+    /((?:AUD\s*)?(?:A\$|\$)\s*\d[\d,]*(?:\.\d{1,2})?(?:\s?[kK])?|\b\d[\d,]{2,}(?:\.\d{1,2})?\b|\b\d[\d,]*(?:\.\d{1,2})?\s?[kK]\b)/gi;
   const percentRe = /(\d+(?:\.\d+)?)\s*%/gi;
+  const HOURS_PER_DAY = 8;
+  const wordNumberMap: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12
+  };
 
   function cleanLabel(label: string) {
     if (!label) return "";
@@ -104,7 +120,7 @@
       .replace(/\([^()]*\)\s*$/g, "")
       .replace(/\b(allowance|approx|approximately|around|about|allowing|allow)\b$/gi, "")
       .replace(/[–—-]+$/g, "")
-      .replace(/\b(is|are|at|for|approx|around|about|to)\b$/i, "")
+      .replace(/\b(is|are|at|for|approx|around|about|to|more|extra)\b$/i, "")
       .replace(/\s+/g, " ")
       .trim();
     return out;
@@ -118,6 +134,61 @@
     return hasK ? n * 1000 : n;
   }
 
+  function toQuantity(fragment: string | undefined | null) {
+    if (!fragment) return null;
+    const cleaned = fragment.trim().toLowerCase();
+    if (cleaned in wordNumberMap) {
+      return wordNumberMap[cleaned];
+    }
+    const numeric = Number(cleaned.replace(/[^0-9.]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  type DurationUnit = "hour" | "day";
+
+  function detectLabourAllowance(line: string): ParsedEntry | null {
+    if (!line) return null;
+    const rateMatch = line.match(
+      /(?:@\s*)?(?:about\s+|approx(?:\.|\s+))?(\$[\d,]+(?:\.\d+)?)(?:\s*(?:\/|per)\s*)(hour|hr|hrs?|day|days|shift)/i
+    );
+    if (!rateMatch) return null;
+    const rate = toAmount(rateMatch[1]);
+    if (!Number.isFinite(rate) || rate <= 0) return null;
+    const rateUnit: DurationUnit = /day|shift/i.test(rateMatch[2]) ? "day" : "hour";
+    const workerMatch = line.match(
+      /(\d+(?:\.\d+)?|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b)\s*(?:techs?|technicians?|trad(?:es)?people|installers?|sparkies|electricians?|plumbers?|crew|workers?|team|staff)/i
+    );
+    const workerQty = toQuantity(workerMatch?.[1]) ?? 1;
+    const durationMatch = line.match(
+      /(\d+(?:\.\d+)?|\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b)\s*(?:full\s+|business\s+|working\s+)?(days?|day|hours?|hrs?|h)/i
+    );
+    let durationValue = durationMatch ? toQuantity(durationMatch[1]) ?? 1 : 1;
+    let durationUnit: DurationUnit = durationMatch
+      ? (/day/i.test(durationMatch[2]) ? "day" : "hour")
+      : rateUnit;
+    if (!durationMatch && rateUnit === "hour") {
+      durationValue = HOURS_PER_DAY;
+      durationUnit = "hour";
+    }
+    let totalUnits = durationValue;
+    if (durationUnit === "day" && rateUnit === "hour") {
+      totalUnits = durationValue * HOURS_PER_DAY;
+    } else if (durationUnit === "hour" && rateUnit === "day") {
+      totalUnits = durationValue / HOURS_PER_DAY;
+    }
+    const amount = workerQty * totalUnits * rate;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const label = cleanLabel(line) || "Labour allowance";
+    return { label, amount };
+  }
+
+  function listToParagraph(items: string[]) {
+    return items
+      .map((item) => item.replace(/^[-•\s]+/, "").trim())
+      .filter(Boolean)
+      .join(" ");
+  }
+
   function parseCostContext(text: string): ParsedBlock {
     const entries: ParsedEntry[] = [];
     const percentAdjustments: PercentAdj[] = [];
@@ -129,7 +200,12 @@
       .forEach((line) => {
         if (!line) return;
         let matchedAmount = false;
-        const matches = [...line.matchAll(currencyRe)];
+        const labourAllowance = detectLabourAllowance(line);
+        if (labourAllowance) {
+          entries.push(labourAllowance);
+          matchedAmount = true;
+        }
+        const matches = labourAllowance ? [] : [...line.matchAll(currencyRe)];
         matches.forEach((match) => {
           if (!match[0]) return;
           const raw = match[0];
@@ -138,11 +214,19 @@
           if (!Number.isFinite(amount)) {
             return;
           }
+          const nextChar = line[start + raw.length];
+          const hasCurrencySymbol = /\$|AUD|A\$/i.test(raw);
+          if (!hasCurrencySymbol && amount < 100) {
+            return;
+          }
+          if (nextChar && nextChar.trim().startsWith("%")) {
+            return;
+          }
           const around = line
             .slice(Math.max(0, start - 8), Math.min(line.length, start + raw.length + 8))
             .toLowerCase();
           const looksUnitRate =
-            /(per\s|\/|@)\s*(hour|hr|day|week|shift)/i.test(around) || /\b(hr|hour)\b/.test(around);
+            /(per\s|\/|@)\s*(hour|hr|day|week|shift)/i.test(around) || /\b(hr|hour|day|days)\b/.test(around);
           if (looksUnitRate && !/total|sum|allowance|visit|call|mobilisation|materials|supply|install|markup/i.test(line)) {
             return;
           }
@@ -154,7 +238,7 @@
         });
 
         const percentMatches = [...line.matchAll(percentRe)];
-        if (percentMatches.length && /markup|margin|contingency|allowance|buffer|risk|admin/i.test(line)) {
+        if (percentMatches.length) {
           percentMatches.forEach((p) => {
             const pct = toNumber(p[1], NaN);
             if (!Number.isFinite(pct)) return;
@@ -267,8 +351,10 @@ Return ONLY JSON with keys and detailed content:
 Rules:
 - Analyse the free-form pricing context and detected figures to produce professional totals rather than echoing the text.
 - If labour rates are provided (e.g. two techs for 3 days @ $95/hr), multiply them out and explain the assumption in the detail field.
-- If only percentages are given (e.g. 15% markup), apply them to the detected base costs to estimate the amount.
-- Always produce a timeline, even if you must infer it from trade best practice.
+ - If only percentages are given (e.g. 15% markup), apply them to the detected base costs to estimate the amount.
+ - Clean up spelling, casing and grammar of any user-provided allowance names before outputting them in tables.
+ - Convert any percentage surcharges or call-out loadings into dollar figures using the detected base costs so totals remain accurate.
+ - Always produce a timeline, even if you must infer it from trade best practice.
 - Prefer practical Australian trade language.
 - Never copy the user's raw cost sentences verbatim—rewrite allowances, markups and caveats in polished, client-facing language.
 - Pricing notes should summarise the key assumptions or caveats from the brief instead of repeating the same sentences.`;
@@ -383,7 +469,9 @@ Rules:
     const ai = await aiSections();
     const usingAISuggestedLabour = ai.labourSuggest.length > 0;
     const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
-    const aiCostRowsClean = aiCostRows.filter((row) => !/(subtotal|total|gst|tax)/i.test(row.label || ""));
+    const aiCostRowsClean = aiCostRows.filter(
+      (row) => (row.amount || 0) > 0 && !/(subtotal|total|gst|tax)/i.test(row.label || "")
+    );
     const parsedPricingRows: AICostItem[] = parsedCosts.entries.map((entry) => ({
       label: entry.label,
       amount: entry.amount,
@@ -551,7 +639,7 @@ Rules:
         md += `| ${entry.label || "Allowance"} | ${fmt(entry.amount || 0)} | ${note} |\n`;
       });
       let sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-      if (parsedPricingRows.length && markupEntries.length) {
+      if (markupEntries.length && baseCostsTotal > 0) {
         markupEntries.forEach((adj) => {
           md += `| ${adj.label || "Markup"} | ${fmt(adj.amount)} | ${adj.percent ? `${fmtPercent(adj.percent)}% allowance on base costs` : "Markup applied"} |\n`;
         });
@@ -564,15 +652,13 @@ Rules:
       }
       const totalLine = includeGST ? sourceSubtotal * (1 + (gstRate || 0)) : sourceSubtotal;
       md += `| **Client total (AUD)** | **${fmt(totalLine)}** |  |\n\n`;
-      md += `_AI-assisted estimate based on your cost notes — confirm allowances and GST before issuing to the client._\n\n`;
     } else {
       md += `_Add any pricing context above (materials, labour, markups) so we can summarise it here._\n\n`;
     }
     const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : [];
     if (contextNotes.length) {
       md += `**Pricing assumptions & reminders**\n\n`;
-      md += `These notes explain how the allowances above were built—sense check them before you lock in the number.\n\n`;
-      md += contextNotes.map((n) => `- ${n}`).join("\n") + `\n\n`;
+      md += `${listToParagraph(contextNotes)}\n\n`;
     }
 
     if (usingAISuggestedLabour && ai.labourSuggest.length) {
@@ -594,11 +680,11 @@ Rules:
     }
 
     md += `## Project considerations\n\n`;
-    md += `**Working assumptions to confirm**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `**Working assumptions to confirm**\n\n${listToParagraph(assumptions)}\n\n`;
     if (ai.risks && ai.risks.length) {
-      md += `**Site risks & watchpoints**\n\n` + ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
+      md += `**Site risks & watchpoints**\n\n${listToParagraph(ai.risks)}\n\n`;
     }
-    md += `**Exclusions / outside this estimate**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `**Exclusions / outside this estimate**\n\n${listToParagraph(exclusions)}\n\n`;
 
     if (ai.options && ai.options.length) {
       md += `## Optional upgrades (quoted separately)\n\n`;
@@ -616,7 +702,6 @@ Rules:
     md += `**Business contact:** ${
       preparedByPieces.length ? preparedByPieces.join(" — ") : "Add your name and business"
     }${contactPieces.length ? ` · ${contactPieces.join(" · ")}` : ""}  \n`;
-    md += `**AI disclaimer:** This proposal was drafted from your brief using AI. Confirm allowances, GST and timing before sharing it with ${clientName || "the client"}.  \n\n`;
     md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
     md += `Signature: __________________ Date: ________________\n`;
 
