@@ -28,9 +28,10 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const systemPrompt =
-    'You are a Terms & Conditions assistant for Australian tradies. Draft concise, plain-English business terms that clients agree to before work starts.' +
-    ' Focus on expectations, payment rules, responsibilities, variations and compliance. Keep the copy distinct from a proposal.' +
-    ' Reference Australian licensing/warranty obligations when relevant.' +
+    'You are a Terms & Conditions assistant for Australian tradies. Draft clear, plain-English clauses a tradie can attach to any quote or invoice.' +
+    ' Keep the focus on expectations, payment timing, variations, client responsibilities, access, warranties/compliance, and liability.' +
+    ' Do not rewrite the broader proposal or marketing copy—deliver practical conditions only.' +
+    ' Reference Australian standards, licensing and warranty duties when relevant.' +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
   const userContent = {
@@ -55,9 +56,10 @@ export const POST: RequestHandler = async ({ request }) => {
           {
             role: 'user',
             content:
-              'Using the following JSON, produce general trade terms and conditions. Prioritise evergreen clauses (payment milestones, responsibilities, variations, compliance) and add any project-specific notes at the end.' +
-              ' Sections should stay scannable with headings such as Business Overview, Standard Terms, Payment Expectations, Variations, Compliance & Warranty, Dispute Resolution.' +
-              ' Close with a reminder for both parties to review and seek legal advice.' +
+              'Using the following JSON, produce general business terms and conditions a tradie can attach to any project.' +
+              ' Prioritise evergreen clauses (scope & responsibilities, payment milestones, variations, access, warranties/compliance, liability) and keep the tone direct and Australian.' +
+              ' Finish with any project-specific notes (if supplied) and a reminder to review professionally.' +
+              ' Suggested headings: Overview, Scope & Responsibilities, Payment Terms, Variations & Extras, Access & Client Duties, Warranty & Compliance, Liability & Disputes, Project Add-ons.' +
               '\n' +
               JSON.stringify(userContent, null, 2)
           }
@@ -111,11 +113,48 @@ function buildFallback(payload: TermsRequest): string {
   if (payload.businessWebsite) {
     lines.push(`**Website:** ${payload.businessWebsite}`);
   }
+  lines.push('These general terms sit alongside every quote and invoice issued by our team. They set expectations before work starts.');
 
   const generalLines = listFromText(payload.businessNotes);
   if (generalLines.length) {
-    lines.push('\n## Standard business terms', ...generalLines.map((line) => `- ${line}`));
+    lines.push('\n## Business standards & notes', ...generalLines.map((line) => `- ${line}`));
   }
+
+  lines.push(
+    '\n## Scope & responsibilities',
+    '- We deliver the works described in the quote and agreed variations, using licensed trades and following Australian Standards.',
+    '- Client ensures accurate information about site conditions and approvals; extra work caused by unknown issues is treated as a variation.'
+  );
+
+  lines.push(
+    '\n## Payment terms',
+    '- Deposits, progress claims, and balances are due per the quote schedule or within 5 business days if no date is listed.',
+    '- Late or missed payments may pause work and attract interest or debt recovery costs.'
+  );
+
+  lines.push(
+    '\n## Variations & extras',
+    '- Any change to scope, materials, or access is priced in writing and approved before work proceeds.',
+    '- Emergency instructions given onsite are treated as variations and billed accordingly.'
+  );
+
+  lines.push(
+    '\n## Access & client duties',
+    '- Provide safe, continuous access, services (power/water), and clear work areas during agreed hours.',
+    '- Client is responsible for securing valuables, notifying neighbours, and arranging permits unless otherwise agreed.'
+  );
+
+  lines.push(
+    '\n## Warranty & compliance',
+    '- Workmanship is backed by statutory warranties under Australian Consumer Law and relevant state building laws.',
+    '- Manufacturer warranties apply to supplied products; maintenance instructions must be followed to keep cover valid.'
+  );
+
+  lines.push(
+    '\n## Liability & disputes',
+    '- We hold appropriate insurances and limit liability to the cost of re-performing the services, except where legislation prevents this.',
+    '- Disputes should be raised in writing within 7 days so both parties can resolve issues quickly; unresolved matters may go to the relevant tribunal.'
+  );
 
   const projectLines = listFromText(payload.projectSpecificTerms);
   if (projectLines.length) {

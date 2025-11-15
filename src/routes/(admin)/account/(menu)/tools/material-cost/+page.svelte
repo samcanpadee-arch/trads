@@ -86,65 +86,52 @@
   <title>Terms & Conditions Generator</title>
 </svelte:head>
 
-<section class="mx-auto max-w-5xl space-y-8 px-4 py-10">
+<section class="mx-auto max-w-6xl space-y-10 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
-    <div class="space-y-4">
-      <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
-      <div class="space-y-2">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
         <h1 class="text-3xl font-bold leading-tight text-gray-900">Terms & Conditions Generator</h1>
         <p class="max-w-3xl text-base text-gray-700">
-          Lock in a clean, plain-English set of trade terms before every job. We prefill your business identity and you simply
-          add any job-specific notes or evergreen policies—no spreadsheets, no duplicated proposal content.
+          Produce plain-English terms that cover scope, payment expectations, variations, warranties, access, and liability.
+          We pull your business identity automatically—just add any evergreen policies plus job-specific notes when needed.
         </p>
       </div>
-      <a href="/account/tools" class="btn btn-ghost w-fit text-sm">← Back to Smart Tools</a>
+      <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6" on:submit|preventDefault={generate}>
-    <div class="space-y-6">
+  <div class="grid gap-6 lg:grid-cols-2">
+    <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit|preventDefault={generate}>
       <div class="grid gap-4 md:grid-cols-2">
         <label class="form-control gap-2">
           <span class="label-text font-semibold">Business name</span>
-          <input
-            class="input input-bordered"
-            placeholder="e.g. Lawson Civil"
-            bind:value={businessName}
-            aria-describedby="business-name-hint"
-          />
-          <span id="business-name-hint" class="text-xs text-gray-500">Pulled from your profile—update it there if needed.</span>
+          <input class="input input-bordered" placeholder="e.g. Lawson Civil" bind:value={businessName} />
         </label>
         <label class="form-control gap-2">
           <span class="label-text font-semibold">Website or booking link</span>
-          <input
-            class="input input-bordered"
-            placeholder="https://yourbusiness.com.au"
-            bind:value={businessWebsite}
-          />
-          <span class="text-xs text-gray-500">Optional, but helps the copy feel like the rest of your docs.</span>
+          <input class="input input-bordered" placeholder="https://yourbusiness.com.au" bind:value={businessWebsite} />
         </label>
       </div>
 
       <label class="form-control gap-2">
-        <span class="label-text font-semibold">Project-specific add-ons</span>
+        <span class="label-text font-semibold">Project-specific terms</span>
         <textarea
           class="textarea textarea-bordered"
           rows="3"
-          placeholder="Access constraints, special payment milestones, site rules for this job"
+          placeholder="Access rules, staged payments, special responsibilities for this job"
           bind:value={projectSpecificTerms}
         ></textarea>
-        <span class="text-xs text-gray-500">Leave blank if these terms should read as fully generic.</span>
       </label>
 
       <label class="form-control gap-2">
-        <span class="label-text font-semibold">General business terms & standards</span>
+        <span class="label-text font-semibold">General trade policies</span>
         <textarea
           class="textarea textarea-bordered"
           rows="5"
-          placeholder="Licensing, warranties, standard payment structure, variation rules, insurances"
+          placeholder="Payment schedule, variation rules, licensing info, insurances, warranty promises"
           bind:value={businessNotes}
         ></textarea>
-        <span class="text-xs text-gray-500">This powers the core terms your clients agree to every time.</span>
       </label>
 
       {#if errorMessage}
@@ -156,33 +143,26 @@
           {#if loading}
             Drafting…
           {:else}
-            Draft terms
+            Generate terms
           {/if}
         </button>
-        <button type="button" class="btn btn-ghost" on:click={useExample} disabled={loading}>Load example</button>
+        <button type="button" class="btn btn-ghost" on:click={useExample} disabled={loading}>Use example</button>
       </div>
 
       <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
-        These terms are AI-generated. Review them with your legal adviser and confirm they meet licensing obligations before
-        you send or sign anything.
+        These terms are AI-generated. Review them with your legal adviser and confirm they match your licensing obligations
+        before you send or sign anything.
       </div>
-    </div>
-  </form>
+    </form>
 
-  <div class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Preview</p>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-xl font-semibold text-gray-900">Terms & conditions</h2>
+        {#if documentText}
+          <button class="btn btn-sm" type="button" on:click={() => navigator.clipboard?.writeText(documentText)}>Copy</button>
+        {/if}
       </div>
-      {#if documentText}
-        <button class="btn btn-sm" type="button" on:click={() => navigator.clipboard?.writeText(documentText)}>
-          Copy
-        </button>
-      {/if}
-    </div>
 
-    <div class="mt-4">
       {#if loading && !documentText}
         <p class="text-sm text-gray-500">Building your terms…</p>
       {:else if __rich}
