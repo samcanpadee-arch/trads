@@ -43,7 +43,7 @@
 
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
-      href="/account/tools/proposal"
+      href="/account/tools/day-log"
       aria-label="Open Scope Guard Day Log"
     >
       <div class="flex flex-col gap-3">

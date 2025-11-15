@@ -1,4 +1,4 @@
-<!-- /account/tools/proposal → Scope Guard – Day Log Tool -->
+<!-- /account/tools/day-log → Scope Guard – Day Log Tool -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
@@ -10,14 +10,6 @@
   const cleanStr = (value: string | null | undefined) => (value ?? "").trim();
 
   const today = new Date().toISOString().slice(0, 10);
-
-  const keyPurpose = [
-    "Record what was done, who was onsite, and any materials installed.",
-    "Track weather hits, delays, or site access issues the moment they happen.",
-    "Log client chats or verbal approvals so you can reference them later.",
-    "Flag variations or extra work so they don’t go missing on invoices.",
-    "Capture anything unusual (injuries, deliveries, defects) for dispute protection."
-  ];
 
   let jobName = "";
   let logDate = today;
@@ -103,23 +95,10 @@
           <h1 class="text-3xl font-bold leading-tight text-gray-900">Day Log Tool</h1>
         </div>
         <p class="max-w-3xl text-base text-gray-800">
-          Record what actually happened. Crucial for disputes, variations, and remembering what you promised. The Day Log Tool is
-          a simple, AI-enhanced daily record that captures work completed, delays, client chats, and unexpected changes so you
-          can send proof, keep your team aligned, or attach it to quotes and invoices later.
+          Record what actually happened. Crucial for disputes, variations, and remembering what you promised. The Day Log Tool
+          captures crews on site, conversations, weather hits, issues, and scope tweaks so you have a running diary ready for
+          emails, invoices, or evidence later.
         </p>
-        <div class="grid gap-2 text-sm text-gray-800 md:grid-cols-2">
-          {#each keyPurpose as item}
-            <div class="flex items-start gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5 text-amber-600" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M9.55 17.45L4.8 12.7l1.4-1.4l3.35 3.35l8.35-8.35l1.4 1.4z"
-                />
-              </svg>
-              <span>{item}</span>
-            </div>
-          {/each}
-        </div>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
