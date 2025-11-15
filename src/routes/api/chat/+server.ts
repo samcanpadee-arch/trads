@@ -1,11 +1,16 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { consumeRateLimit } from '$lib/server/rate_limit';
+import { profileBrandContext, type ProfileBasics } from '$lib/utils/profile-brand';
 
 type Role = 'system' | 'user' | 'assistant';
 type Msg = { role: Role; content: string };
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const CHAT_SYSTEM_PROMPT = `You are Smart Chat, a conversational co-worker for Australian tradies.
+- Give practical, plain-English answers about jobs, clients, and business admin.
+- Remind people they can paste their own quotes, emails, or site copy if polishing would help.
+- Always finish by suggesting a next step or asking a follow-up question so the chat keeps going (e.g. "Want me to turn that into an SMS?" or "Need me to tighten the wording?").`;
 
 const CHAT_LIMIT = Number.isFinite(Number(process.env.CHAT_RATE_LIMIT)) && Number(process.env.CHAT_RATE_LIMIT) > 0
   ? Number(process.env.CHAT_RATE_LIMIT)
@@ -19,6 +24,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (!session || !user) {
     return new Response('Unauthorized', { status: 401 });
   }
+
+  let profile: ProfileBasics | null = null;
+  try {
+    const { data, error } = await locals.supabase
+      .from('profiles')
+      .select('full_name, company_name, website')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (!error) {
+      profile = (data as ProfileBasics | null) ?? null;
+    }
+  } catch (err) {
+    console.warn('[chat] profile lookup failed', err);
+  }
+
+  const brandContext = profileBrandContext(profile);
 
   const rate = consumeRateLimit(`chat:${user.id}`, { limit: CHAT_LIMIT, windowMs: CHAT_WINDOW_MS });
   if (!rate.allowed) {
@@ -47,6 +68,26 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   // TODO: add real auth/quotas using your existing locals/session helpers
 
+  const hasSystem = messages.some((m) => m.role === 'system');
+  const brandSystem = brandContext
+    ? ({
+        role: 'system',
+        content:
+          `Brand details for this user (use them in signatures, tone, and references):\n${brandContext}\n` +
+          'Mention the business name or website when it helps the client-facing copy stay consistent.'
+      } satisfies Msg)
+    : null;
+
+  const withDefaultSystem = hasSystem
+    ? messages
+    : ([{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...messages] as Msg[]);
+
+  const finalMessages = brandSystem
+    ? hasSystem
+      ? ([brandSystem, ...withDefaultSystem] as Msg[])
+      : ([withDefaultSystem[0]!, brandSystem, ...withDefaultSystem.slice(1)] as Msg[])
+    : withDefaultSystem;
+
   const upstream = await fetch(OPENAI_URL, {
     method: 'POST',
     headers: {
@@ -56,7 +97,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     body: JSON.stringify({
       model,
       stream: true,
-      messages: messages.map((m) => ({ role: m.role, content: m.content }))
+      messages: finalMessages.map((m) => ({ role: m.role, content: m.content }))
     })
   });
 

@@ -2,6 +2,12 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
+  import { profileBrandContext, profileSignature, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const profileContext = profileBrandContext(profile);
+  const profileContact = profileSignature(profile);
 
   // Required
   let brief = "";             // The only required field
@@ -19,6 +25,20 @@
   let output = "";
   let loading = false;
   let briefTouched = false;
+
+  let businessPrefilled = false;
+  let contactPrefilled = false;
+  $: if (!businessPrefilled) {
+    const fallback = (profile?.company_name ?? "").trim();
+    if (fallback) {
+      businessName = fallback;
+      businessPrefilled = true;
+    }
+  }
+  $: if (!contactPrefilled && profileContact) {
+    contact = profileContact;
+    contactPrefilled = true;
+  }
 
   function useExample() {
     brief =
@@ -73,7 +93,8 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       `Tone: ${tone}\n` +
       `KeepItShort: ${keepItShort ? "Yes" : "No"}\n` +
       `Business: ${businessName || "TBA"}\n` +
-      `Contact: ${contact || "TBA"}`;
+      `Contact: ${contact || "TBA"}` +
+      (profileContext ? `\nBrand context:\n${profileContext}` : "");
 
     try {
       const res = await fetch("/api/chat", {

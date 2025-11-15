@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import registry from "$lib/vectorstores.json" assert { type: "json" };
 import { consumeRateLimit } from "$lib/server/rate_limit";
 import type { Database } from "../../../DatabaseDefinitions";
+import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
 
 export const config = { runtime: 'nodejs20.x' };
 
@@ -420,6 +421,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const supabase = locals.supabaseServiceRole as ServiceSupabase | undefined;
 
+    let profile: ProfileBasics | null = null;
+    try {
+      const { data, error } = await locals.supabase
+        .from("profiles")
+        .select("full_name, company_name, website")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!error) {
+        profile = (data as ProfileBasics | null) ?? null;
+      }
+    } catch (err) {
+      console.warn("[assistant] profile lookup failed", err);
+    }
+
+    const brandContext = profileBrandContext(profile);
+
     const API = privateEnv.OPENAI_API_KEY;
     if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
@@ -594,6 +611,12 @@ GROUNDING & CITATIONS (MANDATORY RULES):
    - Do NOT provide exact specifications (numbers with units) in GENERAL mode.
    - If asked for exact values while in GENERAL, explain you cannot provide numeric specs without a manual citation.
 
+REFERENCE NAMING:
+- Always cite using the human-friendly document title or original filename (e.g., "Mitsubishi MLZ-KP Installation Manual DG79T870H01").
+- Never expose internal storage IDs, hashes, or truncated random strings in the answer.
+- If the retrieved metadata is messy, rewrite it into a readable doc name before citing.
+- After the checklist, add a short "References" heading with a bulleted list of each cited document once, using the same clean titles.
+
 ATTACHMENT PRIORITY:
 - When user-uploaded documents exist, search them before consulting the shared library.
 - Prefer citing user uploads first; only rely on the library if the uploads don't cover the request.
@@ -602,6 +625,25 @@ ATTACHMENT PRIORITY:
 STYLE:
 - Be concise but technical. Safety/compliance notes where relevant.
 - End with a short checklist.`;
+
+    const systemBlocks = [
+      { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
+    ];
+
+    if (brandContext) {
+      systemBlocks.push({
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text:
+              "Brand context for this user (use in any suggested comms, notes, or signatures):\n" +
+              `${brandContext}\n` +
+              "If you suggest client-facing wording, align it with this business name/website.",
+          },
+        ],
+      });
+    }
 
     const userText = [
       trade ? `Trade: ${trade}` : null,
@@ -641,10 +683,7 @@ STYLE:
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        input: [
-          { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
-          { role: "user", content: [{ type: "input_text", text: userText }] }
-        ],
+        input: [...systemBlocks, { role: "user", content: [{ type: "input_text", text: userText }] }],
         tools,
         tool_choice: (uniqueVsIds.length ? "required" : "auto"),
         temperature: 0.1
@@ -688,16 +727,6 @@ STYLE:
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
-    }
-
-    if (docReferences.length) {
-      const docList = docReferences.map((name) => `- ${name}`).join("\n");
-      text += `\n\nReferenced documents:\n${docList}`;
-    }
-
-    // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
-    if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
-      text += "\n\n_Note: If the page or section isn’t listed above, please refer to the cited document to confirm the exact location._";
     }
 
     return new Response(

@@ -1,6 +1,11 @@
 <!-- /account/tools/material-cost (v1.3 — clean RichAnswer only, no extra headings, strips currency line) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const brandContext = profileBrandContext(profile);
 
   type Item = { name: string; unitCost: number; quantity: number; discountPct: number };
 
@@ -51,7 +56,12 @@
       const res = await fetch("/api/material-cost", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, markupPercent: toNumber(markupPct), currency })
+        body: JSON.stringify({
+          items,
+          markupPercent: toNumber(markupPct),
+          currency,
+          ...(brandContext ? { brandContext } : {}),
+        })
       });
       if (!res.ok) {
         summary = "Server error: " + (await res.text());

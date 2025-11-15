@@ -1,6 +1,11 @@
 <!-- /account/tools/job-estimation (v3.2 — detailed sections, robust import, editable discounts) -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
+  import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const brandContext = profileBrandContext(profile);
 
   /***** Minimal inputs *****/
   let clientName = "";
@@ -302,7 +307,8 @@ Keep content practical and specific; avoid generic fluff.`;
       (materials.length > 0 ? "Yes" : "No") +
       "\n" +
       "HaveLabour: " +
-      (labour.length > 0 ? "Yes" : "No");
+      (labour.length > 0 ? "Yes" : "No") +
+      (brandContext ? `\nBusiness context:\n${brandContext}` : "");
 
     let text = "";
     try {

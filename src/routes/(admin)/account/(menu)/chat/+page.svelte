@@ -21,6 +21,48 @@
   ];
   let model = models[0].id; // default
 
+  type ChatPrompt = {
+    trade: string;
+    title: string;
+    summary: string;
+    prompt: string;
+  };
+
+  const chatPrompts: ChatPrompt[] = [
+    {
+      trade: 'HVAC',
+      title: 'After-hours breakdown update',
+      summary:
+        'Use when you need to calm a facility manager after a late-night rooftop fault.',
+      prompt:
+        "Got called to an after-hours rooftop package unit fault at a supermarket. We stabilised it but need a proper fix tomorrow. Help me summarise what we did, what’s still pending, and ask the manager to confirm access for the morning crew."
+    },
+    {
+      trade: 'Electrical',
+      title: 'Coach the apprentice on quoting',
+      summary:
+        'Chat through how to explain an EV charger install without sounding robotic.',
+      prompt:
+        "My apprentice has to call a client about installing a 7 kW EV charger in an older brick home. Draft the talking points so they can explain the scope, rough budget, and what info we still need, while sounding confident but relaxed."
+    },
+    {
+      trade: 'Carpentry',
+      title: 'Weather delay chat with a client',
+      summary:
+        'Keep the relationship warm when rain stalls framing or decking work.',
+      prompt:
+        "Week of rain has pushed back a deck build in Geelong. Help me write a friendly update that explains what’s already done, what’s waiting on dry weather, and offers a revised schedule plus ways we can keep momentum."
+    },
+    {
+      trade: 'Plumbing',
+      title: 'Warranty callback boundaries',
+      summary:
+        'Talk through what’s covered and what’s billable on repeat leaks.',
+      prompt:
+        "Client keeps ringing about a leaking mixer we replaced six months ago. Draft a message that walks through the warranty position, what checks we’ll run on the next visit, and how we’ll handle charges if it’s a new issue."
+    }
+  ];
+
   let input = '';
   let streaming = false;
   let streamingIndex: number | null = null;
@@ -28,6 +70,7 @@
   let storageReady = false;
   let chatContainer: HTMLDivElement | null = null;
   let shouldStickToBottom = true;
+  let chatPromptsOpen = false;
 
   const serialize = (value: Msg[]) => JSON.stringify(value);
 
@@ -74,6 +117,10 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 
+  function loadChatPrompt(prompt: string) {
+    input = prompt;
+  }
+
   function handleScroll() {
     if (!chatContainer) return;
     const distanceFromBottom =
@@ -86,7 +133,8 @@
     if (!input.trim() || streaming) return;
 
     errorMsg = null;
-    const nextMessages = [...messages, { role: 'user', content: input }];
+    const userMessage: Msg = { role: 'user', content: input };
+    const nextMessages = [...messages, userMessage];
     const payload = { messages: nextMessages, model };
 
     messages = nextMessages;
@@ -204,26 +252,32 @@
           <p class="text-xs font-semibold uppercase tracking-wide text-primary">Live thread</p>
           <p class="text-sm text-gray-600">Chat history saves locally so you can pick up where you left off.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <label class="text-xs font-semibold uppercase tracking-wide text-gray-500" for="chat-model">Model</label>
-          <select
-            id="chat-model"
-            class="select select-bordered w-full sm:w-auto sm:select-sm"
-            bind:value={model}
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500" for="chat-model">Model</label>
+            <select
+              id="chat-model"
+              class="select select-bordered w-full sm:w-auto sm:select-sm"
+              bind:value={model}
+              disabled={streaming}
+            >
+              {#each models as m}
+                <option value={m.id}>{m.label}</option>
+              {/each}
+            </select>
+          </div>
+          <button
+            class="btn btn-outline btn-error btn-sm w-full sm:w-auto"
+            on:click={clearChat}
             disabled={streaming}
           >
-            {#each models as m}
-              <option value={m.id}>{m.label}</option>
-            {/each}
-          </select>
-          <button class="btn btn-ghost w-full sm:w-auto sm:btn-sm" on:click={clearChat} disabled={streaming}>
-            Clear
+            Clear chat
           </button>
         </div>
       </div>
 
       <div
-        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[420px] max-h-[65vh] overflow-y-auto space-y-4"
+        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[540px] sm:h-[720px] max-h-[80vh] overflow-y-auto space-y-4"
         bind:this={chatContainer}
         on:scroll={handleScroll}
       >
@@ -269,6 +323,42 @@
     </div>
 
     <aside class="space-y-4">
+      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white via-amber-50/70 to-white p-5 shadow-sm backdrop-blur space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Chat prompts</p>
+          <p class="text-sm text-gray-600">Insert a proven scenario without typing it all out.</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs justify-between border border-primary/30 bg-white/80 px-3 text-primary"
+          on:click={() => (chatPromptsOpen = !chatPromptsOpen)}
+          aria-expanded={chatPromptsOpen}
+        >
+          <span>{chatPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
+          <span>{chatPromptsOpen ? '–' : '+'}</span>
+        </button>
+        {#if chatPromptsOpen}
+          <div class="space-y-3">
+            {#each chatPrompts as prompt}
+              <article class="rounded-2xl border border-white/60 bg-white/80 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">{prompt.trade}</p>
+                <h3 class="text-sm font-semibold text-gray-900">{prompt.title}</h3>
+                <p class="mt-1 text-xs text-gray-600">{prompt.summary}</p>
+                <button
+                  type="button"
+                  class="btn btn-outline btn-xs mt-2"
+                  on:click={() => loadChatPrompt(prompt.prompt)}
+                >
+                  Use this prompt
+                </button>
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-xs text-gray-500">Tap to open when you want ideas.</p>
+        {/if}
+      </div>
+
       <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/70 to-rose-50/70 p-5 shadow-sm backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Best results</p>
         <ul class="mt-3 space-y-2 text-sm text-gray-700">
@@ -277,14 +367,19 @@
           <li>• Keep the thread open—Smart Chat remembers what you’ve tried.</li>
         </ul>
       </div>
-      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
-        <p class="text-sm font-semibold text-gray-900">Need manuals or pricing tools?</p>
-        <p class="mt-1 text-sm text-gray-600">
-          Jump into the Tradie Library or Smart Tools when you need standards, proposals, or calculators to back up the chat.
-        </p>
-        <div class="mt-4 flex flex-wrap gap-2 text-sm font-medium">
-          <a class="btn btn-outline btn-sm" href="/account/assistant">Tradie Library</a>
-          <a class="btn btn-ghost btn-sm" href="/account/tools">Smart Tools</a>
+      <div class="rounded-2xl border border-dashed border-gray-200 bg-white/80 p-4 shadow-sm">
+        <div class="flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+            💡
+          </span>
+          <div class="text-sm text-gray-700 space-y-1">
+            <p class="font-semibold text-gray-900">Polish what you already have</p>
+            <p>
+              Paste any quote template, email, or website copy straight into Smart Chat and ask it to tighten the wording,
+              keep the tone, or spin a fresh version.
+            </p>
+            <p class="text-xs text-gray-500">Handy when you need to modernise legacy docs without starting from scratch.</p>
+          </div>
         </div>
       </div>
     </aside>

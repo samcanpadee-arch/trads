@@ -2,6 +2,11 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
+  import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const brandContext = profileBrandContext(profile);
 
   let trade = "Electrical";
   let projectBrief = "";
@@ -9,6 +14,15 @@
 
   let output = "";
   let loading = false;
+
+  let businessPrefilled = false;
+  $: if (!businessPrefilled) {
+    const fallback = (profile?.company_name ?? "").trim();
+    if (fallback) {
+      businessName = fallback;
+      businessPrefilled = true;
+    }
+  }
 
   function useExample() {
     trade = "Electrical";
@@ -31,12 +45,14 @@ Structure (headings optional, paragraphs required):
 5) Pricing Summary — single paragraph noting that itemised pricing is provided separately (e.g., estimate/quote); do not invent numbers.
 6) Closing & Next Steps — invite approval or a site visit.
 7) Signature — include business name/contact if provided.
+If "brandContext" appears in the JSON payload, weave those business details into the closing paragraphs.
 Rules: No invented specifics. No bullet lists. Write cohesive paragraphs in a warm, professional Aussie tone.`;
 
     const userPayload = {
       trade,
       projectBrief,
-      businessName: businessName || null
+      businessName: businessName || null,
+      brandContext: brandContext || null
     };
 
     try {

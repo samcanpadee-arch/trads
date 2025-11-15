@@ -42,6 +42,90 @@
   let share = false;
   let message = "";
 
+  type AssistantPrompt = {
+    trade: string;
+    title: string;
+    summary: string;
+    references: string[];
+    form: {
+      trade?: string;
+      brandModel?: string;
+      focus: typeof focuses[number]["value"];
+      message: string;
+    };
+  };
+
+  const assistantPrompts: AssistantPrompt[] = [
+    {
+      trade: "HVAC",
+      title: "Bulkhead cassette service sheet",
+      summary:
+        "Great for tight medical tenancies where you need the Mitsubishi MLZ-KP checklist filled out with real manual references.",
+      references: [
+        "Mitsubishi MLZ-KP Bulkhead Cassette Manual DG79T870H01",
+        "Mitsubishi Indoor Unit Maintenance Guide"
+      ],
+      form: {
+        trade: "HVAC",
+        brandModel: "Mitsubishi MLZ-KP bulkhead cassette manual DG79T870H01",
+        focus: "maintenance",
+        message:
+          "Servicing a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Need a maintenance worksheet that covers access, filter and condensate care, leak checks, and what to note on the service docket with references to the factory manual."
+      }
+    },
+    {
+      trade: "Electrical",
+      title: "Switchboard changeover game plan",
+      summary:
+        "Maps out the site checks, tests, and safety notes using the Wiring Rules and Managing Electrical Risks guide.",
+      references: [
+        "AS/NZS 3000:2018 – Wiring Rules",
+        "Safe Work Australia – Managing Electrical Risks guide"
+      ],
+      form: {
+        trade: "Electrical",
+        brandModel: "AS/NZS 3000:2018 and Safe Work Managing Electrical Risks guide",
+        focus: "compliance",
+        message:
+          "Upgrading a weatherboard home to RCBOs after repeated nuisance trips. Give me the isolation steps, discrimination tips, and insulation/polarity tests to log so I can brief the crew and finish the CCEW. Keep it grounded in the Wiring Rules and the Safe Work guide."
+      }
+    },
+    {
+      trade: "Carpentry",
+      title: "Pergola + stair variation notes",
+      summary:
+        "Helps you talk through structural changes while pointing at AS 1684 and the NCC housing provisions.",
+      references: [
+        "AS 1684 Timber Framing Code",
+        "NCC Volume Two – Housing Provisions"
+      ],
+      form: {
+        trade: "Carpentry",
+        brandModel: "AS 1684 Timber Framing and NCC Volume Two",
+        focus: "compliance",
+        message:
+          "Client wants the rear pergola extended and the stairs widened with a new balustrade on a 90s townhouse. Outline the framing sizes, fixings, balustrade heights, and any inspection photos I should grab so the variation paperwork lines up with AS 1684 and the NCC."
+      }
+    },
+    {
+      trade: "Plumbing",
+      title: "Trade waste maintenance log",
+      summary:
+        "Turns AS/NZS 3500 guidance into a ready-to-send plan for strata or facility managers dealing with repeat blockages.",
+      references: [
+        "AS/NZS 3500 Plumbing and Drainage",
+        "Building and Plumbing Handbook / WaterMark service notes"
+      ],
+      form: {
+        trade: "Plumbing",
+        brandModel: "AS/NZS 3500 and Building & Plumbing Handbook",
+        focus: "maintenance",
+        message:
+          "Strata has ongoing trade waste blockages in a 12-unit block. Need a maintenance plan covering access, jetting/CCTV cadence, paperwork to keep for compliance, and how to explain the schedule to the committee based on AS/NZS 3500 guidance."
+      }
+    }
+  ];
+
   type ShareFeedback = {
     name: string;
     status: "attached" | "already" | "failed";
@@ -57,6 +141,7 @@
   let errorMsg = "";
   let answer = "";
   let copied = false;
+  let assistantPromptsOpen = false;
 
   const statusMessages: Record<FileStatus["status"], string> = {
     ready: "Ready to upload",
@@ -268,6 +353,13 @@
     } catch {
       errorMsg = "Couldn’t copy to clipboard.";
     }
+  }
+
+  function applyAssistantPrompt(prompt: AssistantPrompt) {
+    trade = prompt.form.trade ?? "";
+    brandModel = prompt.form.brandModel ?? "";
+    focus = prompt.form.focus;
+    message = prompt.form.message;
   }
 </script>
 
@@ -548,12 +640,48 @@
           <li>• Summaries stay in the thread so you can copy and drop into notes later.</li>
         </ul>
       </div>
-      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
-        <p class="text-sm font-semibold text-gray-900">Need inspo?</p>
-        <p class="mt-1 text-sm text-gray-600">Try:
-          <em>“Show me the AS/NZS clause for bonding a pool pump enclosure and what to check before inspection.”</em>
-        </p>
-        <button type="button" class="btn btn-outline btn-sm mt-4" on:click={fillExample}>Fill with an example</button>
+      <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant prompts</p>
+          <p class="text-sm text-gray-600">Loads the trade, manual, and focus fields for you.</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm justify-between border border-amber-200/70 bg-amber-50/60 px-4 font-semibold text-amber-800"
+          on:click={() => (assistantPromptsOpen = !assistantPromptsOpen)}
+          aria-expanded={assistantPromptsOpen}
+        >
+          <span>{assistantPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
+          <span>{assistantPromptsOpen ? '–' : '+'}</span>
+        </button>
+        {#if assistantPromptsOpen}
+          <div class="space-y-3">
+            {#each assistantPrompts as prompt}
+              <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{prompt.trade}</p>
+                <h3 class="text-base font-semibold text-gray-900">{prompt.title}</h3>
+                <p class="mt-1 text-sm text-gray-600">{prompt.summary}</p>
+                <div class="mt-3 text-xs text-amber-800">
+                  <p class="font-semibold uppercase tracking-wide">Cites</p>
+                  <ul class="mt-1 space-y-0.5">
+                    {#each prompt.references as ref}
+                      <li>• {ref}</li>
+                    {/each}
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-xs mt-3"
+                  on:click={() => applyAssistantPrompt(prompt)}
+                >
+                  Use this prompt
+                </button>
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-gray-500">Prompts stay tucked away until you need them.</p>
+        {/if}
       </div>
     </aside>
   </div>
