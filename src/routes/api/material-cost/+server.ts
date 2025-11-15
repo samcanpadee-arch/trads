@@ -15,6 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const payload: TermsRequest = {
     businessName: clean(body.businessName, 200),
     businessWebsite: clean(body.businessWebsite, 200),
+    trade: clean(body.trade, 40) || 'General',
     projectSpecificTerms: clean(body.projectSpecificTerms, 1200),
     businessNotes: clean(body.businessNotes, 2000),
     brandContext: clean(body.brandContext, 500)
@@ -32,11 +33,13 @@ export const POST: RequestHandler = async ({ request }) => {
     ' Keep the focus on expectations, payment timing, variations, client responsibilities, access, warranties/compliance, and liability.' +
     ' Do not rewrite the broader proposal or marketing copy—deliver practical conditions only.' +
     ' Reference Australian standards, licensing and warranty duties when relevant.' +
+    (payload.trade ? `\nTrade focus: ${payload.trade}` : '') +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
   const userContent = {
     businessName: payload.businessName,
     businessWebsite: payload.businessWebsite,
+    trade: payload.trade,
     evergreenPolicies: listFromText(payload.businessNotes),
     projectSpecific: listFromText(payload.projectSpecificTerms)
   };
@@ -86,6 +89,7 @@ export const POST: RequestHandler = async ({ request }) => {
 type TermsRequest = {
   businessName: string;
   businessWebsite: string;
+  trade: string;
   projectSpecificTerms: string;
   businessNotes: string;
   brandContext: string;
@@ -112,6 +116,9 @@ function buildFallback(payload: TermsRequest): string {
   }
   if (payload.businessWebsite) {
     lines.push(`**Website:** ${payload.businessWebsite}`);
+  }
+  if (payload.trade && payload.trade !== 'General') {
+    lines.push(`**Trade focus:** ${payload.trade}`);
   }
   lines.push('These general terms sit alongside every quote and invoice issued by our team. They set expectations before work starts.');
 
