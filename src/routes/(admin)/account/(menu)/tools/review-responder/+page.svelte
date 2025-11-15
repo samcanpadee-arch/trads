@@ -2,6 +2,11 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
+  import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const brandContext = profileBrandContext(profile);
 
   // Minimal inputs
   let businessName = "";
@@ -23,6 +28,15 @@
 
   let output = "";
   let loading = false;
+
+  let businessPrefilled = false;
+  $: if (!businessPrefilled) {
+    const fallback = (profile?.company_name ?? "").trim();
+    if (fallback) {
+      businessName = fallback;
+      businessPrefilled = true;
+    }
+  }
 
   function useExample() {
     businessName = "BrightBuild Renovations";
@@ -70,7 +84,8 @@ ${reviewText.trim()}
 Context:
 ${details}
 
-If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business is provided, you may sign off with it.`;
+If IncludeEmojis=Yes, you may add 1–2 light emojis max (no spam). If Business is provided, you may sign off with it.
+${brandContext ? `Brand context:\n${brandContext}` : ""}`;
 
     try {
       const res = await fetch("/api/chat", {

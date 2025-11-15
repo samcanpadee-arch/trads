@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import registry from "$lib/vectorstores.json" assert { type: "json" };
 import { consumeRateLimit } from "$lib/server/rate_limit";
 import type { Database } from "../../../DatabaseDefinitions";
+import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
 
 export const config = { runtime: 'nodejs20.x' };
 
@@ -420,6 +421,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const supabase = locals.supabaseServiceRole as ServiceSupabase | undefined;
 
+    let profile: ProfileBasics | null = null;
+    try {
+      const { data, error } = await locals.supabase
+        .from("profiles")
+        .select("full_name, company_name, website")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!error) {
+        profile = (data as ProfileBasics | null) ?? null;
+      }
+    } catch (err) {
+      console.warn("[assistant] profile lookup failed", err);
+    }
+
+    const brandContext = profileBrandContext(profile);
+
     const API = privateEnv.OPENAI_API_KEY;
     if (!API) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
@@ -609,6 +626,25 @@ STYLE:
 - Be concise but technical. Safety/compliance notes where relevant.
 - End with a short checklist.`;
 
+    const systemBlocks = [
+      { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
+    ];
+
+    if (brandContext) {
+      systemBlocks.push({
+        role: "system",
+        content: [
+          {
+            type: "input_text",
+            text:
+              "Brand context for this user (use in any suggested comms, notes, or signatures):\n" +
+              `${brandContext}\n` +
+              "If you suggest client-facing wording, align it with this business name/website.",
+          },
+        ],
+      });
+    }
+
     const userText = [
       trade ? `Trade: ${trade}` : null,
       brand ? `Brand/Model or Standard: ${brand}` : null,
@@ -647,10 +683,7 @@ STYLE:
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        input: [
-          { role: "system", content: [{ type: "input_text", text: SYSTEM }] },
-          { role: "user", content: [{ type: "input_text", text: userText }] }
-        ],
+        input: [...systemBlocks, { role: "user", content: [{ type: "input_text", text: userText }] }],
         tools,
         tool_choice: (uniqueVsIds.length ? "required" : "auto"),
         temperature: 0.1

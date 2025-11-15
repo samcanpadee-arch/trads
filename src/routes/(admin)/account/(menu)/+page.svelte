@@ -120,6 +120,12 @@
     <p class="mt-3 text-base text-gray-700 max-w-3xl">
       Your AI on the tools, from site to spreadsheets. Ask for anything: job wording, pricing ideas, client comms, or “how do I fix this?” You’ll get clear, friendly help in seconds.
     </p>
+    <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-amber-800">
+      <span>Need the public site?</span>
+      <a class="link link-primary" href="/" target="_blank" rel="noreferrer">
+        Visit tradieassistant.com ↗
+      </a>
+    </div>
     <div class="mt-6 grid gap-4 sm:grid-cols-2">
       <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
         <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat tip</p>

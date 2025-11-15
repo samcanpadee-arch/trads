@@ -2,6 +2,12 @@
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { getChatErrorMessage } from "$lib/utils/chat-errors";
+  import { profileBrandContext, profileSignature, type ProfileBasics } from "$lib/utils/profile-brand";
+
+  export let data: { profile?: ProfileBasics | null };
+  const profile = data?.profile ?? null;
+  const brandContext = profileBrandContext(profile);
+  const profileContact = profileSignature(profile);
 
   // Minimal inputs
   let brief = ""; // required
@@ -33,6 +39,20 @@
   let hashtags: string[] = [];
   let mediaIdeas: string[] = [];
   let loading = false;
+
+  let businessPrefilled = false;
+  let contactPrefilled = false;
+  $: if (!businessPrefilled) {
+    const fallback = (profile?.company_name ?? "").trim();
+    if (fallback) {
+      businessName = fallback;
+      businessPrefilled = true;
+    }
+  }
+  $: if (!contactPrefilled && profileContact) {
+    contact = profileContact;
+    contactPrefilled = true;
+  }
 
   function togglePlatform(p: string, checked: boolean) {
     if (checked) {
@@ -96,6 +116,7 @@ Return ONLY strict JSON:
         businessName,
         serviceArea,
         contact,
+        brandContext,
       },
     };
 

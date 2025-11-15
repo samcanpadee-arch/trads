@@ -118,21 +118,21 @@
         <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Consistency matters</p>
         <h3 class="mt-2 text-xl font-semibold text-gray-900">Look pro across every workflow</h3>
         <p class="mt-2 text-sm text-gray-700">
-          Smart Chat replies, Tradie Library answers, quotes, and SMS templates all pull from these settings. Keep names, numbers,
-          and websites up to date so clients always see the right details.
+          Smart Chat, Smart Assistant, and every Smart Tool now pull your business name and website straight from these settings.
+          Keep them current so every proposal, email, and checklist sounds like it came from your crew.
         </p>
         <ul class="mt-4 space-y-2 text-sm text-gray-800">
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Share one profile across mobile and desktop.</span>
+            <span>Share one profile across mobile, desktop, and every workflow.</span>
           </li>
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Company info appears on quotes & paperwork workflows.</span>
+            <span>Email, proposal, review, and social templates now auto-fill with your company info.</span>
           </li>
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Ensure the Tradie Assistant greets clients with the right brand.</span>
+            <span>Smart Chat and Smart Assistant sign-offs stay on-brand without extra typing.</span>
           </li>
         </ul>
       </div>

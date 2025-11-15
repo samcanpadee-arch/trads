@@ -1,5 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { consumeRateLimit } from '$lib/server/rate_limit';
+import { profileBrandContext, type ProfileBasics } from '$lib/utils/profile-brand';
 
 type Role = 'system' | 'user' | 'assistant';
 type Msg = { role: Role; content: string };
@@ -23,6 +24,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (!session || !user) {
     return new Response('Unauthorized', { status: 401 });
   }
+
+  let profile: ProfileBasics | null = null;
+  try {
+    const { data, error } = await locals.supabase
+      .from('profiles')
+      .select('full_name, company_name, website')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (!error) {
+      profile = (data as ProfileBasics | null) ?? null;
+    }
+  } catch (err) {
+    console.warn('[chat] profile lookup failed', err);
+  }
+
+  const brandContext = profileBrandContext(profile);
 
   const rate = consumeRateLimit(`chat:${user.id}`, { limit: CHAT_LIMIT, windowMs: CHAT_WINDOW_MS });
   if (!rate.allowed) {
@@ -52,9 +69,24 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   // TODO: add real auth/quotas using your existing locals/session helpers
 
   const hasSystem = messages.some((m) => m.role === 'system');
-  const finalMessages = hasSystem
+  const brandSystem = brandContext
+    ? ({
+        role: 'system',
+        content:
+          `Brand details for this user (use them in signatures, tone, and references):\n${brandContext}\n` +
+          'Mention the business name or website when it helps the client-facing copy stay consistent.'
+      } satisfies Msg)
+    : null;
+
+  const withDefaultSystem = hasSystem
     ? messages
     : ([{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...messages] as Msg[]);
+
+  const finalMessages = brandSystem
+    ? hasSystem
+      ? ([brandSystem, ...withDefaultSystem] as Msg[])
+      : ([withDefaultSystem[0]!, brandSystem, ...withDefaultSystem.slice(1)] as Msg[])
+    : withDefaultSystem;
 
   const upstream = await fetch(OPENAI_URL, {
     method: 'POST',

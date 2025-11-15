@@ -15,7 +15,7 @@ type Row = {
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 export const POST: RequestHandler = async ({ request }) => {
-  let body: { items?: ItemIn[]; markupPercent?: number; currency?: string } = {};
+  let body: { items?: ItemIn[]; markupPercent?: number; currency?: string; brandContext?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -25,6 +25,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const currency = (body.currency || 'AUD').toUpperCase();
   const markupPercent = clamp(num(body.markupPercent), 0, 1000);
   const raw = Array.isArray(body.items) ? body.items : [];
+  const brandContext = typeof body.brandContext === 'string' ? body.brandContext.trim().slice(0, 500) : '';
 
   const rows: Row[] = raw.map((r) => {
     const unit = clamp(num(r.unitCost), 0, 1e12);
@@ -58,7 +59,10 @@ export const POST: RequestHandler = async ({ request }) => {
     "You are a sophisticated calculation tool tailored for Australian tradies. " +
     "Given itemised materials (with trade discounts) and a markup %, present a clear, client-ready summary. " +
     "Include each material's cost before/after discount, the total material cost, profit from markup, and final total. " +
-    "Keep it concise and professional. Use the provided numbers exactly; do not alter calculations.";
+    "Keep it concise and professional. Use the provided numbers exactly; do not alter calculations." +
+    (brandContext
+      ? " Mention the business details supplied so the close or CTA sounds like it came from that company."
+      : '');
 
   const userContent = {
     currency,
@@ -72,7 +76,8 @@ export const POST: RequestHandler = async ({ request }) => {
       discountAmount: r.discountAmount,
       subtotal: r.subtotal
     })),
-    totals: { totalMaterial, profit, finalTotal }
+    totals: { totalMaterial, profit, finalTotal },
+    ...(brandContext ? { brandContext } : {})
   };
 
   try {
@@ -99,7 +104,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
     if (!r.ok) {
       const err = await r.text();
-      return json({ ...payload, summary: fallbackSummary(rows, payload.totals), error: `OpenAI error: ${err}` });
+      return json({
+        ...payload,
+        summary: fallbackSummary(rows, payload.totals, brandContext),
+        error: `OpenAI error: ${err}`
+      });
     }
 
     const data = await r.json();
@@ -107,7 +116,11 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ ...payload, summary: text });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'LLM failed';
-    return json({ ...payload, summary: fallbackSummary(rows, payload.totals), error: message });
+    return json({
+      ...payload,
+      summary: fallbackSummary(rows, payload.totals, brandContext),
+      error: message
+    });
   }
 };
 
@@ -125,7 +138,11 @@ const num = (v: unknown) => {
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const money = (n: number, ccy: string) => n.toLocaleString(undefined, { style: 'currency', currency: ccy });
 
-function fallbackSummary(rows: Row[], t: { currency: string; markupPercent: number; totalMaterial: number; profit: number; finalTotal: number }) {
+function fallbackSummary(
+  rows: Row[],
+  t: { currency: string; markupPercent: number; totalMaterial: number; profit: number; finalTotal: number },
+  brandContext?: string,
+) {
   const lines = [
     `Materials (after trade discounts): ${money(t.totalMaterial, t.currency)}`,
     `Profit (${t.markupPercent}%): ${money(t.profit, t.currency)}`,
@@ -137,6 +154,9 @@ function fallbackSummary(rows: Row[], t: { currency: string; markupPercent: numb
         `• ${r.name || 'Material'} — Before: ${money(r.before, t.currency)}, Discount: ${money(r.discountAmount, t.currency)}, Subtotal: ${money(r.subtotal, t.currency)}`
     )
   ];
+  if (brandContext) {
+    lines.push('', `Brand context: ${brandContext}`);
+  }
   return lines.join('\n');
 }
 
