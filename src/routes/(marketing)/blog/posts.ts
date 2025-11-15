@@ -1,6 +1,6 @@
 export const blogInfo = {
-  name: "SaaS Starter Blog",
-  description: "A sample blog",
+  name: "Tradie Assistant Field Notes",
+  description: "Workflow tips, quoting plays, and AI automation ideas for busy tradies.",
 }
 
 export type BlogPost = {
@@ -15,22 +15,25 @@ export type BlogPost = {
 // Create a page in the "(posts)" directory for each entry
 const blogPosts: BlogPost[] = [
   {
-    title: "How we built a beautiful 41kb SaaS website with this template",
-    description: "How to use this template you to bootstrap your own site.",
-    link: "/blog/how_we_built_our_41kb_saas_website",
-    date: "2024-03-10",
+    title: "Smart Chat templates for job updates clients trust",
+    description:
+      "Turn site photos and field notes into on-brand emails and SMS updates with reusable Smart Chat prompts.",
+    link: "/blog/smart_chat_job_updates",
+    date: "2024-05-18",
   },
   {
-    title: "Example Blog Post 2",
-    description: "Even more example content!",
-    link: "/blog/awesome_post",
-    date: "2022-9-23",
+    title: "Inside the Tradie Library: manuals that answer compliance questions",
+    description:
+      "How Pro crews use Smart Assistant to cite standards, manuals, and safety guides while they write.",
+    link: "/blog/tradie_library_manuals",
+    date: "2024-04-02",
   },
   {
-    title: "Example Blog Post",
-    description: "A sample blog post, showing our blog engine",
-    link: "/blog/example_blog_post",
-    date: "2023-03-13",
+    title: "A quoting playbook that keeps margins healthy",
+    description:
+      "Pair Smart Tools with your price book to draft proposals, variations, and upsells in minutes.",
+    link: "/blog/quoting_playbook",
+    date: "2024-02-26",
   },
 ]
 

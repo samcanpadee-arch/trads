@@ -83,11 +83,11 @@
 
 <section class="max-w-5xl mx-auto px-4 py-10 space-y-8">
   <header class="rounded-3xl bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border border-amber-200/70 px-6 py-8 shadow-sm">
-    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Billing & subscriptions</p>
-    <h1 class="mt-3 text-3xl font-bold text-gray-900">Keep your plan site-ready</h1>
+    <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Billing</p>
+    <h1 class="mt-3 text-3xl font-bold text-gray-900">Billing</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
-      Review your current plan, check when the next invoice lands, and jump into Stripe to switch tiers,
-      update payment methods, download invoices, or tweak billing info. Everything lives in Stripe so changes are applied instantly.
+      Review your current Tradie Assistant plan, confirm upcoming invoices, and open the Stripe customer portal to
+      update payment methods, download receipts, or switch between Standard and Pro tiers.
     </p>
   </header>
 

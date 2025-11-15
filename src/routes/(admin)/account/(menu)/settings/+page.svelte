@@ -16,11 +16,11 @@
 
 <section class="max-w-5xl mx-auto px-4 py-10 space-y-8">
   <header class="rounded-3xl bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border border-amber-200/70 px-6 py-8 shadow-sm">
-    <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Account settings</p>
-    <h1 class="mt-3 text-3xl font-bold text-gray-900">Polish every detail before clients see it</h1>
+    <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Account</p>
+    <h1 class="mt-3 text-3xl font-bold text-gray-900">Settings</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
-      Keep your company profile, logins, and email preferences in sync so every quote, SMS, and Tradie Library reply
-      lands with the right branding. Updates here flow straight through the app, across devices.
+      Update your Tradie Assistant profile, login details, and notification preferences so Smart Chat, Smart Assistant,
+      and every Smart Tool stay on-brand across proposals, manuals, and client comms.
     </p>
   </header>
 

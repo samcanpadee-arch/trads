@@ -5,13 +5,16 @@
 {#if !$page.data?.allowed}
   <section class="max-w-3xl mx-auto px-4 pt-6">
     <div class="alert alert-info">
-      <span>
-        <strong>Smart Assistant is a Pro-plan feature.</strong>
-        Upgrade to unlock the Smart Assistant to get specific and technical help with manuals, guides, standards, and more. 
+      <span class="space-y-1">
+        <strong>Smart Assistant lives on the Pro plan.</strong>
+        <span>
+          Upgrade to unlock the Tradie Library so every answer cites manuals, guides, compliance standards, and job-ready
+          worksheets tailored to your trade.
+        </span>
       </span>
     </div>
-    <div class="mt-4 flex gap-3">
-      <a class="btn btn-primary" href="/pricing?upgrade=assistant">See plans</a>
+    <div class="mt-4 flex flex-wrap gap-3">
+      <a class="btn btn-primary" href="/pricing?upgrade=assistant">Upgrade to Pro</a>
       <a class="btn btn-ghost" href="/account">Back to account</a>
     </div>
   </section>

@@ -25,8 +25,8 @@
   --color-base-200: #faedd6;
   --color-base-300: oklch(92% 0.04 240);
   --color-base-content: #180042;
-  --color-info: oklch(70% 0.2 220);
-  --color-info-content: oklch(98% 0.01 220);
+  --color-info: color-mix(in srgb, var(--color-primary) 70%, white 30%);
+  --color-info-content: color-mix(in srgb, var(--color-primary-content) 85%, var(--color-primary) 15%);
   --color-success: #37d399;
   --color-success-content: oklch(98% 0.01 140);
   --color-warning: oklch(80% 0.25 80);
@@ -60,6 +60,9 @@
     --brand-color-muted-strong: color-mix(in srgb, var(--brand-color-text) 88%, white 12%);
     --brand-color-muted: color-mix(in srgb, var(--brand-color-text) 65%, white 35%);
     --brand-color-accent: var(--color-primary);
+    --brand-color-eyebrow-strong: color-mix(in srgb, var(--brand-color-accent) 82%, white 18%);
+    --brand-color-eyebrow-subtle: color-mix(in srgb, var(--brand-color-accent) 65%, white 35%);
+    --brand-color-eyebrow-deep: color-mix(in srgb, var(--brand-color-accent) 92%, black 8%);
     --brand-heading-1: clamp(2.5rem, 1.5rem + 2vw, 3.8rem);
     --brand-heading-2: clamp(2rem, 1rem + 1.5vw, 2.8rem);
     --brand-heading-3: clamp(1.5rem, 0.9rem + 0.8vw, 2.1rem);
@@ -308,5 +311,26 @@ button[disabled].authBtn::before {
 
   .border-slate-400 {
     border-color: color-mix(in srgb, var(--brand-color-text) 35%, white 65%);
+  }
+
+  .text-amber-700,
+  .text-amber-600,
+  .text-amber-600\/90,
+  .text-amber-600\/80 {
+    color: var(--brand-color-eyebrow-strong);
+  }
+
+  .text-amber-500,
+  .text-amber-500\/80 {
+    color: var(--brand-color-eyebrow-subtle);
+  }
+
+  .text-amber-800 {
+    color: color-mix(in srgb, var(--brand-color-eyebrow-deep) 90%, black 10%);
+  }
+
+  .text-amber-900,
+  .text-amber-900\/90 {
+    color: var(--brand-color-eyebrow-deep);
   }
 }
