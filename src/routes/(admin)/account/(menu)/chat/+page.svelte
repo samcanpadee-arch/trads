@@ -30,52 +30,36 @@
 
   const chatPrompts: ChatPrompt[] = [
     {
-      trade: 'Electrical',
-      title: 'Quote follow-up that wins the work',
+      trade: 'HVAC',
+      title: 'Service recap + next steps',
       summary:
-        'Turn a switchboard upgrade scope into polished quote wording plus a friendly follow-up.',
+        'Have Smart Chat summarise what you serviced and what the client should do next.',
       prompt:
-        "I’m an electrician quoting a switchboard upgrade with RCBOs in an older brick home. Draft the quote summary, list the safety upgrades in bullet points, and give me a follow-up SMS that nudges the client to approve it this week."
+        "Just wrapped a quarterly service on three ducted systems at a childcare centre. Summarise what we checked, highlight any follow-up work, and write an SMS so the centre manager knows the systems are healthy."
+    },
+    {
+      trade: 'Electrical',
+      title: 'Quote follow-up that feels human',
+      summary:
+        'Turn a switchboard upgrade scope into friendly quote wording plus a nudge to accept.',
+      prompt:
+        "I’m chasing up a switchboard upgrade quote on a 1970s brick home. Turn my scope into a short summary with 3 dot points, then draft a follow-up SMS that sounds like a real tradie and nudges them to approve it this week."
+    },
+    {
+      trade: 'Carpentry',
+      title: 'Variation explainer for custom joinery',
+      summary:
+        'Explain a scope change in plain English and keep the relationship warm.',
+      prompt:
+        "Midway through a kitchen reno the client asked for custom oak shelving and LED strips. Help me write a variation email that sets out the extra labour/materials, adjusted timeline, and keeps the tone positive."
     },
     {
       trade: 'Plumbing',
-      title: 'Maintenance contract play',
+      title: 'Recurring maintenance pitch',
       summary:
-        'Pitch quarterly drain maintenance with ROI talking points and tidy proposal copy.',
+        'Sell a preventative plan without sounding salesy.',
       prompt:
-        "I’m a plumber pitching a quarterly drain maintenance plan for a 12-unit block. Outline the inclusions, pricing options, and a short paragraph I can paste into a proposal explaining why preventative jetting saves money."
-    },
-    {
-      trade: 'HVAC',
-      title: 'Service handover helper',
-      summary:
-        'Explain what was serviced, what’s next, and how the client should care for the system.',
-      prompt:
-        "I’ve finished a full HVAC service for a childcare centre. Summarise what we inspected, flag the next seasonal checks, and give me a short message I can send the manager so they know the system is good to go."
-    },
-    {
-      trade: 'Roofing',
-      title: 'Insurance-ready job notes',
-      summary:
-        'Document storm damage clearly and tee up the right insurer wording.',
-      prompt:
-        "I’m a roofer on the Gold Coast helping a homeowner lodge a storm-damage claim. Draft a job note that documents the damage, temporary works completed, and the replacement scope tied to QBCC guidelines."
-    },
-    {
-      trade: 'Solar',
-      title: 'Monitoring + maintenance explainer',
-      summary:
-        'Help homeowners see the value in looking after their system and paying for monitoring.',
-      prompt:
-        "I’ve installed a 6.6kW solar system and want to upsell monitoring plus an annual clean. Give me talking points for the benefits, a quick health checklist to leave with the homeowner, and an SMS that nudges them to book the first service."
-    },
-    {
-      trade: 'Landscaping',
-      title: 'Variation & upsell helper',
-      summary:
-        'Capture the extra scope and turn it into approval-ready wording.',
-      prompt:
-        "I’m a landscaper in Adelaide. Mid-project, the client added a spotted-gum deck extension and upgraded lighting. Give me a variation email outlining new scope, costs, and next steps while sounding like a friendly tradie."
+        "Body corporate for a 16-unit block keeps calling us for blocked stacks. Draft a short plan that explains quarterly jetting + CCTV checks, rough pricing tiers, and a follow-up SMS to get approval."
     }
   ];
 
@@ -287,7 +271,7 @@
       </div>
 
       <div
-        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[420px] sm:h-[520px] max-h-[75vh] overflow-y-auto space-y-4"
+        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[480px] sm:h-[620px] max-h-[80vh] overflow-y-auto space-y-4"
         bind:this={chatContainer}
         on:scroll={handleScroll}
       >

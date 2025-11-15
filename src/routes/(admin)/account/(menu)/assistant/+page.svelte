@@ -57,27 +57,10 @@
 
   const assistantPrompts: AssistantPrompt[] = [
     {
-      trade: "Electrical",
-      title: "Switchboard upgrade with RCBOs",
-      summary:
-        "Keep it in plain English while still flagging the Safe Work and AS/NZS refs the Assistant should cite.",
-      references: [
-        "AS/NZS 3000:2018 residual current device guidance",
-        "Safe Work Australia – Managing Electrical Risks guide"
-      ],
-      form: {
-        trade: "Electrical",
-        brandModel: "AS/NZS 3000:2018 + Safe Work electrical risks guide",
-        focus: "compliance",
-        message:
-          "Upgrading a 2010 brick home switchboard to RCBOs. Remind me what AS/NZS 3000 says about discrimination between the lighting and power circuits, what tests I should jot on the CCEW, and call out any Safe Work electrical risk reminders I should give the apprentice."
-      }
-    },
-    {
       trade: "HVAC",
-      title: "Daikin multi-split commissioning checklist",
+      title: "Commission a Daikin multi split without missing steps",
       summary:
-        "Hands over the CTXM/FTXM model numbers so the response can drop in torque, vacuum, and leak-test pointers.",
+        "Loads the CTXM/FTXM manuals so you get torque, vacuum, and handover notes straight from Daikin.",
       references: [
         "Daikin CTXM-A / FTXM-A Installation Manual 3PEN697375-8B",
         "Daikin FTXM20-50A Operation Manual 3PEN728539-3"
@@ -87,38 +70,58 @@
         brandModel: "Daikin CTXM/FTXM multi split manuals 3PEN697375-8B + 3PEN728539-3",
         focus: "install",
         message:
-          "Commissioning a 4-head Daikin CTXM/FTXM multi split in a two-storey townhouse. Run me through the flare torque targets, max pipe runs per port, the micron level before I open the service valves, and the key handover notes from manuals 3PEN697375-8B and 3PEN728539-3."
+          "Commissioning a four-head Daikin CTXM/FTXM multi split in a two-storey townhouse. Walk me through the flare torque targets, acceptable pipe runs per port, the micron level before opening the service valves, and the key handover tips Daikin spells out. Keep it in everyday language but cite the manuals."
       }
     },
     {
-      trade: "Solar",
-      title: "Solar compliance wrap + customer blurb",
+      trade: "Electrical",
+      title: "Switchboard upgrade checklist with plain-English tests",
       summary:
-        "Points the Assistant at Panasonic VKR + CEC guidance so you get a tidy compliance note and client copy.",
+        "References AS/NZS 3000 and the Safe Work electrical risks guide without expecting the tradie to quote clauses.",
       references: [
-        "Panasonic VKR Operating Manual",
-        "Clean Energy Council install & supervision guidelines"
+        "AS/NZS 3000:2018 – Wiring Rules",
+        "Safe Work Australia – Managing Electrical Risks guide"
       ],
       form: {
         trade: "Electrical",
-        brandModel: "Panasonic VKR 6.6kW inverter",
+        brandModel: "AS/NZS 3000:2018 + Managing Electrical Risks guide",
         focus: "compliance",
         message:
-          "Wrapped a 6.6kW Panasonic VKR job in WA. Need a quick compliance summary that references the Panasonic VKR operating manual and the CEC install guidelines, including shutdown labels, DC isolator spots, and maintenance notes. Finish with a short email paragraph to drop into the client pack."
+          "Upgrading an older weatherboard switchboard to RCBOs. Spell out how to keep the lighting and power circuits coordinated, what insulation resistance + polarity tests to record on the CCEW, and any Safe Work reminders I should give the apprentice. Refer to the Wiring Rules and Managing Electrical Risks guide by name, not clause numbers."
       }
     },
     {
-      trade: "Mechanical",
-      title: "Bulkhead cassette service log",
+      trade: "Carpentry",
+      title: "Timber stair variation that cites the right standards",
       summary:
-        "Targets the Mitsubishi MLZ-KP doc so the reply spells out filter + tray steps with proper references.",
-      references: ["Mitsubishi MLZ-KP Bulkhead Installation Manual DG79T870H01"],
+        "Points the Assistant at AS 1684 and NCC Vol 2 so the answer fills the form with believable references.",
+      references: [
+        "AS 1684 Timber Framing Code",
+        "NCC Volume Two – Housing Provisions (stair + balustrade sections)"
+      ],
       form: {
-        trade: "HVAC",
-        brandModel: "Mitsubishi MLZ-KP bulkhead cassette manual DG79T870H01",
+        trade: "Carpentry",
+        brandModel: "AS 1684 Timber Framing + NCC Volume Two",
+        focus: "compliance",
+        message:
+          "Client wants to widen a hardwood stair and add a new balustrade in a 90s townhouse. Help me outline the material spec, fixing approach, and compliance notes that AS 1684 and NCC Volume Two call for. Include anything I should photograph for the variation file."
+      }
+    },
+    {
+      trade: "Plumbing",
+      title: "Maintenance plan for repeat sewer blockages",
+      summary:
+        "Uses AS/NZS 3500 and WaterMark guidance so you can fill every field before sending the job off.",
+      references: [
+        "AS/NZS 3500 Plumbing and Drainage",
+        "Queensland Urban Drainage Manual / WaterMark maintenance notes"
+      ],
+      form: {
+        trade: "Plumbing",
+        brandModel: "AS/NZS 3500 + WaterMark maintenance notes",
         focus: "maintenance",
         message:
-          "Servicing a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Give me a maintenance worksheet that covers access needs, filter cleaning/replacement intervals, condensate tray checks, and leak test pressures, pointing back to manual DG79T870H01. Add a note about warranty impacts if the schedule slips."
+          "Body corporate keeps calling us for the same 12-unit sewer choke. Draft a maintenance worksheet that covers access requirements, jetting intervals, CCTV recommendations, and anything AS/NZS 3500 says about documenting repeat blockages. Wrap up with how to brief the committee in plain English."
       }
     }
   ];
