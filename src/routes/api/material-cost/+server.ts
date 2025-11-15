@@ -13,13 +13,10 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const payload: TermsRequest = {
-    clientName: clean(body.clientName, 200),
-    projectContext: clean(body.projectContext, 800),
-    scopeSummary: clean(body.scopeSummary, 1500),
-    paymentStructure: clean(body.paymentStructure, 800),
-    responsibilities: clean(body.responsibilities, 1000),
-    variations: clean(body.variations, 800),
-    additionalTerms: clean(body.additionalTerms, 1000),
+    businessName: clean(body.businessName, 200),
+    businessWebsite: clean(body.businessWebsite, 200),
+    projectSpecificTerms: clean(body.projectSpecificTerms, 1200),
+    businessNotes: clean(body.businessNotes, 2000),
     brandContext: clean(body.brandContext, 500)
   };
 
@@ -31,18 +28,16 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const systemPrompt =
-    'You are a Terms & Conditions assistant for Australian tradies. Draft concise, plain-English terms that focus on obligations, payment expectations, and compliance rather than a full proposal.' +
-    ' Keep sections scannable, reference Australian standards where relevant, and make sure the tone suits small trade businesses.' +
+    'You are a Terms & Conditions assistant for Australian tradies. Draft concise, plain-English business terms that clients agree to before work starts.' +
+    ' Focus on expectations, payment rules, responsibilities, variations and compliance. Keep the copy distinct from a proposal.' +
+    ' Reference Australian licensing/warranty obligations when relevant.' +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
   const userContent = {
-    clientName: payload.clientName,
-    projectContext: payload.projectContext,
-    scope: listFromText(payload.scopeSummary),
-    paymentStructure: payload.paymentStructure,
-    responsibilities: listFromText(payload.responsibilities),
-    variations: payload.variations,
-    additionalTerms: payload.additionalTerms
+    businessName: payload.businessName,
+    businessWebsite: payload.businessWebsite,
+    evergreenPolicies: listFromText(payload.businessNotes),
+    projectSpecific: listFromText(payload.projectSpecificTerms)
   };
 
   try {
@@ -60,8 +55,9 @@ export const POST: RequestHandler = async ({ request }) => {
           {
             role: 'user',
             content:
-              'Using the following JSON, draft trade-friendly terms & conditions only. Include headings such as Overview, Scope & Inclusions, Payment Terms, Responsibilities, Variations & Extras, Compliance & Warranties, and Dispute Resolution / Termination.' +
-              ' Keep it distinct from a sales proposal and finish with a short reminder to review the terms before issuing.' +
+              'Using the following JSON, produce general trade terms and conditions. Prioritise evergreen clauses (payment milestones, responsibilities, variations, compliance) and add any project-specific notes at the end.' +
+              ' Sections should stay scannable with headings such as Business Overview, Standard Terms, Payment Expectations, Variations, Compliance & Warranty, Dispute Resolution.' +
+              ' Close with a reminder for both parties to review and seek legal advice.' +
               '\n' +
               JSON.stringify(userContent, null, 2)
           }
@@ -86,13 +82,10 @@ export const POST: RequestHandler = async ({ request }) => {
 };
 
 type TermsRequest = {
-  clientName: string;
-  projectContext: string;
-  scopeSummary: string;
-  paymentStructure: string;
-  responsibilities: string;
-  variations: string;
-  additionalTerms: string;
+  businessName: string;
+  businessWebsite: string;
+  projectSpecificTerms: string;
+  businessNotes: string;
   brandContext: string;
 };
 
@@ -112,33 +105,23 @@ function listFromText(value: string): string[] {
 function buildFallback(payload: TermsRequest): string {
   const lines: string[] = [];
   lines.push('# Terms & Conditions');
-  if (payload.clientName || payload.projectContext) {
-    lines.push(
-      `**Client / project:** ${payload.clientName || 'Not specified'}${
-        payload.projectContext ? ` — ${payload.projectContext}` : ''
-      }`
-    );
+  if (payload.businessName) {
+    lines.push(`**Business:** ${payload.businessName}`);
   }
-  if (payload.projectContext) {
-    lines.push('\n## Overview', payload.projectContext);
+  if (payload.businessWebsite) {
+    lines.push(`**Website:** ${payload.businessWebsite}`);
   }
-  const scope = listFromText(payload.scopeSummary);
-  if (scope.length) {
-    lines.push('\n## Scope & inclusions', ...scope.map((item) => `- ${item}`));
+
+  const generalLines = listFromText(payload.businessNotes);
+  if (generalLines.length) {
+    lines.push('\n## Standard business terms', ...generalLines.map((line) => `- ${line}`));
   }
-  const responsibilities = listFromText(payload.responsibilities);
-  if (responsibilities.length) {
-    lines.push('\n## Responsibilities & site rules', ...responsibilities.map((item) => `- ${item}`));
+
+  const projectLines = listFromText(payload.projectSpecificTerms);
+  if (projectLines.length) {
+    lines.push('\n## Project-specific additions', ...projectLines.map((line) => `- ${line}`));
   }
-  if (payload.paymentStructure) {
-    lines.push('\n## Payment terms', payload.paymentStructure);
-  }
-  if (payload.variations) {
-    lines.push('\n## Variations & extras', payload.variations);
-  }
-  if (payload.additionalTerms) {
-    lines.push('\n## Compliance & other conditions', payload.additionalTerms);
-  }
+
   lines.push('\n> These terms are a guide only. Review with your legal adviser before sending.');
   return lines.join('\n').trim();
 }

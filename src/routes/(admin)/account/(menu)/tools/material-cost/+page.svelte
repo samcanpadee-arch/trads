@@ -7,35 +7,37 @@
   const profile = data?.profile ?? null;
   const brandContext = profileBrandContext(profile);
 
-  let clientName = "";
-  let projectContext = "";
-  let scopeSummary = "";
-  let paymentStructure = "";
-  let responsibilities = "";
-  let variations = "";
-  let additionalTerms = "";
+  const defaultBusinessName = (profile?.company_name ?? "").trim();
+  const defaultWebsite = (profile?.website ?? "").trim();
+
+  let businessName = defaultBusinessName;
+  let businessWebsite = defaultWebsite;
+  let projectSpecificTerms = "";
+  let businessNotes = "";
 
   let loading = false;
   let errorMessage = "";
   let documentText = "";
 
   function useExample() {
-    clientName = "Kelly Builders";
-    projectContext = "Bathroom refresh at 54 Crossley St, Port Melbourne. Internal works only with access between 7am-4pm.";
-    scopeSummary = [
-      "Strip out existing tiles, fixtures and waterproofing",
-      "Prep and waterproof floor and wet walls",
-      "Supply/install tiles, trims, vanity, toilet, tapware",
-      "Commission plumbing, electrical and final clean"
+    if (!businessName) {
+      businessName = "Portside Plumbing Co.";
+    }
+    if (!businessWebsite) {
+      businessWebsite = "portsideplumbing.com.au";
+    }
+    projectSpecificTerms = [
+      "Project: Laundry re-fit at 12 Victoria St, Northcote",
+      "Client provides clear access via rear lane between 7am-4pm",
+      "Allow one shutdown of water (max 2 hrs). Notice required for extra shutdowns",
+      "Tile selections finalised before demo starts"
     ].join("\n");
-    paymentStructure = "40% deposit to secure materials, 40% progress after waterproofing sign-off, 20% due within 3 days of handover. Late fees at 2% per week.";
-    responsibilities = [
-      "Client keeps driveway clear and pets confined",
-      "Client makes tile/tapware selections by 18 May",
-      "Builder manages waste removal and dust control"
+    businessNotes = [
+      "Licensed VIC plumbers (LIC 123456) with $20M public liability",
+      "Standard payment: 40% deposit, progress at rough-in, balance within 5 days of completion",
+      "Variations priced in writing and approved via SMS/email before work proceeds",
+      "We follow NCC + AS/NZS 3500 and warrant labour for 6 years"
     ].join("\n");
-    variations = "Extras outside this scope will be priced and approved before work continues. Hourly variations billed at $95/hr + materials.";
-    additionalTerms = "Quote valid 30 days. Work to NCC + AS/NZS 3500 with $20M public liability. Warranty applies per QBCC guidelines.";
   }
 
   async function generate(event: Event) {
@@ -45,13 +47,10 @@
     documentText = "";
 
     const payload = {
-      clientName,
-      projectContext,
-      scopeSummary,
-      paymentStructure,
-      responsibilities,
-      variations,
-      additionalTerms,
+      businessName,
+      businessWebsite,
+      projectSpecificTerms,
+      businessNotes,
       ...(brandContext ? { brandContext } : {}),
     };
 
@@ -90,12 +89,12 @@
 <section class="mx-auto max-w-5xl space-y-8 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
     <div class="space-y-4">
-      <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Agreements</p>
+      <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
       <div class="space-y-2">
         <h1 class="text-3xl font-bold leading-tight text-gray-900">Terms & Conditions Generator</h1>
         <p class="max-w-3xl text-base text-gray-700">
-          Skip the spreadsheets and draft the fine print faster. Capture the context, inclusions, and payment rules you work to,
-          then let the assistant turn it into tidy terms for your clients to accept alongside your estimates or proposals.
+          Lock in a clean, plain-English set of trade terms before every job. We prefill your business identity and you simply
+          add any job-specific notes or evergreen policies—no spreadsheets, no duplicated proposal content.
         </p>
       </div>
       <a href="/account/tools" class="btn btn-ghost w-fit text-sm">← Back to Smart Tools</a>
@@ -106,68 +105,46 @@
     <div class="space-y-6">
       <div class="grid gap-4 md:grid-cols-2">
         <label class="form-control gap-2">
-          <span class="label-text">Client / business</span>
-          <input class="input input-bordered" placeholder="e.g. Lawson Civil" bind:value={clientName} />
+          <span class="label-text font-semibold">Business name</span>
+          <input
+            class="input input-bordered"
+            placeholder="e.g. Lawson Civil"
+            bind:value={businessName}
+            aria-describedby="business-name-hint"
+          />
+          <span id="business-name-hint" class="text-xs text-gray-500">Pulled from your profile—update it there if needed.</span>
         </label>
-        <label class="form-control gap-2 md:col-span-1">
-          <span class="label-text">Project context & site</span>
-          <textarea
-            class="textarea textarea-bordered"
-            rows="2"
-            placeholder="Key location details, start windows, constraints"
-            bind:value={projectContext}
-          ></textarea>
+        <label class="form-control gap-2">
+          <span class="label-text font-semibold">Website or booking link</span>
+          <input
+            class="input input-bordered"
+            placeholder="https://yourbusiness.com.au"
+            bind:value={businessWebsite}
+          />
+          <span class="text-xs text-gray-500">Optional, but helps the copy feel like the rest of your docs.</span>
         </label>
       </div>
 
       <label class="form-control gap-2">
-        <span class="label-text">Scope & inclusions</span>
+        <span class="label-text font-semibold">Project-specific add-ons</span>
         <textarea
           class="textarea textarea-bordered"
           rows="3"
-          placeholder="Bullet list of what you're delivering"
-          bind:value={scopeSummary}
+          placeholder="Access constraints, special payment milestones, site rules for this job"
+          bind:value={projectSpecificTerms}
         ></textarea>
+        <span class="text-xs text-gray-500">Leave blank if these terms should read as fully generic.</span>
       </label>
 
       <label class="form-control gap-2">
-        <span class="label-text">Payment structure</span>
+        <span class="label-text font-semibold">General business terms & standards</span>
         <textarea
           class="textarea textarea-bordered"
-          rows="2"
-          placeholder="Deposits, progress claims, due dates, late fees"
-          bind:value={paymentStructure}
+          rows="5"
+          placeholder="Licensing, warranties, standard payment structure, variation rules, insurances"
+          bind:value={businessNotes}
         ></textarea>
-      </label>
-
-      <label class="form-control gap-2">
-        <span class="label-text">Responsibilities & site rules</span>
-        <textarea
-          class="textarea textarea-bordered"
-          rows="2"
-          placeholder="Access, selections, utilities, client prep, your obligations"
-          bind:value={responsibilities}
-        ></textarea>
-      </label>
-
-      <label class="form-control gap-2">
-        <span class="label-text">Variations & extras</span>
-        <textarea
-          class="textarea textarea-bordered"
-          rows="2"
-          placeholder="How changes are approved and priced"
-          bind:value={variations}
-        ></textarea>
-      </label>
-
-      <label class="form-control gap-2">
-        <span class="label-text">Other terms / compliance</span>
-        <textarea
-          class="textarea textarea-bordered"
-          rows="2"
-          placeholder="Licensing, warranty, insurance, dispute resolution, etc."
-          bind:value={additionalTerms}
-        ></textarea>
+        <span class="text-xs text-gray-500">This powers the core terms your clients agree to every time.</span>
       </label>
 
       {#if errorMessage}
@@ -185,10 +162,10 @@
         <button type="button" class="btn btn-ghost" on:click={useExample} disabled={loading}>Load example</button>
       </div>
 
-      <p class="text-xs text-gray-500">
-        These terms are AI-generated. Review with your legal adviser and make sure they align with licensing and contract
-        obligations before sharing with clients.
-      </p>
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
+        These terms are AI-generated. Review them with your legal adviser and confirm they meet licensing obligations before
+        you send or sign anything.
+      </div>
     </div>
   </form>
 
