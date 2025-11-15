@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 
 @plugin '@tailwindcss/typography';
@@ -24,8 +25,8 @@
   --color-base-200: #faedd6;
   --color-base-300: oklch(92% 0.04 240);
   --color-base-content: #180042;
-  --color-info: oklch(70% 0.2 220);
-  --color-info-content: oklch(98% 0.01 220);
+  --color-info: color-mix(in srgb, var(--color-primary) 70%, white 30%);
+  --color-info-content: color-mix(in srgb, var(--color-primary-content) 85%, var(--color-primary) 15%);
   --color-success: #37d399;
   --color-success-content: oklch(98% 0.01 140);
   --color-warning: oklch(80% 0.25 80);
@@ -48,6 +49,68 @@
   /* effects */
   --depth: 1;
   --noise: 0;
+}
+
+@layer base {
+  :root {
+    --brand-font-body: "Inter", "Inter var", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --brand-font-heading: "Space Grotesk", "Inter", "Inter var", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --brand-color-text: var(--color-base-content);
+    --brand-color-surface: var(--color-base-100);
+    --brand-color-muted-strong: color-mix(in srgb, var(--brand-color-text) 88%, white 12%);
+    --brand-color-muted: color-mix(in srgb, var(--brand-color-text) 65%, white 35%);
+    --brand-color-accent: var(--color-primary);
+    --brand-color-eyebrow-strong: color-mix(in srgb, var(--brand-color-accent) 82%, white 18%);
+    --brand-color-eyebrow-subtle: color-mix(in srgb, var(--brand-color-accent) 65%, white 35%);
+    --brand-color-eyebrow-deep: color-mix(in srgb, var(--brand-color-accent) 92%, black 8%);
+    --brand-heading-1: clamp(2.5rem, 1.5rem + 2vw, 3.8rem);
+    --brand-heading-2: clamp(2rem, 1rem + 1.5vw, 2.8rem);
+    --brand-heading-3: clamp(1.5rem, 0.9rem + 0.8vw, 2.1rem);
+    --brand-heading-4: clamp(1.25rem, 0.85rem + 0.3vw, 1.5rem);
+  }
+
+  body.brand-surface {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--brand-font-body);
+    color: var(--brand-color-text);
+    background-color: var(--brand-color-surface);
+    text-rendering: optimizeLegibility;
+  }
+
+  .brand-typography {
+    font-family: var(--brand-font-body);
+    color: var(--brand-color-text);
+  }
+
+  .brand-typography :is(h1, h2, h3, h4) {
+    font-family: var(--brand-font-heading);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-bottom: 0.75rem;
+    color: var(--brand-color-text);
+  }
+
+  .brand-typography h1 {
+    font-size: var(--brand-heading-1);
+    line-height: 1.05;
+  }
+
+  .brand-typography h2 {
+    font-size: var(--brand-heading-2);
+    line-height: 1.15;
+  }
+
+  .brand-typography h3 {
+    font-size: var(--brand-heading-3);
+    line-height: 1.25;
+  }
+
+  .brand-typography h4 {
+    font-size: var(--brand-heading-4);
+    line-height: 1.35;
+  }
 }
 
 /*
@@ -133,3 +196,141 @@ button[disabled].authBtn::before {
   }
 }
 /* MOBILE-SELECT-FIX END */
+
+@layer components {
+  .brand-heading {
+    font-family: var(--brand-font-heading);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--brand-color-text);
+  }
+
+  .brand-heading--xl {
+    font-size: var(--brand-heading-1);
+    line-height: 1.05;
+  }
+
+  .brand-heading--lg {
+    font-size: var(--brand-heading-2);
+    line-height: 1.15;
+  }
+
+  .brand-heading--md {
+    font-size: var(--brand-heading-3);
+    line-height: 1.25;
+  }
+
+  .brand-heading--sm {
+    font-size: var(--brand-heading-4);
+    line-height: 1.35;
+  }
+
+  .brand-heading--xs {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .brand-copy {
+    font-family: var(--brand-font-body);
+    color: var(--brand-color-muted-strong);
+    line-height: 1.7;
+  }
+
+  .brand-copy--lead {
+    font-size: clamp(1.125rem, 0.7vw + 1rem, 1.5rem);
+    line-height: 1.8;
+    color: color-mix(in srgb, var(--brand-color-text) 92%, white 8%);
+  }
+
+  .brand-copy--small {
+    font-size: 0.9375rem;
+  }
+
+  .brand-copy--muted {
+    color: var(--brand-color-muted);
+  }
+
+  .brand-eyebrow {
+    font-family: var(--brand-font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--brand-color-accent) 80%, white 20%);
+  }
+
+  .brand-eyebrow--pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand-color-accent) 55%, white 45%);
+    background-color: color-mix(in srgb, var(--brand-color-accent) 8%, white 92%);
+  }
+
+  .brand-eyebrow--subtle {
+    letter-spacing: 0.25em;
+    font-size: 0.7rem;
+    opacity: 0.85;
+  }
+}
+
+@layer utilities {
+  .text-slate-900 {
+    color: var(--brand-color-text);
+  }
+
+  .text-slate-800 {
+    color: color-mix(in srgb, var(--brand-color-text) 92%, white 8%);
+  }
+
+  .text-slate-700 {
+    color: color-mix(in srgb, var(--brand-color-text) 85%, white 15%);
+  }
+
+  .text-slate-600 {
+    color: color-mix(in srgb, var(--brand-color-text) 72%, white 28%);
+  }
+
+  .text-slate-500 {
+    color: color-mix(in srgb, var(--brand-color-text) 60%, white 40%);
+  }
+
+  .text-slate-400 {
+    color: color-mix(in srgb, var(--brand-color-text) 45%, white 55%);
+  }
+
+  .border-slate-200 {
+    border-color: color-mix(in srgb, var(--brand-color-text) 18%, white 82%);
+  }
+
+  .border-slate-300 {
+    border-color: color-mix(in srgb, var(--brand-color-text) 25%, white 75%);
+  }
+
+  .border-slate-400 {
+    border-color: color-mix(in srgb, var(--brand-color-text) 35%, white 65%);
+  }
+
+  .text-amber-700,
+  .text-amber-600,
+  .text-amber-600\/90,
+  .text-amber-600\/80 {
+    color: var(--brand-color-eyebrow-strong);
+  }
+
+  .text-amber-500,
+  .text-amber-500\/80 {
+    color: var(--brand-color-eyebrow-subtle);
+  }
+
+  .text-amber-800 {
+    color: color-mix(in srgb, var(--brand-color-eyebrow-deep) 90%, black 10%);
+  }
+
+  .text-amber-900,
+  .text-amber-900\/90 {
+    color: var(--brand-color-eyebrow-deep);
+  }
+}
