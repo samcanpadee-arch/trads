@@ -1,87 +1,102 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-type ItemIn = { name?: string; unitCost?: number; quantity?: number; discountPct?: number };
-type Row = {
-  name: string;
-  unit: number;
-  qty: number;
-  disc: number;
-  discountedUnit: number;
-  before: number;
-  discountAmount: number;
-  subtotal: number;
+type DocType = 'swms' | 'toolbox' | 'induction';
+
+const DOC_LABEL: Record<DocType, string> = {
+  swms: 'Safe Work Method Statement (SWMS)',
+  toolbox: 'Toolbox Talk Summary',
+  induction: 'Site Induction Outline'
 };
 
+const DOC_GUIDANCE: Record<DocType, string> = {
+  swms:
+    'Structure the SWMS with a short overview, scope, task-by-task hazards, risk controls, PPE, and supervision notes. Mention relevant Australian standards or WHS duties when appropriate.',
+  toolbox:
+    'Provide key discussion points, hazard reminders, housekeeping actions, and takeaways for the crew toolbox talk. Use bullet points with clear actions and call out PPE/permits when referenced.',
+  induction:
+    'Lay out a logical order for inducting new people onto site: welcome, site rules, hazards, emergency plan, communication, and responsibilities. Finish with a recap of must-dos before they start work.'
+};
+
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 export const POST: RequestHandler = async ({ request }) => {
-  let body: { items?: ItemIn[]; markupPercent?: number; currency?: string; brandContext?: string } = {};
+  let body: Partial<{
+    docType: DocType;
+    projectName: string;
+    siteLocation: string;
+    workDescription: string;
+    hazards: string;
+    controls: string;
+    crew: string;
+    notes: string;
+    includeSignOff: boolean;
+    brandContext: string;
+  }> = {};
+
   try {
     body = await request.json();
   } catch {
     return new Response('Invalid JSON', { status: 400 });
   }
 
-  const currency = (body.currency || 'AUD').toUpperCase();
-  const markupPercent = clamp(num(body.markupPercent), 0, 1000);
-  const raw = Array.isArray(body.items) ? body.items : [];
-  const brandContext = typeof body.brandContext === 'string' ? body.brandContext.trim().slice(0, 500) : '';
+  const docType: DocType = isDocType(body.docType) ? body.docType : 'swms';
+  const docLabel = DOC_LABEL[docType];
 
-  const rows: Row[] = raw.map((r) => {
-    const unit = clamp(num(r.unitCost), 0, 1e12);
-    const qty = clamp(num(r.quantity), 0, 1e9);
-    const disc = clamp(num(r.discountPct), 0, 100);
-    const name = (r.name || '').toString().slice(0, 200);
-    const discountedUnit = unit * (1 - disc / 100);
-    const before = unit * qty;
-    const subtotal = discountedUnit * qty;
-    const discountAmount = before - subtotal;
-    return { name, unit, qty, disc, discountedUnit, before, discountAmount, subtotal };
-  });
+  const projectName = clean(body.projectName, 200);
+  const siteLocation = clean(body.siteLocation, 200);
+  const workDescription = clean(body.workDescription, 1200);
+  const hazards = clean(body.hazards, 1200);
+  const controls = clean(body.controls, 1200);
+  const crew = clean(body.crew, 800);
+  const notes = clean(body.notes, 800);
+  const includeSignOff = Boolean(body.includeSignOff);
+  const brandContext = clean(body.brandContext, 500);
 
-  const totalMaterial = rows.reduce((s, r) => s + r.subtotal, 0);
-  const profit = (totalMaterial * markupPercent) / 100;
-  const finalTotal = totalMaterial + profit;
-
-  // Base response
-  const payload = {
-    breakdown: rows,
-    totals: { currency, markupPercent, totalMaterial, profit, finalTotal }
+  const requestPayload = {
+    docType,
+    docLabel,
+    projectName,
+    siteLocation,
+    workDescription,
+    hazards,
+    controls,
+    crew,
+    notes,
+    includeSignOff,
+    brandContext,
   };
 
-  // Optional: call OpenAI to generate a polished summary
+  const fallback = buildFallback(requestPayload);
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return json({ ...payload, summary: fallbackSummary(rows, payload.totals) });
+    return json({ document: fallback, usedFallback: true });
   }
 
   const systemPrompt =
-    "You are a sophisticated calculation tool tailored for Australian tradies. " +
-    "Given itemised materials (with trade discounts) and a markup %, present a clear, client-ready summary. " +
-    "Include each material's cost before/after discount, the total material cost, profit from markup, and final total. " +
-    "Keep it concise and professional. Use the provided numbers exactly; do not alter calculations." +
-    (brandContext
-      ? " Mention the business details supplied so the close or CTA sounds like it came from that company."
-      : '');
+    `You are Safety Document Assistant for Australian tradies. Prepare a ${docLabel} using the provided context.` +
+    ' Write in clear Australian English, keep paragraphs short, and favour bullet lists.' +
+    ' Reference Aussie WHS expectations when relevant. ' +
+    DOC_GUIDANCE[docType] +
+    (includeSignOff
+      ? ' Always finish with a sign-off or distribution block summarising who needs to acknowledge the document.'
+      : '') +
+    (brandContext ? '\nBrand context: ' + brandContext : '');
 
   const userContent = {
-    currency,
-    markupPercent,
-    items: rows.map((r) => ({
-      name: r.name,
-      unitCost: r.unit,
-      quantity: r.qty,
-      discountPct: r.disc,
-      before: r.before,
-      discountAmount: r.discountAmount,
-      subtotal: r.subtotal
-    })),
-    totals: { totalMaterial, profit, finalTotal },
-    ...(brandContext ? { brandContext } : {})
+    projectName,
+    siteLocation,
+    workDescription,
+    hazards: listFromText(hazards),
+    controls: listFromText(controls),
+    crew: listFromText(crew),
+    notes,
+    includeSignOff,
   };
 
   try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(OPENAI_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -89,74 +104,98 @@ export const POST: RequestHandler = async ({ request }) => {
       },
       body: JSON.stringify({
         model: DEFAULT_MODEL,
+        temperature: 0.3,
         messages: [
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content:
-              "Prepare a neatly formatted summary for a quote based on this JSON (do not change the numbers):\n" +
+              'Create the document using this structured JSON. Keep headings short and readable.\n' +
               JSON.stringify(userContent, null, 2)
           }
-        ],
-        temperature: 0.2
+        ]
       })
     });
 
-    if (!r.ok) {
-      const err = await r.text();
-      return json({
-        ...payload,
-        summary: fallbackSummary(rows, payload.totals, brandContext),
-        error: `OpenAI error: ${err}`
-      });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn('[safety-docs] upstream error', err);
+      return json({ document: fallback, error: err || 'OpenAI error' }, { status: 200 });
     }
 
-    const data = await r.json();
-    const text = data?.choices?.[0]?.message?.content?.trim() || '';
-    return json({ ...payload, summary: text });
+    const data = await response.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    return json({ document: text || fallback });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'LLM failed';
-    return json({
-      ...payload,
-      summary: fallbackSummary(rows, payload.totals, brandContext),
-      error: message
-    });
+    console.error('[safety-docs] request failed', error);
+    const message = error instanceof Error ? error.message : 'LLM request failed';
+    return json({ document: fallback, error: message }, { status: 200 });
   }
 };
 
-// Helpers
-const num = (v: unknown) => {
-  if (typeof v === 'number' && Number.isFinite(v)) {
-    return v;
-  }
-  if (typeof v === 'string') {
-    const parsed = parseFloat(v);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-};
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-const money = (n: number, ccy: string) => n.toLocaleString(undefined, { style: 'currency', currency: ccy });
-
-function fallbackSummary(
-  rows: Row[],
-  t: { currency: string; markupPercent: number; totalMaterial: number; profit: number; finalTotal: number },
-  brandContext?: string,
-) {
-  const lines = [
-    `Materials (after trade discounts): ${money(t.totalMaterial, t.currency)}`,
-    `Profit (${t.markupPercent}%): ${money(t.profit, t.currency)}`,
-    `Final total: ${money(t.finalTotal, t.currency)}`,
-    ``,
-    `Breakdown:`,
-    ...rows.map(
-      (r) =>
-        `• ${r.name || 'Material'} — Before: ${money(r.before, t.currency)}, Discount: ${money(r.discountAmount, t.currency)}, Subtotal: ${money(r.subtotal, t.currency)}`
-    )
-  ];
-  if (brandContext) {
-    lines.push('', `Brand context: ${brandContext}`);
-  }
-  return lines.join('\n');
+function clean(value: unknown, max = 500): string {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, max);
 }
 
+function listFromText(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+}
+
+function isDocType(value: unknown): value is DocType {
+  return value === 'swms' || value === 'toolbox' || value === 'induction';
+}
+
+type RequestPayload = {
+  docType: DocType;
+  docLabel: string;
+  projectName: string;
+  siteLocation: string;
+  workDescription: string;
+  hazards: string;
+  controls: string;
+  crew: string;
+  notes: string;
+  includeSignOff: boolean;
+  brandContext: string;
+};
+
+function buildFallback(payload: RequestPayload): string {
+  const lines: string[] = [];
+  lines.push(`# ${payload.docLabel}`);
+  if (payload.projectName || payload.siteLocation) {
+    lines.push(
+      `**Project:** ${payload.projectName || 'Not specified'}${payload.siteLocation ? ` — ${payload.siteLocation}` : ''}`
+    );
+  }
+  if (payload.workDescription) {
+    lines.push('\n## Scope', payload.workDescription);
+  }
+  const hazards = listFromText(payload.hazards);
+  if (hazards.length) {
+    lines.push('\n## Key hazards', ...hazards.map((h) => `- ${h}`));
+  }
+  const controls = listFromText(payload.controls);
+  if (controls.length) {
+    lines.push('\n## Controls & PPE', ...controls.map((c) => `- ${c}`));
+  }
+  const crew = listFromText(payload.crew);
+  if (crew.length) {
+    lines.push('\n## Responsibilities', ...crew.map((c) => `- ${c}`));
+  }
+  if (payload.notes) {
+    lines.push('\n## Additional notes', payload.notes);
+  }
+  if (payload.includeSignOff) {
+    lines.push(
+      '\n## Sign-off',
+      '- Supervisor: ___________________________',
+      '- Date: _________________________________'
+    );
+  }
+  return lines.join('\n').trim();
+}

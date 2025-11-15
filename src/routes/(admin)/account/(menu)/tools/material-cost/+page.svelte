@@ -1,4 +1,4 @@
-<!-- /account/tools/material-cost (v1.3 — clean RichAnswer only, no extra headings, strips currency line) -->
+<!-- /account/tools/material-cost → Safety Document Assistant -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
@@ -7,258 +7,267 @@
   const profile = data?.profile ?? null;
   const brandContext = profileBrandContext(profile);
 
-  type Item = { name: string; unitCost: number; quantity: number; discountPct: number };
+  type DocType = "swms" | "toolbox" | "induction";
+  const docOptions: { value: DocType; label: string; helper: string }[] = [
+    {
+      value: "swms",
+      label: "Safe Work Method Statement (SWMS)",
+      helper: "Step-by-step tasks, hazards, and controls for high-risk work.",
+    },
+    {
+      value: "toolbox",
+      label: "Toolbox Talk Summary",
+      helper: "Talking points for the pre-start chat and daily reminders.",
+    },
+    {
+      value: "induction",
+      label: "Site Induction Outline",
+      helper: "Welcome, access, and safety expectations for new arrivals.",
+    },
+  ];
 
-  let items: Item[] = [{ name: "", unitCost: 0, quantity: 1, discountPct: 0 }];
+  let docType: DocType = "swms";
+  let projectName = "";
+  let siteLocation = "";
+  let workDescription = "";
+  let hazards = "";
+  let controls = "";
+  let crew = "";
+  let notes = "";
+  let includeSignOff = true;
 
-  let markupPct = 20;
-  let currency: "AUD" | "USD" | "EUR" | "GBP" = "AUD";
+  let loading = false;
+  let errorMessage = "";
+  let documentText = "";
 
-  let generating = false;
-  let summary = "";
+  $: activeDoc = docOptions.find((d) => d.value === docType) ?? docOptions[0]!;
+  $: docLabel = activeDoc.label;
 
-  function addRow() {
-    items = [...items, { name: "", unitCost: 0, quantity: 1, discountPct: 0 }];
+  function useExample() {
+    docType = "swms";
+    projectName = "Switchboard upgrade – Kilsyth Workshop";
+    siteLocation = "24 Holloway Dr, Kilsyth";
+    workDescription =
+      "Isolate existing supply, install new 3-phase switchboard, label circuits, test, and hand back to production.";
+    hazards = [
+      "Live electrical parts when isolations fail",
+      "Working around forklifts and plant movement",
+      "Manual handling of board components",
+      "Working at height for cable management",
+    ].join("\n");
+    controls = [
+      "Lock-out/tag-out with tested voltage indicators",
+      "Spotter to control forklift traffic during lifts",
+      "Use of lifting trolley and two-person lift for heavy gear",
+      "Platform ladder with fall restraint for cable tray access",
+      "PPE: arc-rated kit, safety boots, gloves, face shield",
+    ].join("\n");
+    crew = "Lead electrician, apprentice, client maintenance manager";
+    notes = "Reference AS/NZS 3000, confirm client sign-off once testing sheets are attached.";
   }
-  function removeRow(i: number) {
-    items = items.filter((_, idx) => idx !== i);
-  }
-  const toNumber = (value: unknown) => {
-    if (typeof value === "number" && Number.isFinite(value)) return value;
-    if (typeof value === "string") {
-      const parsed = parseFloat(value);
-      return Number.isFinite(parsed) ? parsed : 0;
-    }
-    return 0;
-  };
-  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-  const money = (n: number) => n.toLocaleString(undefined, { style: "currency", currency });
 
-  $: breakdown = items.map((r) => {
-    const unit = toNumber(r.unitCost);
-    const qty = clamp(toNumber(r.quantity), 0, 1e9);
-    const disc = clamp(toNumber(r.discountPct), 0, 100);
-    const discountedUnit = unit * (1 - disc / 100);
-    const before = unit * qty;
-    const subtotal = discountedUnit * qty;
-    const discountAmount = before - subtotal;
-    return { ...r, unit, qty, disc, discountedUnit, before, discountAmount, subtotal };
-  });
+  async function generate(event: Event) {
+    event.preventDefault();
+    loading = true;
+    errorMessage = "";
+    documentText = "";
 
-  $: totalMaterial = breakdown.reduce((s, r) => s + r.subtotal, 0);
-  $: profit = totalMaterial * (toNumber(markupPct) / 100);
-  $: finalTotal = totalMaterial + profit;
+    const payload = {
+      docType,
+      projectName,
+      siteLocation,
+      workDescription,
+      hazards,
+      controls,
+      crew,
+      notes,
+      includeSignOff,
+      ...(brandContext ? { brandContext } : {}),
+    };
 
-  async function generateSummary() {
-    generating = true;
-    summary = "";
     try {
       const res = await fetch("/api/material-cost", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          markupPercent: toNumber(markupPct),
-          currency,
-          ...(brandContext ? { brandContext } : {}),
-        })
+        body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
-        summary = "Server error: " + (await res.text());
+        errorMessage = await res.text();
         return;
       }
+
       const data = await res.json();
-      summary = data.summary ?? "";
+      const text = String(data.document || data.summary || "").trim();
+      documentText = text;
+      if (!text) {
+        errorMessage = "The assistant returned an empty response. Try again in a moment.";
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      summary = "Request failed: " + message;
+      errorMessage = error instanceof Error ? error.message : "Request failed. Please try again.";
     } finally {
-      generating = false;
+      loading = false;
     }
   }
 
-  // --- Clean the generated text: remove "Quote Summary" headings & "Currency: XXX" lines
-  function sanitizeRich(t: string): string {
-    if (!t) return "";
-    let out = t;
-
-    // Remove markdown heading variants for "Quote Summary" (e.g., "# Quote Summary", "## Quote Summary")
-    out = out.replace(/^\s*#{1,6}\s*quote\s+summary\s*$/gim, "");
-
-    // Remove plain line "Quote Summary" (any case)
-    out = out.replace(/^\s*quote\s+summary\s*$/gim, "");
-
-    // Remove standalone "Currency: XXX" line
-    out = out.replace(/^\s*currency:\s*[A-Z]{3}\s*$/gim, "");
-
-    // Trim excessive blank lines created by removals (collapse 3+ to 2, then 2+ to 1 where useful)
-    out = out.replace(/\n{3,}/g, "\n\n").trim();
-
-    return out;
-  }
-
-  // Rich preview source (exactly what we generated, then sanitized)
-  $: __richRaw = (summary || "").trim();
-  $: __rich = sanitizeRich(__richRaw);
+  $: __rich = documentText?.trim() || "";
 </script>
 
-<svelte:head><title>Material & Cost Calculator</title></svelte:head>
+<svelte:head>
+  <title>Safety Document Assistant</title>
+</svelte:head>
 
 <section class="mx-auto max-w-6xl space-y-8 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
     <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
       <div class="space-y-3">
-        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Costing</p>
-        <h1 class="text-3xl font-bold leading-tight text-gray-900">Material &amp; Cost Calculator</h1>
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">Safety Document Assistant</h1>
         <p class="max-w-3xl text-base text-gray-700">
-          Stack every nut, bolt, and roll of cable in one place, then let the calculator spit out clean totals with markup baked in.
-          It’s built for Aussie job sheets so you can eyeball the margin, tweak discounts, and hand clients a polished summary without spreadsheets.
+          Skip the blank Word doc. Drop in the job basics, risks, and controls and this assistant will draft a clean
+          {docLabel.toLowerCase()} ready for your crew, complete with Aussie standards and sign-off reminders.
         </p>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
     </div>
   </header>
 
-  <div class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6">
-    <div class="grid gap-4 sm:grid-cols-2">
-      <label class="form-control gap-2" for="markupPct">
-        <span class="label-text">Markup % (profit)</span>
-        <input
-          id="markupPct"
-          type="number"
-          class="input input-bordered w-full"
-          min="0"
-          step="0.1"
-          bind:value={markupPct}
-        />
-      </label>
-      <label class="form-control gap-2" for="currency">
-        <span class="label-text">Currency</span>
-        <select id="currency" class="select select-bordered w-full" bind:value={currency}>
-          <option value="AUD">AUD</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="GBP">GBP</option>
-        </select>
-      </label>
-    </div>
-  </div>
-
-  <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-    <div class="space-y-6 p-5 sm:p-6">
-      <div class="overflow-x-auto">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Material</th>
-              <th class="text-right">Unit Cost</th>
-              <th class="text-right">Qty</th>
-              <th class="text-right">Trade Disc. %</th>
-              <th class="text-right">Before</th>
-              <th class="text-right">Discount</th>
-              <th class="text-right">Subtotal</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each items as r, i}
-              <tr>
-                <td class="min-w-[12rem]">
-                  <input
-                    class="input input-bordered w-full sm:input-sm"
-                    placeholder="e.g. 2.5mm TPS Cable"
-                    bind:value={r.name}
-                  />
-                </td>
-                <td class="min-w-[8rem] text-right">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="input input-bordered text-right w-full sm:w-28 sm:input-sm"
-                    bind:value={r.unitCost}
-                  />
-                </td>
-                <td class="min-w-[6rem] text-right">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="input input-bordered text-right w-full sm:w-20 sm:input-sm"
-                    bind:value={r.quantity}
-                  />
-                </td>
-                <td class="min-w-[6rem] text-right">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    class="input input-bordered text-right w-full sm:w-24 sm:input-sm"
-                    bind:value={r.discountPct}
-                  />
-                </td>
-                {#if breakdown[i]}
-                  <td class="text-right">{money(breakdown[i].before)}</td>
-                  <td class="text-right">{money(breakdown[i].discountAmount)}</td>
-                  <td class="text-right font-semibold">{money(breakdown[i].subtotal)}</td>
-                {:else}
-                  <td class="text-right">—</td>
-                  <td class="text-right">—</td>
-                  <td class="text-right">—</td>
-                {/if}
-                <td class="text-right">
-                  {#if items.length > 1}
-                    <button class="btn btn-ghost w-full sm:w-auto sm:btn-xs" on:click={() => removeRow(i)}>Remove</button>
-                  {/if}
-                </td>
-              </tr>
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+    <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6" on:submit|preventDefault={generate}>
+      <div class="space-y-6">
+        <label class="form-control">
+          <span class="label-text font-semibold">Document type</span>
+          <select class="select select-bordered" bind:value={docType}>
+            {#each docOptions as option}
+              <option value={option.value}>{option.label}</option>
             {/each}
-          </tbody>
-        </table>
-      </div>
+          </select>
+          <span class="label-text-alt text-gray-500">{activeDoc.helper}</span>
+        </label>
 
-      <div class="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <button class="btn btn-outline w-full sm:w-auto sm:btn-sm" on:click={addRow}>+ Add Material</button>
-        <div class="space-y-1 text-right">
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="form-control gap-2">
+            <span class="label-text">Client / project name</span>
+            <input class="input input-bordered" placeholder="e.g. Lawson Civil – Pump upgrade" bind:value={projectName} />
+          </label>
+          <label class="form-control gap-2">
+            <span class="label-text">Site / address</span>
+            <input class="input input-bordered" placeholder="Where is the work happening?" bind:value={siteLocation} />
+          </label>
+        </div>
+
+        <label class="form-control gap-2">
+          <span class="label-text">Scope / project brief</span>
+          <textarea
+            class="textarea textarea-bordered"
+            rows="3"
+            placeholder="Describe the work stages or main deliverables."
+            bind:value={workDescription}
+          ></textarea>
+        </label>
+
+        <label class="form-control gap-2">
+          <span class="label-text">Key hazards or risks</span>
+          <textarea
+            class="textarea textarea-bordered"
+            rows="3"
+            placeholder="List one per line – e.g. live electrical parts, confined space access."
+            bind:value={hazards}
+          ></textarea>
+        </label>
+
+        <label class="form-control gap-2">
+          <span class="label-text">Controls, PPE & procedures</span>
+          <textarea
+            class="textarea textarea-bordered"
+            rows="3"
+            placeholder="Isolation steps, PPE, permits, supervision, toolbox reminders."
+            bind:value={controls}
+          ></textarea>
+        </label>
+
+        <label class="form-control gap-2">
+          <span class="label-text">Crew & responsibilities</span>
+          <textarea
+            class="textarea textarea-bordered"
+            rows="2"
+            placeholder="Who is on site and what they cover."
+            bind:value={crew}
+          ></textarea>
+        </label>
+
+        <label class="form-control gap-2">
+          <span class="label-text">Extra notes / compliance requirements</span>
+          <textarea
+            class="textarea textarea-bordered"
+            rows="2"
+            placeholder="Permits, references to standards, client reminders, handover steps."
+            bind:value={notes}
+          ></textarea>
+        </label>
+
+        <label class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-4 text-sm">
+          <input type="checkbox" class="checkbox checkbox-primary" bind:checked={includeSignOff} />
           <div>
-            Total materials: <span class="font-semibold">{money(totalMaterial)}</span>
+            <p class="font-semibold">Include sign-off & next steps</p>
+            <p class="text-gray-500">Adds a table or bullet block for supervisor sign-off and distribution.</p>
           </div>
-          <div>
-            Profit ({markupPct}%): <span class="font-semibold">{money(profit)}</span>
-          </div>
-          <div class="text-lg">
-            Final total: <span class="font-bold">{money(finalTotal)}</span>
-          </div>
+        </label>
+
+        {#if errorMessage}
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+        {/if}
+
+        <div class="flex flex-wrap gap-3">
+          <button type="submit" class="btn btn-primary" disabled={loading}>
+            {#if loading}
+              Generating…
+            {:else}
+              Generate {docLabel.split(" ")[0]}
+            {/if}
+          </button>
+          <button type="button" class="btn btn-ghost" on:click={useExample} disabled={loading}>
+            Load example
+          </button>
         </div>
       </div>
-    </div>
+    </form>
+
+    <aside class="rounded-3xl border border-dashed border-primary/30 bg-primary/5 p-5 text-sm text-gray-700 shadow-sm">
+      <h2 class="text-base font-semibold text-primary">What you get</h2>
+      <ul class="mt-3 space-y-2 list-disc pl-4">
+        <li>Task breakdown with hazards and controls mapped to each stage.</li>
+        <li>PPE and permit reminders tailored to your notes.</li>
+        <li>Toolbox talk or induction talking points with action items.</li>
+        <li>Optional sign-off block so the paperwork is ready to issue.</li>
+      </ul>
+      <p class="mt-4 text-gray-600">
+        The assistant leans on your brand details automatically so tone, business name, and web links stay consistent with your
+        other documents.
+      </p>
+    </aside>
   </div>
 
-  <!-- Costing Summary -->
-  <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-    <div class="space-y-4 p-5 sm:p-6">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-lg font-semibold">Costing Summary</h2>
-        <button class="btn btn-primary w-full sm:w-auto sm:btn-sm" on:click={generateSummary} disabled={generating}>
-          {generating ? "Generating…" : "Generate"}
-        </button>
+  <div class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Preview</p>
+        <h2 class="text-xl font-semibold text-gray-900">{docLabel}</h2>
       </div>
+      {#if documentText}
+        <button class="btn btn-sm" type="button" on:click={() => navigator.clipboard?.writeText(documentText)}>
+          Copy
+        </button>
+      {/if}
+    </div>
 
-      {#if __rich.length}
-        <!-- Rich preview only (no extra headings, no markdown fallback) -->
-        <div class="space-y-3">
-          <RichAnswer text={__rich} />
-          <div class="mt-2">
-            <button
-              type="button"
-              class="btn btn-outline w-full sm:w-auto sm:btn-sm"
-              on:click={() => navigator.clipboard.writeText(__rich)}
-            >
-              Copy answer
-            </button>
-          </div>
-        </div>
+    <div class="mt-4">
+      {#if loading && !documentText}
+        <p class="text-sm text-gray-500">Building your document…</p>
+      {:else if __rich}
+        <RichAnswer text={__rich} />
+      {:else}
+        <p class="text-sm text-gray-500">Fill out the form and generate to see your SWMS / toolbox / induction doc here.</p>
       {/if}
     </div>
   </div>
