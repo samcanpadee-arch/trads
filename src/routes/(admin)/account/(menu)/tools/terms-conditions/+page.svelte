@@ -116,7 +116,7 @@
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm space-y-8 sm:p-6" on:submit|preventDefault={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm space-y-10 sm:p-6" on:submit|preventDefault={generate}>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
       <label class="form-control gap-2">
         <span class="label-text">Business name</span>
@@ -143,35 +143,37 @@
       </label>
     </div>
 
-    <label class="form-control gap-3">
-      <div class="space-y-1">
-        <span class="label-text">Project-specific terms</span>
-        <p class="text-xs text-gray-500">Site quirks, staged payments, client responsibilities, or approvals to call out for this job.</p>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-32 w-full"
-        placeholder="Example: Allow one shutdown of water (max 2 hrs). Client to confirm tile selections before demo."
-        bind:value={projectSpecificTerms}
-      ></textarea>
-    </label>
+    <div class="space-y-8">
+      <label class="form-control gap-3">
+        <div class="space-y-1">
+          <span class="label-text">Project-specific terms</span>
+          <p class="text-xs text-gray-500">Site quirks, staged payments, client responsibilities, or approvals to call out for this job.</p>
+        </div>
+        <textarea
+          class="textarea textarea-bordered h-32 w-full"
+          placeholder="Example: Allow one shutdown of water (max 2 hrs). Client to confirm tile selections before demo."
+          bind:value={projectSpecificTerms}
+        ></textarea>
+      </label>
 
-    <label class="form-control gap-3">
-      <div class="space-y-1">
-        <span class="label-text">Evergreen business policies</span>
-        <p class="text-xs text-gray-500">Payment schedule, variation rules, licensing info, insurances, warranties, or guarantees.</p>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-40 w-full"
-        placeholder="Example: 40% deposit, balance within 5 days of completion. Variations priced in writing before work proceeds."
-        bind:value={businessNotes}
-      ></textarea>
-    </label>
+      <label class="form-control gap-3">
+        <div class="space-y-1">
+          <span class="label-text">Evergreen business policies</span>
+          <p class="text-xs text-gray-500">Payment schedule, variation rules, licensing info, insurances, warranties, or guarantees.</p>
+        </div>
+        <textarea
+          class="textarea textarea-bordered h-40 w-full"
+          placeholder="Example: 40% deposit, balance within 5 days of completion. Variations priced in writing before work proceeds."
+          bind:value={businessNotes}
+        ></textarea>
+      </label>
+    </div>
 
     {#if errorMessage}
       <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
     {/if}
 
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3 pt-2">
       <button type="submit" class="btn btn-primary" disabled={loading}>
         {#if loading}
           <span class="loading loading-dots"></span>
@@ -191,7 +193,7 @@
   </form>
 
   <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-    <div class="p-5 sm:p-6 space-y-4">
+    <div class="p-5 sm:p-6 space-y-6">
       {#if loading && !documentText}
         <p class="text-sm text-gray-500">Building your terms…</p>
       {:else if __rich}
