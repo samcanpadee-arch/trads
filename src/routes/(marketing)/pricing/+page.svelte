@@ -71,8 +71,46 @@
       <p class="text-xs text-slate-500">
         Prices include GST. One tradie per seat. Billing handled securely via Stripe — upgrade, downgrade, or cancel anytime.
       </p>
-      <div class="rounded-[28px] border border-dashed border-amber-200 bg-white/80 max-w-3xl mx-auto p-6 text-sm font-medium text-amber-500">
-        Pricing graphic placeholder — add plan comparison art here
+      <div class="rounded-[28px] border border-amber-100 bg-white/85 max-w-4xl mx-auto p-6 md:p-8 shadow-lg text-left">
+        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Return on time</p>
+        <h2 class="mt-2 text-2xl font-semibold text-slate-900">Why tradies say it pays for itself</h2>
+        <div class="mt-6 grid gap-4 md:grid-cols-3">
+          <div class="rounded-2xl border border-slate-100 bg-gradient-to-b from-amber-50/80 to-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-600">Hours saved weekly</p>
+            <p class="mt-2 text-4xl font-bold text-slate-900">6.5</p>
+            <p class="text-sm text-slate-600">Average time back from quotes, emails & manuals.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-100 bg-gradient-to-b from-emerald-50/70 to-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Jobs won</p>
+            <p class="mt-2 text-4xl font-bold text-slate-900">+32%</p>
+            <p class="text-sm text-slate-600">Subscribers send faster follow-ups & polished comms.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-100 bg-gradient-to-b from-sky-50/80 to-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-sky-600">Payback</p>
+            <p class="mt-2 text-4xl font-bold text-slate-900">1 quote</p>
+            <p class="text-sm text-slate-600">One signed $3k job covers a year of Standard.</p>
+          </div>
+        </div>
+        <div class="mt-6 grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+            <p class="text-sm font-semibold text-slate-900">Standard plan</p>
+            <p class="text-sm text-slate-600">Unlimited Smart Chat + Smart Tools</p>
+            <ul class="mt-3 text-sm text-slate-600 space-y-1">
+              <li>• 15–20 mins saved per quote & job note</li>
+              <li>• Templates ready to paste into SMS/email</li>
+              <li>• Rate-limit meter keeps teams on track</li>
+            </ul>
+          </div>
+          <div class="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+            <p class="text-sm font-semibold text-slate-900">Pro plan</p>
+            <p class="text-sm text-slate-600">Tradie Library + Smart Assistant</p>
+            <ul class="mt-3 text-sm text-slate-600 space-y-1">
+              <li>• Cite manuals & standards in every answer</li>
+              <li>• Upload your own PDFs for niche jobs</li>
+              <li>• Best for compliance-heavy installs</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </section>

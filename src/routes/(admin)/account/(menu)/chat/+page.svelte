@@ -277,6 +277,21 @@
           <li>• Keep the thread open—Smart Chat remembers what you’ve tried.</li>
         </ul>
       </div>
+      <div class="rounded-2xl border border-dashed border-gray-200 bg-white/80 p-4 shadow-sm">
+        <div class="flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+            💡
+          </span>
+          <div class="text-sm text-gray-700 space-y-1">
+            <p class="font-semibold text-gray-900">Polish what you already have</p>
+            <p>
+              Paste any quote template, email, or website copy straight into Smart Chat and ask it to tighten the wording,
+              keep the tone, or spin a fresh version.
+            </p>
+            <p class="text-xs text-gray-500">Handy when you need to modernise legacy docs without starting from scratch.</p>
+          </div>
+        </div>
+      </div>
       <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
         <p class="text-sm font-semibold text-gray-900">Need manuals or pricing tools?</p>
         <p class="mt-1 text-sm text-gray-600">

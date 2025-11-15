@@ -42,6 +42,91 @@
   let share = false;
   let message = "";
 
+  type TradePlaybook = {
+    trade: string;
+    title: string;
+    summary: string;
+    prompt: string;
+    ctas?: Array<{ label: string; href: string }>;
+  };
+
+  const tradePlaybooks: TradePlaybook[] = [
+    {
+      trade: "Electrical",
+      title: "Quote follow-up that wins the work",
+      summary:
+        "Polish the technical guts of a switchboard upgrade quote, then turn it into a friendly SMS + email follow-up.",
+      prompt:
+        "I’m an electrician quoting a switchboard upgrade with RCBOs in an older brick home. Draft the quote summary, list the safety upgrades in bullet points, and give me a follow-up SMS that nudges the client to approve it this week.",
+      ctas: [{ label: "Open proposal tool", href: "/account/tools/proposal" }]
+    },
+    {
+      trade: "Plumbing",
+      title: "Maintenance contract play",
+      summary:
+        "Frame recurring drain maintenance as a value-add with ROI talking points and a tidy attachment for strata.",
+      prompt:
+        "I’m a plumber pitching a quarterly drain maintenance plan for a 12-unit block. Outline the inclusions, pricing options, and a short paragraph I can paste into a proposal explaining why preventative jetting saves money.",
+      ctas: [{ label: "Material & cost calc", href: "/account/tools/material-cost" }]
+    },
+    {
+      trade: "HVAC",
+      title: "Commissioning checklist & client summary",
+      summary:
+        "Use the library to double-check clearances, then send the client a commissioning note with warranty reminders.",
+      prompt:
+        "I’ve just installed a Daikin multi split (4 heads) in a two-storey townhouse. Give me the commissioning checklist with AS/NZS references plus a client-facing summary that covers maintenance and warranty steps.",
+      ctas: [{ label: "Email templates", href: "/account/tools/email-template" }]
+    },
+    {
+      trade: "Landscaping",
+      title: "Variation & upsell helper",
+      summary:
+        "Capture the extra scope (decks, lighting, planting) and translate it into a variation email with clear next steps.",
+      prompt:
+        "I’m mid-way through a landscaping project and the client wants to add a spotted-gum deck extension plus garden lighting. Draft the variation summary with new costs, a timeline adjustment, and an upsell paragraph for maintenance visits.",
+      ctas: [{ label: "Job estimation", href: "/account/tools/job-estimation" }]
+    }
+  ];
+
+  type LibraryShortcut = {
+    title: string;
+    description: string;
+    prompt: string;
+    link: { label: string; href: string };
+  };
+
+  const libraryShortcuts: LibraryShortcut[] = [
+    {
+      title: "Win more maintenance contracts",
+      description: "Bundle Smart Assistant briefs with proposal + email templates.",
+      prompt:
+        "Create a short plan that shows the ROI of quarterly HVAC maintenance for a medical clinic. Include key checks, pricing ranges, and a paragraph I can drop into a proposal.",
+      link: { label: "Proposal workflow", href: "/account/tools/proposal" }
+    },
+    {
+      title: "Upsell EV chargers",
+      description: "Answer safety questions, then jump straight into Smart Tools.",
+      prompt:
+        "Give me the key standards and homeowner talking points when upselling a single-phase EV charger install in Victoria. Include clearance reminders and inspection steps.",
+      link: { label: "Quote builder", href: "/account/tools/material-cost" }
+    },
+    {
+      title: "Close variations without fuss",
+      description: "Summaries + email copy ready to paste.",
+      prompt:
+        "Summarise a variation for a bathroom reno where the client added underfloor heating and premium tapware. Include bulletproof reasons for the price increase and a polite approval request.",
+      link: { label: "Email helper", href: "/account/tools/email-template" }
+    },
+    {
+      title: "Prep insurance-ready job notes",
+      description: "Use manual citations, then export to Smart Tools.",
+      prompt:
+        "I’m documenting storm damage to a colorbond roof for an insurance report. Draft the job notes with photos to capture, temporary works completed, and references to QBCC guidance.",
+      link: { label: "Job estimation", href: "/account/tools/job-estimation" }
+    }
+  ];
+
   type ShareFeedback = {
     name: string;
     status: "attached" | "already" | "failed";
@@ -269,6 +354,10 @@
       errorMsg = "Couldn’t copy to clipboard.";
     }
   }
+
+  function usePromptText(text: string) {
+    message = text;
+  }
 </script>
 
 <svelte:head>
@@ -284,6 +373,63 @@
       standards, and guides so you can make the call on site. Add files only when you need something outside the shared library.
     </p>
   </header>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Trade playbooks</p>
+        <p class="text-sm text-gray-600">Drop in a proven brief to keep the convo moving.</p>
+      </div>
+      <div class="mt-4 space-y-3">
+        {#each tradePlaybooks as playbook}
+          <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{playbook.trade}</p>
+            <h3 class="text-base font-semibold text-gray-900">{playbook.title}</h3>
+            <p class="mt-1 text-sm text-gray-600">{playbook.summary}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-primary btn-xs"
+                on:click={() => usePromptText(playbook.prompt)}
+              >
+                Use playbook
+              </button>
+              {#if playbook.ctas?.length}
+                {#each playbook.ctas as cta}
+                  <a class="btn btn-ghost btn-xs" href={cta.href}>{cta.label}</a>
+                {/each}
+              {/if}
+            </div>
+          </article>
+        {/each}
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-gray-200 bg-white/90 p-5 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">Outcome shortcuts</p>
+        <p class="text-sm text-gray-600">Start with the goal, then open the right tool.</p>
+      </div>
+      <div class="mt-4 space-y-3">
+        {#each libraryShortcuts as shortcut}
+          <article class="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+            <h3 class="text-base font-semibold text-gray-900">{shortcut.title}</h3>
+            <p class="mt-1 text-sm text-gray-600">{shortcut.description}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-outline btn-xs"
+                on:click={() => usePromptText(shortcut.prompt)}
+              >
+                Ask this
+              </button>
+              <a class="btn btn-ghost btn-xs" href={shortcut.link.href}>{shortcut.link.label}</a>
+            </div>
+          </article>
+        {/each}
+      </div>
+    </div>
+  </div>
 
   <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
     <form
