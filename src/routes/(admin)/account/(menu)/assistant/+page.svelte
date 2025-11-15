@@ -42,7 +42,7 @@
   let share = false;
   let message = "";
 
-  type AssistantPlaybook = {
+  type AssistantPrompt = {
     trade: string;
     title: string;
     summary: string;
@@ -55,70 +55,70 @@
     };
   };
 
-  const assistantPlaybooks: AssistantPlaybook[] = [
+  const assistantPrompts: AssistantPrompt[] = [
     {
       trade: "Electrical",
-      title: "RCD discrimination + switchboard upgrade brief",
+      title: "Switchboard upgrade with RCBOs",
       summary:
-        "Loads AS/NZS 3000 clause info plus the SafeWork risk guide so the Assistant cites the right sections when reviewing your board design.",
+        "Keep it in plain English while still flagging the Safe Work and AS/NZS refs the Assistant should cite.",
       references: [
-        "AS/NZS 3000:2018 cl.2.6 Residual current devices",
-        "Managing Electrical Risks in the Workplace (Safe Work Australia)"
+        "AS/NZS 3000:2018 residual current device guidance",
+        "Safe Work Australia – Managing Electrical Risks guide"
       ],
       form: {
         trade: "Electrical",
-        brandModel: "AS/NZS 3000:2018 cl.2.6 — RCD discrimination",
+        brandModel: "AS/NZS 3000:2018 + Safe Work electrical risks guide",
         focus: "compliance",
         message:
-          "I’m upgrading a 2010-era domestic switchboard with RCBOs. Confirm discrimination requirements for lighting vs power circuits and reference AS/NZS 3000:2018 clause 2.6 plus Safe Work Australia’s Managing Electrical Risks guide. Include recommended insulation resistance + polarity test steps to note on the CCEW."
+          "Upgrading a 2010 brick home switchboard to RCBOs. Remind me what AS/NZS 3000 says about discrimination between the lighting and power circuits, what tests I should jot on the CCEW, and call out any Safe Work electrical risk reminders I should give the apprentice."
       }
     },
     {
       trade: "HVAC",
-      title: "Daikin multi-split commissioning pack",
+      title: "Daikin multi-split commissioning checklist",
       summary:
-        "Prefills the CTXM/FTXM manual number so the Assistant can cite torque settings, vacuum targets, and leak test steps.",
+        "Hands over the CTXM/FTXM model numbers so the response can drop in torque, vacuum, and leak-test pointers.",
       references: [
         "Daikin CTXM-A / FTXM-A Installation Manual 3PEN697375-8B",
         "Daikin FTXM20-50A Operation Manual 3PEN728539-3"
       ],
       form: {
         trade: "HVAC",
-        brandModel: "Daikin CTXM-A / FTXM-A multi split 3PEN697375-8B",
+        brandModel: "Daikin CTXM/FTXM multi split manuals 3PEN697375-8B + 3PEN728539-3",
         focus: "install",
         message:
-          "Commissioning a Daikin 4-head multi split (CTXM/FTXM series) in a two-storey townhouse. Summarise final flare torque specs, maximum pipe runs per port, target micron level before opening service valves, and the client handover checklist with references to manuals 3PEN697375-8B and 3PEN728539-3."
+          "Commissioning a 4-head Daikin CTXM/FTXM multi split in a two-storey townhouse. Run me through the flare torque targets, max pipe runs per port, the micron level before I open the service valves, and the key handover notes from manuals 3PEN697375-8B and 3PEN728539-3."
       }
     },
     {
       trade: "Solar",
-      title: "PV compliance summary + client email",
+      title: "Solar compliance wrap + customer blurb",
       summary:
-        "Sets the fields for a Panasonic VKR inverter job so responses cite Clean Energy Council + OEM requirements.",
+        "Points the Assistant at Panasonic VKR + CEC guidance so you get a tidy compliance note and client copy.",
       references: [
         "Panasonic VKR Operating Manual",
-        "CEC Install & Supervision Guidelines"
+        "Clean Energy Council install & supervision guidelines"
       ],
       form: {
         trade: "Electrical",
         brandModel: "Panasonic VKR 6.6kW inverter",
         focus: "compliance",
         message:
-          "Need a compliance summary for a 6.6kW Panasonic VKR install in WA. Reference the Panasonic VKR operating manual plus CEC guidelines for shutdown labelling, DC isolator locations, and routine maintenance notes. Finish with an email paragraph I can send the homeowner."
+          "Wrapped a 6.6kW Panasonic VKR job in WA. Need a quick compliance summary that references the Panasonic VKR operating manual and the CEC install guidelines, including shutdown labels, DC isolator spots, and maintenance notes. Finish with a short email paragraph to drop into the client pack."
       }
     },
     {
       trade: "Mechanical",
       title: "Bulkhead cassette service log",
       summary:
-        "Targets the Mitsubishi MLZ-KP service doc so maintenance notes cite filter and condensate tray requirements.",
+        "Targets the Mitsubishi MLZ-KP doc so the reply spells out filter + tray steps with proper references.",
       references: ["Mitsubishi MLZ-KP Bulkhead Installation Manual DG79T870H01"],
       form: {
         trade: "HVAC",
-        brandModel: "Mitsubishi MLZ-KP bulkhead cassette",
+        brandModel: "Mitsubishi MLZ-KP bulkhead cassette manual DG79T870H01",
         focus: "maintenance",
         message:
-          "Prepare a maintenance worksheet for a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Include access requirements, condensate tray cleaning, filter replacement intervals, and leak test pressures referencing manual DG79T870H01. Add a sentence noting warranty impacts if intervals are missed."
+          "Servicing a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Give me a maintenance worksheet that covers access needs, filter cleaning/replacement intervals, condensate tray checks, and leak test pressures, pointing back to manual DG79T870H01. Add a note about warranty impacts if the schedule slips."
       }
     }
   ];
@@ -138,6 +138,7 @@
   let errorMsg = "";
   let answer = "";
   let copied = false;
+  let assistantPromptsOpen = false;
 
   const statusMessages: Record<FileStatus["status"], string> = {
     ready: "Ready to upload",
@@ -351,11 +352,11 @@
     }
   }
 
-  function applyAssistantPlaybook(playbook: AssistantPlaybook) {
-    trade = playbook.form.trade ?? "";
-    brandModel = playbook.form.brandModel ?? "";
-    focus = playbook.form.focus;
-    message = playbook.form.message;
+  function applyAssistantPrompt(prompt: AssistantPrompt) {
+    trade = prompt.form.trade ?? "";
+    brandModel = prompt.form.brandModel ?? "";
+    focus = prompt.form.focus;
+    message = prompt.form.message;
   }
 </script>
 
@@ -373,35 +374,48 @@
     </p>
   </header>
 
-  <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm">
+  <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm space-y-4">
     <div class="flex flex-wrap items-center gap-3">
-      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant playbooks</p>
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant prompts</p>
       <p class="text-sm text-gray-600">Loads the trade, manual, and focus fields for you.</p>
     </div>
-    <div class="mt-4 space-y-3">
-      {#each assistantPlaybooks as playbook}
-        <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{playbook.trade}</p>
-          <h3 class="text-base font-semibold text-gray-900">{playbook.title}</h3>
-          <p class="mt-1 text-sm text-gray-600">{playbook.summary}</p>
-          <div class="mt-3 text-xs text-amber-800">
-            <p class="font-semibold uppercase tracking-wide">Cites</p>
-            <ul class="mt-1 space-y-0.5">
-              {#each playbook.references as ref}
-                <li>• {ref}</li>
-              {/each}
-            </ul>
-          </div>
-          <button
-            type="button"
-            class="btn btn-primary btn-xs mt-3"
-            on:click={() => applyAssistantPlaybook(playbook)}
-          >
-            Load playbook
-          </button>
-        </article>
-      {/each}
-    </div>
+    <button
+      type="button"
+      class="btn btn-ghost btn-sm justify-between border border-amber-200/70 bg-amber-50/60 px-4 font-semibold text-amber-800"
+      on:click={() => (assistantPromptsOpen = !assistantPromptsOpen)}
+      aria-expanded={assistantPromptsOpen}
+    >
+      <span>{assistantPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
+      <span>{assistantPromptsOpen ? '–' : '+'}</span>
+    </button>
+    {#if assistantPromptsOpen}
+      <div class="space-y-3">
+        {#each assistantPrompts as prompt}
+          <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{prompt.trade}</p>
+            <h3 class="text-base font-semibold text-gray-900">{prompt.title}</h3>
+            <p class="mt-1 text-sm text-gray-600">{prompt.summary}</p>
+            <div class="mt-3 text-xs text-amber-800">
+              <p class="font-semibold uppercase tracking-wide">Cites</p>
+              <ul class="mt-1 space-y-0.5">
+                {#each prompt.references as ref}
+                  <li>• {ref}</li>
+                {/each}
+              </ul>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary btn-xs mt-3"
+              on:click={() => applyAssistantPrompt(prompt)}
+            >
+              Use this prompt
+            </button>
+          </article>
+        {/each}
+      </div>
+    {:else}
+      <p class="text-sm text-gray-500">Prompts stay tucked away until you need them.</p>
+    {/if}
   </div>
 
   <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">

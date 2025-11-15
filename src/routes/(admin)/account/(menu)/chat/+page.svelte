@@ -21,14 +21,14 @@
   ];
   let model = models[0].id; // default
 
-  type ChatPlaybook = {
+  type ChatPrompt = {
     trade: string;
     title: string;
     summary: string;
     prompt: string;
   };
 
-  const chatPlaybooks: ChatPlaybook[] = [
+  const chatPrompts: ChatPrompt[] = [
     {
       trade: 'Electrical',
       title: 'Quote follow-up that wins the work',
@@ -47,11 +47,11 @@
     },
     {
       trade: 'HVAC',
-      title: 'Commissioning checklist & client summary',
+      title: 'Service handover helper',
       summary:
-        'Get commissioning steps plus a customer-friendly note after a multi-split install.',
+        'Explain what was serviced, what’s next, and how the client should care for the system.',
       prompt:
-        "I’ve just installed a Daikin multi split (4 heads) in a two-storey townhouse. Give me the commissioning checklist with AS/NZS references plus a client-facing summary that covers maintenance and warranty steps."
+        "I’ve finished a full HVAC service for a childcare centre. Summarise what we inspected, flag the next seasonal checks, and give me a short message I can send the manager so they know the system is good to go."
     },
     {
       trade: 'Roofing',
@@ -63,11 +63,11 @@
     },
     {
       trade: 'Solar',
-      title: 'Compliance summary + upsell',
+      title: 'Monitoring + maintenance explainer',
       summary:
-        'Explain why a CCTV or monitoring add-on matters and capture compliance notes.',
+        'Help homeowners see the value in looking after their system and paying for monitoring.',
       prompt:
-        "I run a solar crew in Perth. We just finished a 6.6kW install with a Fronius Primo. Draft the compliance summary for the customer pack, referencing Clean Energy Council requirements and warranty pointers."
+        "I’ve installed a 6.6kW solar system and want to upsell monitoring plus an annual clean. Give me talking points for the benefits, a quick health checklist to leave with the homeowner, and an SMS that nudges them to book the first service."
     },
     {
       trade: 'Landscaping',
@@ -86,6 +86,7 @@
   let storageReady = false;
   let chatContainer: HTMLDivElement | null = null;
   let shouldStickToBottom = true;
+  let chatPromptsOpen = false;
 
   const serialize = (value: Msg[]) => JSON.stringify(value);
 
@@ -132,7 +133,7 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 
-  function loadChatPlaybook(prompt: string) {
+  function loadChatPrompt(prompt: string) {
     input = prompt;
   }
 
@@ -286,7 +287,7 @@
       </div>
 
       <div
-        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[420px] max-h-[65vh] overflow-y-auto space-y-4"
+        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[420px] sm:h-[520px] max-h-[75vh] overflow-y-auto space-y-4"
         bind:this={chatContainer}
         on:scroll={handleScroll}
       >
@@ -332,27 +333,40 @@
     </div>
 
     <aside class="space-y-4">
-      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white via-amber-50/70 to-white p-5 shadow-sm backdrop-blur">
+      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white via-amber-50/70 to-white p-5 shadow-sm backdrop-blur space-y-4">
         <div class="flex flex-wrap items-center gap-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Trade playbooks</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Chat prompts</p>
           <p class="text-sm text-gray-600">Insert a proven scenario without typing it all out.</p>
         </div>
-        <div class="mt-4 space-y-3">
-          {#each chatPlaybooks as playbook}
-            <article class="rounded-2xl border border-white/60 bg-white/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">{playbook.trade}</p>
-              <h3 class="text-sm font-semibold text-gray-900">{playbook.title}</h3>
-              <p class="mt-1 text-xs text-gray-600">{playbook.summary}</p>
-              <button
-                type="button"
-                class="btn btn-outline btn-xs mt-2"
-                on:click={() => loadChatPlaybook(playbook.prompt)}
-              >
-                Use this playbook
-              </button>
-            </article>
-          {/each}
-        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs justify-between border border-primary/30 bg-white/80 px-3 text-primary"
+          on:click={() => (chatPromptsOpen = !chatPromptsOpen)}
+          aria-expanded={chatPromptsOpen}
+        >
+          <span>{chatPromptsOpen ? 'Hide prompts' : 'Show prompts'}</span>
+          <span>{chatPromptsOpen ? '–' : '+'}</span>
+        </button>
+        {#if chatPromptsOpen}
+          <div class="space-y-3">
+            {#each chatPrompts as prompt}
+              <article class="rounded-2xl border border-white/60 bg-white/80 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">{prompt.trade}</p>
+                <h3 class="text-sm font-semibold text-gray-900">{prompt.title}</h3>
+                <p class="mt-1 text-xs text-gray-600">{prompt.summary}</p>
+                <button
+                  type="button"
+                  class="btn btn-outline btn-xs mt-2"
+                  on:click={() => loadChatPrompt(prompt.prompt)}
+                >
+                  Use this prompt
+                </button>
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-xs text-gray-500">Tap to open when you want ideas.</p>
+        {/if}
       </div>
 
       <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/70 to-rose-50/70 p-5 shadow-sm backdrop-blur">
