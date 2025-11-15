@@ -6,7 +6,16 @@
   export let data: { profile?: ProfileBasics | null };
   const profile = data?.profile ?? null;
   const brandContext = profileBrandContext(profile);
+  const cleanStr = (value: string | null | undefined) => (value ?? "").trim();
+  const defaultTradieName = cleanStr(profile?.full_name);
+  const defaultBusinessName = cleanStr(profile?.company_name);
+  const defaultBusinessPhone = "";
+  const defaultBusinessWebsite = cleanStr(profile?.website);
 
+  let tradieName = defaultTradieName;
+  let businessName = defaultBusinessName;
+  let businessPhone = defaultBusinessPhone;
+  let businessWebsite = defaultBusinessWebsite;
   let clientName = "";
   let siteAddress = "";
   let projectBrief = ""; // drives AI (overview/scope/assumptions/risks/timeline)
@@ -120,14 +129,21 @@
       .forEach((line) => {
         if (!line) return;
         let matchedAmount = false;
-        const rateLike = /(per\s+|\/|hour|hr|day|week|rate|each)/i.test(line) && !/total|sum|allowance/i.test(line);
         const matches = [...line.matchAll(currencyRe)];
         matches.forEach((match) => {
           if (!match[0]) return;
           const raw = match[0];
           const start = match.index ?? 0;
           const amount = toAmount(raw);
-          if (!Number.isFinite(amount) || rateLike) {
+          if (!Number.isFinite(amount)) {
+            return;
+          }
+          const around = line
+            .slice(Math.max(0, start - 8), Math.min(line.length, start + raw.length + 8))
+            .toLowerCase();
+          const looksUnitRate =
+            /(per\s|\/|@)\s*(hour|hr|day|week|shift)/i.test(around) || /\b(hr|hour)\b/.test(around);
+          if (looksUnitRate && !/total|sum|allowance|visit|call|mobilisation|materials|supply|install|markup/i.test(line)) {
             return;
           }
           const before = cleanLabel(line.slice(0, start));
@@ -177,9 +193,6 @@
   }));
   $: markupTotal = markupEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
   $: clientSubtotal = baseCostsTotal + markupTotal;
-  $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
-  $: grandTotal = clientSubtotal + gst;
-
   const exampleCosts = `Materials & equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
 Labour effort: Two techs on site for 3 full days @ $95/hr each, apprentice support on day two for 6 hrs.
 Program & supervision: 15% markup to cover design checks, procurement and warranty handling.
@@ -190,12 +203,20 @@ Risks: Labour may increase if the existing switchboard needs upgrades or ceiling
     clientName = "Jordan Moore";
     siteAddress = "12 Rivergum Rd, Brunswick VIC 3056";
     trade = "Electrical";
+    tradieName = "Taylor Reid";
+    businessName = "Reid Electrical & Air";
+    businessPhone = "0400 123 678";
+    businessWebsite = "reidelectrical.au";
     projectBrief =
       "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard tidy-up. Patch penetrations and leave clean.";
     costsText = exampleCosts;
   }
 
   function resetAll() {
+    tradieName = defaultTradieName;
+    businessName = defaultBusinessName;
+    businessPhone = defaultBusinessPhone;
+    businessWebsite = defaultBusinessWebsite;
     clientName = "";
     siteAddress = "";
     projectBrief = "";
@@ -261,6 +282,10 @@ Rules:
     const notesBlock = parsedCosts.notes.map((note) => `- ${note}`).join("\n");
     const user =
       `Trade: ${trade}\n` +
+      `Tradie name: ${tradieName || "N/A"}\n` +
+      `Business: ${businessName || "N/A"}\n` +
+      `Business phone: ${businessPhone || "N/A"}\n` +
+      `Business website: ${businessWebsite || "N/A"}\n` +
       `Brief: ${projectBrief || "N/A"}\n` +
       `Client: ${clientName || "N/A"}\n` +
       `Site: ${siteAddress || "N/A"}\n\n` +
@@ -359,8 +384,30 @@ Rules:
     const usingAISuggestedLabour = ai.labourSuggest.length > 0;
     const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
     const aiCostRowsClean = aiCostRows.filter((row) => !/(subtotal|total|gst|tax)/i.test(row.label || ""));
-    const parsedPricingRows = parsedCosts.entries.length ? parsedCosts.entries : [];
-    const pricingSource = parsedPricingRows.length ? parsedPricingRows : aiCostRowsClean;
+    const parsedPricingRows: AICostItem[] = parsedCosts.entries.map((entry) => ({
+      label: entry.label,
+      amount: entry.amount,
+      detail: undefined
+    }));
+    const pricingSource: AICostItem[] = [];
+    const seenLabels = new Set<string>();
+    parsedPricingRows.forEach((row) => {
+      const key = (row.label || "").toLowerCase();
+      if (key) {
+        seenLabels.add(key);
+      }
+      pricingSource.push(row);
+    });
+    if (pricingSource.length && aiCostRowsClean.length) {
+      aiCostRowsClean.forEach((row) => {
+        const key = (row.label || "").toLowerCase();
+        if (!key || seenLabels.has(key) || !(row.amount || 0)) return;
+        seenLabels.add(key);
+        pricingSource.push(row);
+      });
+    } else if (!pricingSource.length && aiCostRowsClean.length) {
+      pricingSource.push(...aiCostRowsClean);
+    }
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
@@ -474,7 +521,13 @@ Rules:
     md += `**To:** ${clientName || "_Client_"}  \n`;
     md += `**Site:** ${siteAddress || "_Site Address_"}  \n`;
     md += `**Project:** ${title}  \n`;
-    md += `**Estimate Valid For:** ${validityDays} days\n\n`;
+    md += `**Estimate Valid For:** ${validityDays} days  \n`;
+    const preparedByPieces = [tradieName, businessName].filter((value) => value && value.trim().length);
+    md += `**Prepared by:** ${
+      preparedByPieces.length ? preparedByPieces.join(" — ") : "_Add your name or business before sending_"
+    }  \n`;
+    const contactPieces = [businessPhone, businessWebsite].filter((value) => value && value.trim().length);
+    md += `**Contacts:** ${contactPieces.length ? contactPieces.join(" · ") : "_Add phone or website_"}\n\n`;
 
     md += `## Overview\n\n`;
     if (ai.overview) {
@@ -518,24 +571,34 @@ Rules:
     const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : [];
     if (contextNotes.length) {
       md += `**Pricing assumptions & reminders**\n\n`;
+      md += `These notes explain how the allowances above were built—sense check them before you lock in the number.\n\n`;
       md += contextNotes.map((n) => `- ${n}`).join("\n") + `\n\n`;
     }
 
     if (usingAISuggestedLabour && ai.labourSuggest.length) {
-      md += `## Suggested Labour Mix\n\n`;
-      md += `| Role | Hours | Rate |\n|------|------:|-----:|\n`;
-      ai.labourSuggest.forEach((row) => {
-        md += `| ${row.role || "-"} | ${row.hours || 0} | ${fmt(row.rate || 0)} |\n`;
-      });
-      md += `\n`;
+      const labourNarrative = ai.labourSuggest
+        .map((row) => {
+          const role = row.role ? row.role.trim() : "Crew";
+          const hoursVal = Number(row.hours);
+          const hoursLabel = Number.isFinite(hoursVal) && hoursVal > 0
+            ? `${hoursVal % 1 === 0 ? hoursVal.toFixed(0) : hoursVal.toFixed(1)} hours`
+            : "hours as required";
+          const rateLabel = Number(row.rate) > 0 ? ` (allow ${fmt(row.rate)} for this crew type)` : "";
+          return `${role} — approx ${hoursLabel}${rateLabel}.`;
+        })
+        .filter(Boolean);
+      if (labourNarrative.length) {
+        md += `## Crew & labour outlook\n\n`;
+        md += labourNarrative.join(" ") + `\n\n`;
+      }
     }
 
     md += `## Project considerations\n\n`;
-    md += `**Key assumptions**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `**Working assumptions to confirm**\n\n` + assumptions.map((a) => `- ${a}`).join("\n") + `\n\n`;
     if (ai.risks && ai.risks.length) {
-      md += `**Risks & watch points**\n\n` + ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
+      md += `**Site risks & watchpoints**\n\n` + ai.risks.map((r) => `- ${r}`).join("\n") + `\n\n`;
     }
-    md += `**Exclusions / not included**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
+    md += `**Exclusions / outside this estimate**\n\n` + exclusions.map((a) => `- ${a}`).join("\n") + `\n\n`;
 
     if (ai.options && ai.options.length) {
       md += `## Optional upgrades (quoted separately)\n\n`;
@@ -550,7 +613,10 @@ Rules:
     md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
     md += `**Payment terms:** A deposit is required to confirm your booking and secure materials. The remaining balance is payable once the job is completed, unless other arrangements have been agreed to in writing. Payment can be made by bank transfer, EFT, or another approved method.  \n`;
     md += `**Warranty:** Workmanship warranty per trade standards; manufacturer warranties apply to materials.  \n`;
-    md += `**AI disclaimer:** Scope, pricing and timing are generated from your brief—double-check before sharing with a client.  \n\n`;
+    md += `**Business contact:** ${
+      preparedByPieces.length ? preparedByPieces.join(" — ") : "Add your name and business"
+    }${contactPieces.length ? ` · ${contactPieces.join(" · ")}` : ""}  \n`;
+    md += `**AI disclaimer:** This proposal was drafted from your brief using AI. Confirm allowances, GST and timing before sharing it with ${clientName || "the client"}.  \n\n`;
     md += `**Acceptance:** I, ______________________ (Client), accept this estimate and agree to proceed.  \n`;
     md += `Signature: __________________ Date: ________________\n`;
 
@@ -597,6 +663,44 @@ Rules:
       </label>
     </div>
 
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <label class="form-control gap-2">
+        <span class="label-text">Tradie or estimator name</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={tradieName}
+          placeholder="Who is preparing this estimate?"
+        />
+      </label>
+      <label class="form-control gap-2">
+        <span class="label-text">Business name</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessName}
+          placeholder="Trading or company name shown on the proposal."
+        />
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <label class="form-control gap-2">
+        <span class="label-text">Business phone</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessPhone}
+          placeholder="Best phone number for client follow-ups."
+        />
+      </label>
+      <label class="form-control gap-2">
+        <span class="label-text">Website or booking link</span>
+        <input
+          class="input input-bordered w-full"
+          bind:value={businessWebsite}
+          placeholder="URL where clients can read more or book in (optional)."
+        />
+      </label>
+    </div>
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
       <label class="form-control gap-2">
         <span class="label-text">Project brief (1–3 sentences)</span>
@@ -611,14 +715,14 @@ Rules:
         <div class="space-y-2">
           <span class="label-text">Cost &amp; pricing context</span>
           <p class="text-xs leading-relaxed text-gray-500">
-            Spell out the big-ticket items, allowances and caveats in plain English (e.g. supply brand/model, crew effort, markups,
-            traffic management, risks). Any dollars or percentages you mention here are auto-totalled before we call the AI.
+            Write costs in natural sentences (e.g. equipment, crew effort, call-out fees, markups, allowances, risks). We detect any
+            $ or % figures automatically and total them before drafting the AI proposal.
           </p>
         </div>
         <textarea
           class="textarea textarea-bordered h-56 w-full"
           bind:value={costsText}
-          placeholder="Outline key purchases, labour effort, markups and risk allowances (e.g. ‘Supply Panasonic ducted package ≈$20k; two techs for 3 days @ $95/hr; allow crane & traffic mgmt $1.1k; add 15% supervision/variations markup’)."
+          placeholder="Example: ‘Panasonic ducted kit supplied/installed about $20k; two techs for 3 days and apprentice support (labour ≈$4,500); crane + traffic mgmt $1.1k if required; add 15% supervision/variations buffer.’"
         ></textarea>
       </label>
     </div>
@@ -664,70 +768,22 @@ Rules:
       </div>
     </details>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-        <div class="space-y-4 p-5 sm:p-6 text-sm">
-          <h2 class="text-lg font-semibold">Totals snapshot</h2>
-          {#if baseCostsTotal || markupTotal}
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="opacity-70">Base allowances</span>
-                <span class="font-semibold">{fmt(baseCostsTotal)}</span>
-              </div>
-              {#if markupEntries.length}
-                {#each markupEntries as adj}
-                  <div class="flex flex-col text-xs text-gray-600">
-                    <div class="flex items-center justify-between text-sm">
-                      <span class="opacity-70">
-                        {adj.label || "Markup"}
-                        {#if adj.percent}
-                          ({fmtPercent(adj.percent)}%)
-                        {/if}
-                      </span>
-                      <span class="font-semibold">{fmt(adj.amount)}</span>
-                    </div>
-                    {#if adj.context}<span>{adj.context}</span>{/if}
-                  </div>
-                {/each}
-              {/if}
-              <div class="flex items-center justify-between">
-                <span class="opacity-70">Subtotal</span>
-                <span class="font-semibold">{fmt(clientSubtotal)}</span>
-              </div>
-              {#if includeGST}
-                <div class="flex items-center justify-between">
-                  <span class="opacity-70">GST ({(gstRate * 100).toFixed(0)}%)</span>
-                  <span class="font-semibold">{fmt(gst)}</span>
-                </div>
-              {/if}
-              <div class="flex items-center justify-between text-base">
-                <span class="opacity-70">Grand total</span>
-                <span class="font-semibold">{fmt(grandTotal)}</span>
-              </div>
-            </div>
-          {:else}
-            <p class="text-sm text-gray-500">Add rough figures above to preview totals before generating the AI proposal.</p>
-          {/if}
-        </div>
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3 p-5 sm:p-6">
+        <button class="btn btn-primary" type="submit" disabled={loading}>
+          {#if loading}<span class="loading loading-dots"></span>{/if}
+          <span>Generate proposal</span>
+        </button>
+        <button type="button" class="btn" on:click={useExample}>Use example</button>
+        <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
+        <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
+        <p class="text-xs leading-relaxed text-gray-500">
+          <span class="font-semibold text-gray-600">Reminder:</span>
+          Plain-English cost notes are fine—we’ll detect any $ or % figures automatically. All pricing and timelines are AI-generated
+          from your inputs, so double-check before presenting to a client.
+        </p>
       </div>
-
-      <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm lg:col-span-2">
-        <div class="flex flex-wrap items-center gap-3 p-5 sm:p-6">
-          <button class="btn btn-primary" type="submit" disabled={loading}>
-            {#if loading}<span class="loading loading-dots"></span>{/if}
-            <span>Generate proposal</span>
-          </button>
-            <button type="button" class="btn" on:click={useExample}>Use example</button>
-            <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-            <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-            <p class="text-xs leading-relaxed text-gray-500">
-              <span class="font-semibold text-gray-600">Tip:</span>
-              Describe costs in plain English and we’ll total any figures before drafting.
-              <span class="block text-[11px] text-gray-500/90 sm:inline">Reminder: costs, allowances and timelines are AI-generated from your brief—double check numbers before sending to a client.</span>
-            </p>
-          </div>
-        </div>
-      </div>
+    </div>
   </form>
 
   {#if output.trim().length}
