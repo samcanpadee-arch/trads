@@ -1,38 +1,10 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-type DocType = 'swms' | 'toolbox' | 'induction';
-
-const DOC_LABEL: Record<DocType, string> = {
-  swms: 'Safe Work Method Statement (SWMS)',
-  toolbox: 'Toolbox Talk Summary',
-  induction: 'Site Induction Outline'
-};
-
-const DOC_GUIDANCE: Record<DocType, string> = {
-  swms:
-    'Structure the SWMS with a short overview, scope, task-by-task hazards, risk controls, PPE, and supervision notes. Mention relevant Australian standards or WHS duties when appropriate.',
-  toolbox:
-    'Provide key discussion points, hazard reminders, housekeeping actions, and takeaways for the crew toolbox talk. Use bullet points with clear actions and call out PPE/permits when referenced.',
-  induction:
-    'Lay out a logical order for inducting new people onto site: welcome, site rules, hazards, emergency plan, communication, and responsibilities. Finish with a recap of must-dos before they start work.'
-};
-
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 export const POST: RequestHandler = async ({ request }) => {
-  let body: Partial<{
-    docType: DocType;
-    projectName: string;
-    siteLocation: string;
-    workDescription: string;
-    hazards: string;
-    controls: string;
-    crew: string;
-    notes: string;
-    includeSignOff: boolean;
-    brandContext: string;
-  }> = {};
+  let body: Partial<AgreementRequest> = {};
 
   try {
     body = await request.json();
@@ -40,34 +12,21 @@ export const POST: RequestHandler = async ({ request }) => {
     return new Response('Invalid JSON', { status: 400 });
   }
 
-  const docType: DocType = isDocType(body.docType) ? body.docType : 'swms';
-  const docLabel = DOC_LABEL[docType];
-
-  const projectName = clean(body.projectName, 200);
-  const siteLocation = clean(body.siteLocation, 200);
-  const workDescription = clean(body.workDescription, 1200);
-  const hazards = clean(body.hazards, 1200);
-  const controls = clean(body.controls, 1200);
-  const crew = clean(body.crew, 800);
-  const notes = clean(body.notes, 800);
-  const includeSignOff = Boolean(body.includeSignOff);
-  const brandContext = clean(body.brandContext, 500);
-
-  const requestPayload = {
-    docType,
-    docLabel,
-    projectName,
-    siteLocation,
-    workDescription,
-    hazards,
-    controls,
-    crew,
-    notes,
-    includeSignOff,
-    brandContext,
+  const payload: AgreementRequest = {
+    clientName: clean(body.clientName, 200),
+    siteAddress: clean(body.siteAddress, 200),
+    projectBrief: clean(body.projectBrief, 1200),
+    inclusions: clean(body.inclusions, 1500),
+    responsibilities: clean(body.responsibilities, 1200),
+    paymentTerms: clean(body.paymentTerms, 800),
+    schedule: clean(body.schedule, 800),
+    variations: clean(body.variations, 800),
+    specialTerms: clean(body.specialTerms, 800),
+    includeSignature: Boolean(body.includeSignature),
+    brandContext: clean(body.brandContext, 500)
   };
 
-  const fallback = buildFallback(requestPayload);
+  const fallback = buildFallback(payload);
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -75,24 +34,21 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const systemPrompt =
-    `You are Safety Document Assistant for Australian tradies. Prepare a ${docLabel} using the provided context.` +
-    ' Write in clear Australian English, keep paragraphs short, and favour bullet lists.' +
-    ' Reference Aussie WHS expectations when relevant. ' +
-    DOC_GUIDANCE[docType] +
-    (includeSignOff
-      ? ' Always finish with a sign-off or distribution block summarising who needs to acknowledge the document.'
-      : '') +
-    (brandContext ? '\nBrand context: ' + brandContext : '');
+    'You are Customer Agreement Assistant for Australian tradies. Turn the provided context into a clear agreement ready for clients to sign.' +
+    ' Write in short paragraphs or bullet lists, highlight expectations, responsibilities, payment milestones, variation rules, and compliance duties.' +
+    (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
   const userContent = {
-    projectName,
-    siteLocation,
-    workDescription,
-    hazards: listFromText(hazards),
-    controls: listFromText(controls),
-    crew: listFromText(crew),
-    notes,
-    includeSignOff,
+    clientName: payload.clientName,
+    siteAddress: payload.siteAddress,
+    projectBrief: payload.projectBrief,
+    inclusions: listFromText(payload.inclusions),
+    responsibilities: listFromText(payload.responsibilities),
+    paymentTerms: payload.paymentTerms,
+    schedule: payload.schedule,
+    variations: payload.variations,
+    specialTerms: payload.specialTerms,
+    includeSignature: payload.includeSignature
   };
 
   try {
@@ -104,13 +60,17 @@ export const POST: RequestHandler = async ({ request }) => {
       },
       body: JSON.stringify({
         model: DEFAULT_MODEL,
-        temperature: 0.3,
+        temperature: 0.35,
         messages: [
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content:
-              'Create the document using this structured JSON. Keep headings short and readable.\n' +
+              'Create the customer agreement using this JSON. Include headings like Overview, Inclusions, Responsibilities, Payment, Schedule, Variations, Terms.' +
+              (payload.includeSignature
+                ? ' Finish with an Acceptance / Sign-off panel for both parties.'
+                : '') +
+              '\n' +
               JSON.stringify(userContent, null, 2)
           }
         ]
@@ -119,7 +79,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     if (!response.ok) {
       const err = await response.text();
-      console.warn('[safety-docs] upstream error', err);
+      console.warn('[customer-agreement] upstream error', err);
       return json({ document: fallback, error: err || 'OpenAI error' }, { status: 200 });
     }
 
@@ -127,10 +87,24 @@ export const POST: RequestHandler = async ({ request }) => {
     const text = data?.choices?.[0]?.message?.content?.trim();
     return json({ document: text || fallback });
   } catch (error) {
-    console.error('[safety-docs] request failed', error);
+    console.error('[customer-agreement] request failed', error);
     const message = error instanceof Error ? error.message : 'LLM request failed';
     return json({ document: fallback, error: message }, { status: 200 });
   }
+};
+
+type AgreementRequest = {
+  clientName: string;
+  siteAddress: string;
+  projectBrief: string;
+  inclusions: string;
+  responsibilities: string;
+  paymentTerms: string;
+  schedule: string;
+  variations: string;
+  specialTerms: string;
+  includeSignature: boolean;
+  brandContext: string;
 };
 
 function clean(value: unknown, max = 500): string {
@@ -146,55 +120,42 @@ function listFromText(value: string): string[] {
     .slice(0, 40);
 }
 
-function isDocType(value: unknown): value is DocType {
-  return value === 'swms' || value === 'toolbox' || value === 'induction';
-}
-
-type RequestPayload = {
-  docType: DocType;
-  docLabel: string;
-  projectName: string;
-  siteLocation: string;
-  workDescription: string;
-  hazards: string;
-  controls: string;
-  crew: string;
-  notes: string;
-  includeSignOff: boolean;
-  brandContext: string;
-};
-
-function buildFallback(payload: RequestPayload): string {
+function buildFallback(payload: AgreementRequest): string {
   const lines: string[] = [];
-  lines.push(`# ${payload.docLabel}`);
-  if (payload.projectName || payload.siteLocation) {
+  lines.push('# Customer Agreement');
+  if (payload.clientName || payload.siteAddress) {
     lines.push(
-      `**Project:** ${payload.projectName || 'Not specified'}${payload.siteLocation ? ` — ${payload.siteLocation}` : ''}`
+      `**Client:** ${payload.clientName || 'Not specified'}${payload.siteAddress ? ` — ${payload.siteAddress}` : ''}`
     );
   }
-  if (payload.workDescription) {
-    lines.push('\n## Scope', payload.workDescription);
+  if (payload.projectBrief) {
+    lines.push('\n## Overview', payload.projectBrief);
   }
-  const hazards = listFromText(payload.hazards);
-  if (hazards.length) {
-    lines.push('\n## Key hazards', ...hazards.map((h) => `- ${h}`));
+  const inclusions = listFromText(payload.inclusions);
+  if (inclusions.length) {
+    lines.push('\n## Inclusions & scope', ...inclusions.map((item) => `- ${item}`));
   }
-  const controls = listFromText(payload.controls);
-  if (controls.length) {
-    lines.push('\n## Controls & PPE', ...controls.map((c) => `- ${c}`));
+  const responsibilities = listFromText(payload.responsibilities);
+  if (responsibilities.length) {
+    lines.push('\n## Client responsibilities / prep', ...responsibilities.map((item) => `- ${item}`));
   }
-  const crew = listFromText(payload.crew);
-  if (crew.length) {
-    lines.push('\n## Responsibilities', ...crew.map((c) => `- ${c}`));
+  if (payload.paymentTerms) {
+    lines.push('\n## Payment terms', payload.paymentTerms);
   }
-  if (payload.notes) {
-    lines.push('\n## Additional notes', payload.notes);
+  if (payload.schedule) {
+    lines.push('\n## Schedule', payload.schedule);
   }
-  if (payload.includeSignOff) {
+  if (payload.variations) {
+    lines.push('\n## Variations & exclusions', payload.variations);
+  }
+  if (payload.specialTerms) {
+    lines.push('\n## Terms & compliance', payload.specialTerms);
+  }
+  if (payload.includeSignature) {
     lines.push(
-      '\n## Sign-off',
-      '- Supervisor: ___________________________',
-      '- Date: _________________________________'
+      '\n## Acceptance',
+      '- Contractor: ___________________________   Date: ____________',
+      '- Client: _______________________________   Date: ____________'
     );
   }
   return lines.join('\n').trim();
