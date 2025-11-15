@@ -34,7 +34,8 @@
   let loading = false;
 
   type ParsedEntry = { label: string; amount: number };
-  type ParsedBlock = { entries: ParsedEntry[]; notes: string[] };
+  type PercentAdj = { label: string; percent: number };
+  type ParsedBlock = { entries: ParsedEntry[]; percentAdjustments: PercentAdj[]; notes: string[] };
 
   function toNumber(n: unknown, d = 0) {
     const cleaned = typeof n === "string" ? n : String(n ?? "");
@@ -75,31 +76,73 @@
     return out.replace(/[.!?]+$/, "");
   }
 
-  function parseLabelledAmounts(text: string): ParsedBlock {
+  const currencyRe = /(?:AUD\s*)?(?:A\$|\$)?\s*\d[\d,]*(?:\.\d{1,2})?(?:\s?[kK])?/gi;
+  const percentRe = /(\d+(?:\.\d+)?)\s*%/gi;
+
+  function cleanLabel(label: string) {
+    return label
+      .replace(/[–—-]+$/g, "")
+      .replace(/\b(is|are|at|for|approx|around|about|to)\b$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function toAmount(raw: string) {
+    const hasK = /k$/i.test(raw.trim());
+    const cleaned = raw.replace(/[^0-9.-]/g, "").replace(/k$/i, "");
+    const n = toNumber(cleaned, NaN);
+    if (!Number.isFinite(n)) return NaN;
+    return hasK ? n * 1000 : n;
+  }
+
+  function parseCostContext(text: string): ParsedBlock {
     const entries: ParsedEntry[] = [];
+    const percentAdjustments: PercentAdj[] = [];
     const notes: string[] = [];
+
     (text || "")
       .split(/\r?\n/)
       .map((line) => line.trim())
       .forEach((line) => {
         if (!line) return;
-        const [first, ...rest] = line.split(":");
-        if (rest.length) {
-          const label = first.trim();
-          const amountStr = rest.join(":").trim();
-          const amount = toNumber(amountStr, NaN);
-          if (label && amountStr && Number.isFinite(amount)) {
-            entries.push({ label, amount });
+        let matchedAmount = false;
+        const rateLike = /(per\s+|\/|hour|hr|day|week|rate|each)/i.test(line) && !/total|sum|allowance/i.test(line);
+        const matches = [...line.matchAll(currencyRe)];
+        matches.forEach((match) => {
+          if (!match[0]) return;
+          const raw = match[0];
+          const start = match.index ?? 0;
+          const amount = toAmount(raw);
+          if (!Number.isFinite(amount) || rateLike) {
             return;
           }
+          const before = cleanLabel(line.slice(0, start));
+          const after = cleanLabel(line.slice(start + raw.length));
+          const label = before || after || "Allowance";
+          entries.push({ label, amount });
+          matchedAmount = true;
+        });
+
+        const percentMatches = [...line.matchAll(percentRe)];
+        if (percentMatches.length && /markup|margin|contingency|allowance|buffer|risk|admin/i.test(line)) {
+          percentMatches.forEach((p) => {
+            const pct = toNumber(p[1], NaN);
+            if (!Number.isFinite(pct)) return;
+            percentAdjustments.push({ label: line, percent: pct });
+          });
+          matchedAmount = true;
         }
-        notes.push(line);
+
+        if (!matchedAmount) {
+          notes.push(line);
+        }
       });
-    return { entries, notes };
+
+    return { entries, percentAdjustments, notes };
   }
 
-  let parsedCosts: ParsedBlock = { entries: [], notes: [] };
-  $: parsedCosts = parseLabelledAmounts(costsText);
+  let parsedCosts: ParsedBlock = { entries: [], percentAdjustments: [], notes: [] };
+  $: parsedCosts = parseCostContext(costsText);
 
   $: {
     const pct = Math.min(100, Math.max(0, Number(gstRateInput) || 0));
@@ -110,15 +153,21 @@
   }
 
   $: baseCostsTotal = parsedCosts.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  $: clientSubtotal = baseCostsTotal;
+  let markupEntries: ParsedEntry[] = [];
+  $: markupEntries = parsedCosts.percentAdjustments.map((adj) => ({
+    label: adj.label,
+    amount: baseCostsTotal * ((adj.percent || 0) / 100)
+  }));
+  $: markupTotal = markupEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  $: clientSubtotal = baseCostsTotal + markupTotal;
   $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
   $: grandTotal = clientSubtotal + gst;
 
-  const exampleCosts = `Supply and install a Panasonic ducted system approx $20k (materials, controls, commissioning).
-Two technicians for 3 full days @ $95/hr each, plus one apprentice on day two.
-15% markup to cover procurement admin, variations buffer and warranty handling.
-Allow crane lift and traffic mgmt up to $1,100 if street parking is tight.
-Labour may increase if switchboard needs upgrades or ceiling access is restricted.`;
+  const exampleCosts = `Materials + equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
+Labour effort: Two techs on site for three full days, apprentice support on day two, allow overtime if ceilings are tight.
+Program + supervision: 15% markup to cover design checks, procurement and warranty handling.
+Access / cranage: Allowance of $1,100 for traffic control and crane if parking is limited.
+Risks: Labour may increase if the existing switchboard needs upgrades or ceiling access is restricted.`;
 
   function useExample() {
     clientName = "Jordan Moore";
@@ -150,6 +199,7 @@ Labour may increase if switchboard needs upgrades or ceiling access is restricte
   }
 
   type LabourRow = { role: string; hours: number; rate: number };
+  type AICostItem = { label: string; amount: number; detail?: string };
 
   /************ AI helper ************/
   async function aiSections(): Promise<{
@@ -161,34 +211,45 @@ Labour may increase if switchboard needs upgrades or ceiling access is restricte
     timeline: string[];
     options: string[];
     labourSuggest: LabourRow[];
+    costSummary: AICostItem[];
+    pricingNotes: string[];
   }> {
     const SYSTEM = `You are an AI assistant for Australian tradies. Reply in Australian English.
 Return ONLY JSON with keys and detailed content:
-- overview: string (≈150–220 words; friendly, client-facing; mention specifics from the brief; explain approach, quality and compliance)
-- scope: string[] (8–12 bullets; each a full, concrete sentence tailored to the trade & brief)
+- overview: string (≈150–220 words; client-facing; reference the brief, site realities and trade expertise)
+- scope: string[] (8–12 bullets; each a concrete service activity tailored to the trade)
 - assumptions: string[] (6–10 realistic assumptions)
 - exclusions: string[] (4–8 clear boundaries)
-- risks: string[] (4–8 items; flag unknowns and site-dependent factors)
-- timeline: string[] (4–6 milestones; each with a short helpful description)
-- options: string[] (3–6 value-adding items NOT included; e.g., preventative maintenance, minor upgrades, extended warranty)
-- labourSuggest: {role,hours,rate}[] (only if useful; else [])
-Keep content practical and specific; avoid generic fluff.`;
+- risks: string[] (4–8 site/brief-dependent risks to monitor)
+- timeline: string[] (4–6 milestone-style bullets, each with a timeframe or dependency)
+- options: string[] (3–6 upsell ideas NOT included)
+- labourSuggest: {role,hours,rate}[] (only when helpful)
+- costSummary: {label:string, amount:number, detail?:string}[] (convert the provided cost context into line items, combine similar allowances, calculate labour totals from hours/day rates if information is there, and include markups or contingencies as their own rows)
+- pricingNotes: string[] (call out any special caveats, exclusions or assumptions tied to pricing)
+Rules:
+- Analyse the free-form pricing context and detected figures to produce professional totals rather than echoing the text.
+- If labour rates are provided (e.g. two techs for 3 days @ $95/hr), multiply them out and explain the assumption in the detail field.
+- If only percentages are given (e.g. 15% markup), apply them to the detected base costs to estimate the amount.
+- Always produce a timeline, even if you must infer it from trade best practice.
+- Prefer practical Australian trade language.`;
 
     const parsedCostLines = parsedCosts.entries
       .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
       .join("\n");
+    const markupLines = markupEntries
+      .map((entry) => `${entry.label} → +${fmt(entry.amount)}`)
+      .join("\n");
+    const notesBlock = parsedCosts.notes.map((note) => `- ${note}`).join("\n");
     const user =
-      "Trade: " +
-      trade +
-      "\n" +
-      "Brief: " +
-      (projectBrief || "N/A") +
-      "\n\n" +
-      "Costs text (raw):\n" +
-      (costsText || "N/A") +
-      "\n\n" +
-      (parsedCostLines ? `Parsed cost lines:\n${parsedCostLines}\n\n` : "") +
-      `Totals before GST: ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
+      `Trade: ${trade}\n` +
+      `Brief: ${projectBrief || "N/A"}\n` +
+      `Client: ${clientName || "N/A"}\n` +
+      `Site: ${siteAddress || "N/A"}\n\n` +
+      `Cost context (raw):\n${costsText || "N/A"}\n\n` +
+      (parsedCostLines ? `Detected dollar figures:\n${parsedCostLines}\n\n` : "") +
+      (markupLines ? `Detected markups/contingencies:\n${markupLines}\n\n` : "") +
+      (notesBlock ? `Non-dollar context to weave into pricing:\n${notesBlock}\n\n` : "") +
+      `Current subtotal before GST (from user figures): ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
       (brandContext ? `\nBusiness context:\n${brandContext}` : "");
 
     let text = "";
@@ -244,7 +305,15 @@ Keep content practical and specific; avoid generic fluff.`;
               hours: toNumber(r.hours, 0),
               rate: toNumber(r.rate, 0)
             }))
-          : []
+          : [],
+        costSummary: Array.isArray(j.costSummary)
+          ? j.costSummary.map((row: Record<string, unknown>) => ({
+              label: String(row.label || ""),
+              amount: toNumber(row.amount, 0),
+              detail: row.detail ? String(row.detail) : undefined
+            }))
+          : [],
+        pricingNotes: Array.isArray(j.pricingNotes) ? j.pricingNotes.map(String) : []
       };
     } catch (error) {
       console.warn("job-estimation parse failed", error);
@@ -256,7 +325,9 @@ Keep content practical and specific; avoid generic fluff.`;
         risks: [],
         timeline: [],
         options: [],
-        labourSuggest: []
+        labourSuggest: [],
+        costSummary: [],
+        pricingNotes: []
       };
     }
   }
@@ -267,6 +338,7 @@ Keep content practical and specific; avoid generic fluff.`;
 
     const ai = await aiSections();
     const usingAISuggestedLabour = ai.labourSuggest.length > 0;
+    const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
@@ -396,18 +468,38 @@ Keep content practical and specific; avoid generic fluff.`;
     });
     md += `\n`;
 
-    md += `## Costs & Allowances\n\n`;
-    if (parsedCosts.entries.length) {
-      md += `| Item | Amount (AUD) |\n|------|--------------:|\n`;
-      parsedCosts.entries.forEach((entry) => {
-        md += `| ${entry.label} | ${fmt(entry.amount)} |\n`;
+    const fallbackCostRows: AICostItem[] = parsedCosts.entries.map((entry) => ({
+      label: entry.label,
+      amount: entry.amount
+    }));
+    md += `## Pricing Summary\n\n`;
+    const pricingSource = aiCostRows.length ? aiCostRows : fallbackCostRows;
+    if (pricingSource.length) {
+      md += `| Item | Amount (AUD) | Notes |\n|------|--------------:|-------|\n`;
+      pricingSource.forEach((entry) => {
+        const note = "detail" in entry && entry.detail ? entry.detail : "";
+        md += `| ${entry.label || "Allowance"} | ${fmt(entry.amount || 0)} | ${note} |\n`;
       });
-      md += `\n**Estimated subtotal:** ${fmt(baseCostsTotal)}\n\n`;
+      let sourceSubtotal = pricingSource.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+      if (!aiCostRows.length && markupEntries.length) {
+        markupEntries.forEach((adj) => {
+          md += `| ${adj.label || "Markup"} | ${fmt(adj.amount)} | Applied as % of base costs |\n`;
+        });
+        sourceSubtotal += markupTotal;
+      }
+      md += `| **Subtotal** | **${fmt(sourceSubtotal)}** |  |\n`;
+      if (includeGST) {
+        const gstLine = sourceSubtotal * (gstRate || 0);
+        md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gstLine)}** |  |\n`;
+      }
+      const totalLine = includeGST ? sourceSubtotal * (1 + (gstRate || 0)) : sourceSubtotal;
+      md += `| **Client total (AUD)** | **${fmt(totalLine)}** |  |\n\n`;
     } else {
-      md += `_List your allowances, day rates, markups or contingencies above to keep pricing transparent._\n\n`;
+      md += `_Add any pricing context above (materials, labour, markups) so we can summarise it here._\n\n`;
     }
-    if (parsedCosts.notes.length) {
-      md += `**Context & reminders:**\n` + parsedCosts.notes.map((n) => `- ${n}`).join("\n") + `\n\n`;
+    const contextNotes = ai.pricingNotes && ai.pricingNotes.length ? ai.pricingNotes : parsedCosts.notes;
+    if (contextNotes.length) {
+      md += `**Pricing assumptions & reminders:**\n` + contextNotes.map((n) => `- ${n}`).join("\n") + `\n\n`;
     }
 
     if (usingAISuggestedLabour && ai.labourSuggest.length) {
@@ -507,14 +599,14 @@ Keep content practical and specific; avoid generic fluff.`;
         <div class="space-y-2">
           <span class="label-text">Cost &amp; pricing context</span>
           <p class="text-xs leading-relaxed text-gray-500">
-            Write it like you would in an email to a client: include key materials, labour effort or day rates, markups, allowances,
-            access issues, and anything that could push the price up or down. We'll pick up any figures you mention and total them automatically.
+            Spell out the big-ticket items, allowances and caveats in plain English (e.g. supply brand/model, crew effort, markups,
+            traffic management, risks). Any dollars or percentages you mention here are auto-totalled before we call the AI.
           </p>
         </div>
         <textarea
           class="textarea textarea-bordered h-56 w-full"
           bind:value={costsText}
-          placeholder="Explain materials, labour time or crew mix, hourly/day rates, markup %, provisional sums, access constraints, and any pricing caveats the AI should respect."
+          placeholder="Example: Materials & equipment allowance, labour mix and hours, site access costs, markup % to cover supervision, risk or contingency notes, and anything that could sway the price."
         ></textarea>
       </label>
     </div>
@@ -564,14 +656,41 @@ Keep content practical and specific; avoid generic fluff.`;
       <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
         <div class="space-y-4 p-5 sm:p-6 text-sm">
           <h2 class="text-lg font-semibold">Totals snapshot</h2>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between"><span class="opacity-70">Costs &amp; allowances</span><span class="font-semibold">{fmt(baseCostsTotal)}</span></div>
-            <div class="flex items-center justify-between"><span class="opacity-70">Subtotal</span><span class="font-semibold">{fmt(clientSubtotal)}</span></div>
-            {#if includeGST}
-              <div class="flex items-center justify-between"><span class="opacity-70">GST ({(gstRate * 100).toFixed(0)}%)</span><span class="font-semibold">{fmt(gst)}</span></div>
-            {/if}
-            <div class="flex items-center justify-between text-base"><span class="opacity-70">Grand total</span><span class="font-semibold">{fmt(grandTotal)}</span></div>
-          </div>
+          {#if baseCostsTotal || markupTotal}
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="opacity-70">Base allowances</span>
+                <span class="font-semibold">{fmt(baseCostsTotal)}</span>
+              </div>
+              {#if markupEntries.length}
+                {#each markupEntries as adj}
+                  <div class="flex flex-col text-xs text-gray-600">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="opacity-70">Markup/contingency</span>
+                      <span class="font-semibold">{fmt(adj.amount)}</span>
+                    </div>
+                    <span>{cleanLabel(adj.label)}</span>
+                  </div>
+                {/each}
+              {/if}
+              <div class="flex items-center justify-between">
+                <span class="opacity-70">Subtotal</span>
+                <span class="font-semibold">{fmt(clientSubtotal)}</span>
+              </div>
+              {#if includeGST}
+                <div class="flex items-center justify-between">
+                  <span class="opacity-70">GST ({(gstRate * 100).toFixed(0)}%)</span>
+                  <span class="font-semibold">{fmt(gst)}</span>
+                </div>
+              {/if}
+              <div class="flex items-center justify-between text-base">
+                <span class="opacity-70">Grand total</span>
+                <span class="font-semibold">{fmt(grandTotal)}</span>
+              </div>
+            </div>
+          {:else}
+            <p class="text-sm text-gray-500">Add rough figures above to preview totals before generating the AI proposal.</p>
+          {/if}
         </div>
       </div>
 
@@ -584,7 +703,7 @@ Keep content practical and specific; avoid generic fluff.`;
             <button type="button" class="btn" on:click={useExample}>Use example</button>
             <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
             <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-            <p class="text-xs text-gray-500">Tip: Rough numbers are fine—just mention them in plain English and we’ll crunch totals before the AI drafts your proposal.</p>
+            <p class="text-xs text-gray-500">Tip: No special format needed—describe costs in plain English and we’ll total any figures before drafting.</p>
           </div>
         </div>
       </div>
