@@ -16,8 +16,8 @@
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
-      href="/account/tools/job-estimation"
-      aria-label="Open Material & Cost Calculator"
+      href="/account/tools/terms-conditions"
+      aria-label="Open Terms & Conditions Generator"
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-3">
@@ -25,17 +25,17 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6">
               <path
                 fill="currentColor"
-                d="M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3m0 2a1 1 0 0 0-1 1v14c0 .55.45 1 1 1h10a1 1 0 0 0 1-1V5c0-.55-.45-1-1-1zm2 3h6v3H9zm0 6h2v2H9zm0 4h2v2H9zm4-4h2v2h-2zm0 4h2v2h-2z"
+                d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m8 1.5V9h5.5M7 12h10v2H7zm0 4h10v2H7z"
               />
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Costing</p>
-            <h2 class="text-lg font-semibold">Material &amp; Cost Calculator</h2>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Compliance</p>
+            <h2 class="text-lg font-semibold">Terms & Conditions Generator</h2>
           </div>
         </div>
         <p class="text-sm text-gray-600">
-          Crunch material costs with confidence, then pull the results straight into quotes without spreadsheet acrobatics.
+          Quickly draft payment terms, responsibilities, and conditions your clients agree to before work kicks off.
         </p>
         <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
       </div>
@@ -43,8 +43,8 @@
 
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
-      href="/account/tools/job-estimation"
-      aria-label="Open Sales Proposal Generator"
+      href="/account/tools/day-log"
+      aria-label="Open Scope Guard Day Log"
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-3">
@@ -54,11 +54,11 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Docs</p>
-            <h2 class="text-lg font-semibold">Sales Proposal Generator</h2>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Scope Guard</p>
+            <h2 class="text-lg font-semibold">Day Log</h2>
           </div>
         </div>
-        <p class="text-sm text-gray-600">Spin a rough brief into a persuasive, wow-worthy proposal that shows why your crew is the standout choice.</p>
+        <p class="text-sm text-gray-600">Capture each day’s progress, conversations, delays, or weather issues so you have a running log when clients query scope or timelines.</p>
         <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
       </div>
     </a>
@@ -66,7 +66,7 @@
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
       href="/account/tools/job-estimation"
-      aria-label="Open Job Estimation Wizard"
+      aria-label="Open Proposal & Estimate Builder"
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-3">
@@ -77,7 +77,7 @@
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-primary">Pricing</p>
-            <h2 class="text-lg font-semibold">Job Estimation Wizard</h2>
+            <h2 class="text-lg font-semibold">Proposal & Estimate Builder</h2>
           </div>
         </div>
         <p class="text-sm text-gray-600">Build out detailed estimates with materials, labour, overheads, and GST ready to send—no spreadsheet wrangling required.</p>
