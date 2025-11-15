@@ -67,14 +67,12 @@
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <div class="space-y-6">
-          <div class="inline-flex items-center gap-2 rounded-full border border-amber-200/60 bg-white/70 px-4 py-1 text-xs uppercase tracking-[0.2em] text-amber-600">
-            Built for AU/NZ tradies
-          </div>
-          <h1 class="text-4xl md:text-5xl font-bold leading-tight">
-            <span class="text-slate-900">Tradie Assistant</span>
+          <div class="brand-eyebrow brand-eyebrow--pill">Built for AU/NZ tradies</div>
+          <h1 class="brand-heading brand-heading--xl">
+            <span>Tradie Assistant</span>
             <span class="block text-amber-600/90">your AI mate for jobs, clients, and the hard bits</span>
           </h1>
-          <p class="text-lg text-slate-700 max-w-xl">
+          <p class="brand-copy brand-copy--lead max-w-xl">
             Quote quicker, fire off pro proposals, handle reviews in seconds, and grab answers from manuals without scrolling PDFs.
             Less admin. More tools time. Easy as.
           </p>
@@ -84,19 +82,19 @@
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
             <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
-              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Tools</p>
-              <p class="text-2xl font-semibold text-slate-900 mt-1">6 instant workflows</p>
-              <p class="text-slate-600 mt-1">Quotes, proposals, reviews, socials, SMS, and cost calculators ready before smoko.</p>
+              <p class="brand-eyebrow brand-eyebrow--subtle">Smart Tools</p>
+              <p class="brand-heading brand-heading--md mt-1">6 instant workflows</p>
+              <p class="brand-copy brand-copy--small brand-copy--muted mt-1">Quotes, proposals, reviews, socials, SMS, and cost calculators ready before smoko.</p>
             </div>
             <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
-              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Tradie Library</p>
-              <p class="text-2xl font-semibold text-slate-900 mt-1">1,200+ manuals & guides</p>
-              <p class="text-slate-600 mt-1">Wiring rules, HVAC install books, plumbing codes, SDS, and spec sheets on tap.</p>
+              <p class="brand-eyebrow brand-eyebrow--subtle">Tradie Library</p>
+              <p class="brand-heading brand-heading--md mt-1">1,200+ manuals & guides</p>
+              <p class="brand-copy brand-copy--small brand-copy--muted mt-1">Wiring rules, HVAC install books, plumbing codes, SDS, and spec sheets on tap.</p>
             </div>
             <div class="rounded-2xl border border-amber-100 bg-white/85 shadow-sm p-4">
-              <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Speed</p>
-              <p class="text-2xl font-semibold text-slate-900 mt-1">Answers in seconds</p>
-              <p class="text-slate-600 mt-1">Polished responses land before you’ve packed the ute — even on patchy site Wi-Fi.</p>
+              <p class="brand-eyebrow brand-eyebrow--subtle">Speed</p>
+              <p class="brand-heading brand-heading--md mt-1">Answers in seconds</p>
+              <p class="brand-copy brand-copy--small brand-copy--muted mt-1">Polished responses land before you’ve packed the ute — even on patchy site Wi-Fi.</p>
             </div>
           </div>
         </div>
@@ -129,16 +127,16 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid gap-6 md:grid-cols-3">
         <div class="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <h3 class="text-xl font-semibold text-slate-900">Work smarter, not longer</h3>
-          <p class="text-sm text-slate-600 mt-2">Less keyboard, more toolbox. Keep jobs moving without overtime.</p>
+          <h3 class="brand-heading brand-heading--sm">Work smarter, not longer</h3>
+          <p class="brand-copy brand-copy--small brand-copy--muted mt-2">Less keyboard, more toolbox. Keep jobs moving without overtime.</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <h3 class="text-xl font-semibold text-slate-900">Win more jobs</h3>
-          <p class="text-sm text-slate-600 mt-2">Be first with a clean quote — and close it with confidence.</p>
+          <h3 class="brand-heading brand-heading--sm">Win more jobs</h3>
+          <p class="brand-copy brand-copy--small brand-copy--muted mt-2">Be first with a clean quote — and close it with confidence.</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <h3 class="text-xl font-semibold text-slate-900">Do better work</h3>
-          <p class="text-sm text-slate-600 mt-2">Check manuals when it matters. Fewer mistakes, happier clients.</p>
+          <h3 class="brand-heading brand-heading--sm">Do better work</h3>
+          <p class="brand-copy brand-copy--small brand-copy--muted mt-2">Check manuals when it matters. Fewer mistakes, happier clients.</p>
         </div>
       </div>
     </div>
@@ -148,32 +146,32 @@
   <section class="py-16 bg-gradient-to-b from-white via-amber-50/60 to-white">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
       <div class="text-center max-w-3xl mx-auto">
-        <p class="text-sm uppercase tracking-[0.2em] text-amber-600">Everything in one spot</p>
-        <h2 class="text-3xl md:text-4xl font-bold mt-3">Tools, chat, and the Tradie Library in one tap</h2>
-        <p class="mt-3 text-slate-600">From first quote to final review, every part of your trade day gets easier.</p>
+        <p class="brand-eyebrow brand-eyebrow--subtle">Everything in one spot</p>
+        <h2 class="brand-heading brand-heading--lg mt-3">Tools, chat, and the Tradie Library in one tap</h2>
+        <p class="brand-copy brand-copy--muted mt-3">From first quote to final review, every part of your trade day gets easier.</p>
       </div>
 
-      <div class="rounded-[32px] border border-dashed border-slate-200 bg-white/80 shadow-sm p-6 text-center text-sm font-medium text-slate-500">
+      <div class="rounded-[32px] border border-dashed border-slate-200 bg-white/80 shadow-sm p-6 text-center text-sm font-medium brand-copy brand-copy--muted">
         Workflow image placeholder — drop in Smart Tools screenshots here
       </div>
 
       <div class="grid gap-8 lg:grid-cols-3">
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
-          <div class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Tools</div>
-          <h3 class="mt-3 text-2xl font-semibold">Job-ready workflows</h3>
-          <p class="mt-2 text-slate-600">Price jobs, turn quotes into polished proposals, and handle client comms without the back-and-forth.</p>
+          <div class="brand-eyebrow brand-eyebrow--subtle">Smart Tools</div>
+          <h3 class="brand-heading brand-heading--md mt-3">Job-ready workflows</h3>
+          <p class="brand-copy brand-copy--muted mt-2">Price jobs, turn quotes into polished proposals, and handle client comms without the back-and-forth.</p>
           <div class="mt-6 grid grid-cols-1 gap-3 text-sm">
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="font-semibold">Material & Cost Calculator</div>
-              <p class="text-slate-500">Materials, labour & markup sorted in minutes.</p>
+              <div class="brand-heading brand-heading--xs">Material & Cost Calculator</div>
+              <p class="brand-copy brand-copy--small brand-copy--muted">Materials, labour & markup sorted in minutes.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="font-semibold">Job Estimation Wizard</div>
-              <p class="text-slate-500">Short brief → itemised, client-ready quote.</p>
+              <div class="brand-heading brand-heading--xs">Job Estimation Wizard</div>
+              <p class="brand-copy brand-copy--small brand-copy--muted">Short brief → itemised, client-ready quote.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="font-semibold">Proposal & Comms kit</div>
-              <p class="text-slate-500">Proposals, review replies, socials & tidy emails.</p>
+              <div class="brand-heading brand-heading--xs">Proposal & Comms kit</div>
+              <p class="brand-copy brand-copy--small brand-copy--muted">Proposals, review replies, socials & tidy emails.</p>
             </div>
           </div>
           <div class="mt-6">
@@ -182,16 +180,16 @@
         </div>
 
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
-          <div class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Chat</div>
-          <h3 class="mt-3 text-2xl font-semibold">Advice on tap</h3>
-          <p class="mt-2 text-slate-600">Safety notes, tidy SMS messages, troubleshooting, or “how do I fix this?” — ask it anything.</p>
+          <div class="brand-eyebrow brand-eyebrow--subtle">Smart Chat</div>
+          <h3 class="brand-heading brand-heading--md mt-3">Advice on tap</h3>
+          <p class="brand-copy brand-copy--muted mt-2">Safety notes, tidy SMS messages, troubleshooting, or “how do I fix this?” — ask it anything.</p>
           <div class="mt-4 space-y-3 text-sm">
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <p class="text-slate-700">Apprentice starts Monday — safety induction checklist?</p>
+              <p class="brand-copy">Apprentice starts Monday — safety induction checklist?</p>
               <p class="mt-2 text-xs text-amber-600/80">Comes back with PPE, hazards, reporting, plus an optional printable one-pager.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <p class="text-slate-700">Need a friendly SMS reminder for 8am access.</p>
+              <p class="brand-copy">Need a friendly SMS reminder for 8am access.</p>
               <p class="mt-2 text-xs text-amber-600/80">You’ll get a ready-to-send message and optional email.</p>
             </div>
           </div>
@@ -201,14 +199,14 @@
         </div>
 
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
-          <div class="text-xs uppercase tracking-[0.3em] text-amber-600">Smart Assistant</div>
-          <h3 class="mt-3 text-2xl font-semibold">Tradie Library answers</h3>
-          <p class="mt-2 text-slate-600">Your on-site brain — thousands of AU/NZ codes, manufacturer manuals, spec sheets, install guides, SDS, and textbooks.</p>
+          <div class="brand-eyebrow brand-eyebrow--subtle">Smart Assistant</div>
+          <h3 class="brand-heading brand-heading--md mt-3">Tradie Library answers</h3>
+          <p class="brand-copy brand-copy--muted mt-2">Your on-site brain — thousands of AU/NZ codes, manufacturer manuals, spec sheets, install guides, SDS, and textbooks.</p>
           <div class="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm space-y-4">
             <div>
               <div class="badge badge-ghost badge-sm mb-2 text-slate-600">Example output</div>
-              <div class="font-semibold text-slate-800">Mitsubishi MSZ-FS clearances & electrics?</div>
-              <p class="opacity-90 mt-1 text-slate-600">
+              <div class="brand-heading brand-heading--xs">Mitsubishi MSZ-FS clearances & electrics?</div>
+              <p class="brand-copy brand-copy--small brand-copy--muted opacity-90 mt-1">
                 Indoor: 50/100/65&nbsp;mm. Outdoor: ≥400&nbsp;mm front, ≥1000&nbsp;mm above. Max fuse 15–20&nbsp;A; MCA 10–18&nbsp;A; copper conductors AWG14–12; wiring per local code.
               </p>
               <div class="mt-1 text-xs text-amber-600/80 italic">References where possible.</div>
@@ -216,8 +214,8 @@
             <div class="divider"></div>
             <div>
               <div class="badge badge-ghost badge-sm mb-2 text-slate-600">Example output</div>
-              <div class="font-semibold text-slate-800">Domestic hot water storage vs outlet temps?</div>
-              <p class="opacity-90 mt-1 text-slate-600">
+              <div class="brand-heading brand-heading--xs">Domestic hot water storage vs outlet temps?</div>
+              <p class="brand-copy brand-copy--small brand-copy--muted opacity-90 mt-1">
                 Store ≥60&nbsp;°C to control Legionella. Temper to ≤50&nbsp;°C for bathrooms (≤45&nbsp;°C childcare/aged care) using approved TMV sized to fixture units and run length.
               </p>
             </div>
@@ -236,32 +234,32 @@
       <div class="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-sm">
         <div class="grid gap-6 lg:grid-cols-3">
           <div>
-            <p class="text-sm uppercase tracking-[0.3em] text-amber-600">1 • Price it</p>
-            <h3 class="text-2xl font-semibold mt-2">Josh costs the job</h3>
-            <p class="text-sm text-slate-600 mt-3">
+            <p class="brand-eyebrow brand-eyebrow--subtle">1 • Price it</p>
+            <h3 class="brand-heading brand-heading--md mt-2">Josh costs the job</h3>
+            <p class="brand-copy brand-copy--small brand-copy--muted mt-3">
               Materials & Cost Calculator + Estimation Wizard turn a deck brief into an itemised quote ready to paste.
             </p>
           </div>
           <div>
-            <p class="text-sm uppercase tracking-[0.3em] text-amber-600">2 • Keep clients updated</p>
-            <h3 class="text-2xl font-semibold mt-2">Smart Chat tidies the comms</h3>
-            <p class="text-sm text-slate-600 mt-3">
+            <p class="brand-eyebrow brand-eyebrow--subtle">2 • Keep clients updated</p>
+            <h3 class="brand-heading brand-heading--md mt-2">Smart Chat tidies the comms</h3>
+            <p class="brand-copy brand-copy--small brand-copy--muted mt-3">
               Friendly follow-up emails, SMS reminders, even review replies — all in his tone without the blank-page stare.
             </p>
           </div>
           <div>
-            <p class="text-sm uppercase tracking-[0.3em] text-amber-600">3 • Confirm on site</p>
-            <h3 class="text-2xl font-semibold mt-2">Assistant checks the spec</h3>
-            <p class="text-sm text-slate-600 mt-3">
+            <p class="brand-eyebrow brand-eyebrow--subtle">3 • Confirm on site</p>
+            <h3 class="brand-heading brand-heading--md mt-2">Assistant checks the spec</h3>
+            <p class="brand-copy brand-copy--small brand-copy--muted mt-3">
               Need clearances or electrical notes? Ask the Tradie Library and it’ll cite the manual so Josh can crack on.
             </p>
           </div>
         </div>
         <div class="mt-8 grid gap-4 md:grid-cols-2">
-          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium text-slate-500">
+          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium brand-copy brand-copy--muted">
             Drop a site photo or product hero render here
           </div>
-          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium text-slate-500">
+          <div class="rounded-[28px] border border-dashed border-slate-200 bg-white/70 p-6 text-center text-sm font-medium brand-copy brand-copy--muted">
             Drop a Tradie Library screenshot or testimonial collage here
           </div>
         </div>
@@ -273,25 +271,25 @@
   <section class="py-16 bg-amber-50/60">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       <div class="text-center">
-        <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Real tradies</p>
-        <h2 class="text-3xl md:text-4xl font-bold mt-3">“It looks mint and saves me hours.”</h2>
-        <p class="mt-3 text-slate-600">Built with sparkies, plumbers, HVAC techs, and builders who wanted AI that sounds like them.</p>
+        <p class="brand-eyebrow brand-eyebrow--subtle">Real tradies</p>
+        <h2 class="brand-heading brand-heading--lg mt-3">“It looks mint and saves me hours.”</h2>
+        <p class="brand-copy brand-copy--muted mt-3">Built with sparkies, plumbers, HVAC techs, and builders who wanted AI that sounds like them.</p>
       </div>
       <div class="grid gap-6 md:grid-cols-3">
         <div class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <div class="text-amber-500 text-xl">★★★★★</div>
-          <p class="mt-2 text-slate-800">“Quoting used to chew up my nights. Now it’s sorted before dinner.”</p>
-          <p class="mt-3 text-xs text-slate-500">Jake • Electrician</p>
+          <p class="mt-2 brand-copy">“Quoting used to chew up my nights. Now it’s sorted before dinner.”</p>
+          <p class="mt-3 brand-copy brand-copy--small brand-copy--muted">Jake • Electrician</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <div class="text-amber-500 text-xl">★★★★★</div>
-          <p class="mt-2 text-slate-800">“The proposal looked pro. Client signed the next day.”</p>
-          <p class="mt-3 text-xs text-slate-500">Mel • Plumber</p>
+          <p class="mt-2 brand-copy">“The proposal looked pro. Client signed the next day.”</p>
+          <p class="mt-3 brand-copy brand-copy--small brand-copy--muted">Mel • Plumber</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <div class="text-amber-500 text-xl">★★★★★</div>
-          <p class="mt-2 text-slate-800">“On-site answers from manuals — game changer.”</p>
-          <p class="mt-3 text-xs text-slate-500">Ari • HVAC</p>
+          <p class="mt-2 brand-copy">“On-site answers from manuals — game changer.”</p>
+          <p class="mt-3 brand-copy brand-copy--small brand-copy--muted">Ari • HVAC</p>
         </div>
       </div>
       <div class="text-center">
@@ -304,9 +302,9 @@
   <section class="py-16 bg-white">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
       <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Use it like an app</p>
-        <h2 class="text-3xl font-semibold mt-3">Keep Tradie Assistant on your home screen</h2>
-        <p class="mt-4 text-slate-600">
+        <p class="brand-eyebrow brand-eyebrow--subtle">Use it like an app</p>
+        <h2 class="brand-heading brand-heading--lg mt-3">Keep Tradie Assistant on your home screen</h2>
+        <p class="brand-copy brand-copy--muted mt-4">
           The site is already mobile optimised — all you need is the built-in “Add to Home Screen” option on your phone. Takes a few taps and works on both iPhone and Android.
         </p>
         {#if detectedPlatform}
@@ -324,17 +322,17 @@
                 : 'border-slate-200 bg-white/80 shadow-sm'
             }`}
           >
-            <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <h3 class="brand-heading brand-heading--xs flex items-center gap-2">
               <span class="inline-flex h-2 w-2 rounded-full bg-amber-400"></span>
               {guide.platform}
             </h3>
-            <ol class="mt-3 space-y-2 list-decimal list-inside text-sm text-slate-600">
+            <ol class="mt-3 space-y-2 list-decimal list-inside text-sm brand-copy brand-copy--muted">
               {#each guide.steps as step}
                 <li>{step}</li>
               {/each}
             </ol>
             {#if guide.extra}
-              <p class="mt-3 text-xs text-slate-500">{guide.extra}</p>
+              <p class="mt-3 text-xs brand-copy brand-copy--muted">{guide.extra}</p>
             {/if}
           </div>
         {/each}
@@ -346,14 +344,14 @@
   <section class="py-16 bg-gradient-to-b from-white to-slate-100/60">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-8">
-        <p class="text-sm uppercase tracking-[0.3em] text-amber-600">FAQs</p>
-        <h2 class="text-3xl font-bold mt-3">Straight answers for busy tradies</h2>
+        <p class="brand-eyebrow brand-eyebrow--subtle">FAQs</p>
+        <h2 class="brand-heading brand-heading--lg mt-3">Straight answers for busy tradies</h2>
       </div>
       <div class="space-y-3">
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">How do you look after my data and privacy?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">How do you look after my data and privacy?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>
               We treat your info like it’s locked in the ute. Your account sits in our secure setup, and we don’t read your chats, generated outputs, or files unless you explicitly share something with support.
               When we call OpenAI to generate answers, request/response data may be retained for up to 30 days for abuse/safety checks, then deleted unless required by law. API data isn’t used to train OpenAI’s models by default. See our Privacy and Terms for details.
@@ -362,8 +360,8 @@
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">What happens to manuals or files I upload?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">What happens to manuals or files I upload?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>
               By default, uploads stay private to your account. We index them so the Assistant can pull short, relevant snippets and include those in the prompt to get you a targeted answer. If you tick “Share this upload to help other tradies”, you’re giving us permission to add a sanitised copy into a shared, read-only library so others can benefit from common manuals/standards. OpenAI may retain API logs for up to 30 days for security/abuse monitoring; that retention isn’t used for training by default.
             </p>
@@ -371,8 +369,8 @@
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Can I cancel my subscription at any time?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">Can I cancel my subscription at any time?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>
               Too easy. Go <strong>Account → Billing → Manage subscription</strong> to open your secure Stripe portal. Cancel any time; your plan stays active until the end of the current period. We don’t store card details — Stripe handles payments and is PCI DSS Level 1 compliant.
             </p>
@@ -380,50 +378,50 @@
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Can I use Tradie Assistant on multiple devices?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">Can I use Tradie Assistant on multiple devices?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>Yep. It’s a web app — use it on your phone on site, laptop in the shed, or tablet in the ute. Same login, same workspace.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">How accurate are the answers?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">How accurate are the answers?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>AI is brilliant at speed and wording, but it’s not a licensed tradie. For anything safety-critical or standards-driven, check the cited page and use your judgement.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">How often do you update the app?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">How often do you update the app?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>We ship small tweaks most weeks and bigger improvements regularly. Keep an eye on the Blog for notable changes.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Do you offer a free plan or trial?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">Do you offer a free plan or trial?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>Yes. You can use the Smart Tools on a free account. To try Smart Chat and Smart Assistant, start a 14-day free trial — cancel any time from Billing. See the <a class="link" href="/pricing">Pricing</a> page for details.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Do I need to be tech-savvy?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">Do I need to be tech-savvy?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>Nope. It’s built for tradies: step-by-step screens, plain language, and job-ready outputs. Type what you need, pick a tool, done.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">How is this different to ChatGPT?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">How is this different to ChatGPT?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>Tradie Assistant is built for trades — much easier to use, privacy-focused, and backed by a large library of manuals, Australian standards, and guides so you can verify answers. And it’s better value for the jobs you do every day.</p>
           </div>
         </div>
         <div class="collapse collapse-arrow bg-white border border-slate-200 rounded-2xl">
           <input type="checkbox" />
-          <div class="collapse-title text-base font-medium text-slate-900">Need help?</div>
-          <div class="collapse-content text-sm text-slate-600">
+          <div class="collapse-title text-base font-medium brand-heading brand-heading--sm">Need help?</div>
+          <div class="collapse-content text-sm brand-copy brand-copy--muted">
             <p>
               Hit <a class="link" href="/contact_us">Contact</a> or email <a class="link" href="mailto:support@tradieassistant.app">support@tradieassistant.app</a> — we’ll get you sorted.
             </p>
