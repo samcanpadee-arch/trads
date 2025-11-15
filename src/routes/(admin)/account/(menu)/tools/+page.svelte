@@ -17,7 +17,7 @@
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
       href="/account/tools/material-cost"
-      aria-label="Open Customer Agreement Templates"
+      aria-label="Open Terms & Conditions Generator"
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-3">
@@ -31,11 +31,11 @@
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-primary">Compliance</p>
-            <h2 class="text-lg font-semibold">Customer Agreement Templates</h2>
+            <h2 class="text-lg font-semibold">Terms & Conditions Generator</h2>
           </div>
         </div>
         <p class="text-sm text-gray-600">
-          Nail down expectations, inclusions, payment terms, and responsibilities in a tidy agreement before you start any job.
+          Quickly draft payment terms, responsibilities, and conditions your clients agree to before work kicks off.
         </p>
         <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
       </div>

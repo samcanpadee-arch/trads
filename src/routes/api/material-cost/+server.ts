@@ -4,7 +4,7 @@ const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 export const POST: RequestHandler = async ({ request }) => {
-  let body: Partial<AgreementRequest> = {};
+  let body: Partial<TermsRequest> = {};
 
   try {
     body = await request.json();
@@ -12,17 +12,14 @@ export const POST: RequestHandler = async ({ request }) => {
     return new Response('Invalid JSON', { status: 400 });
   }
 
-  const payload: AgreementRequest = {
+  const payload: TermsRequest = {
     clientName: clean(body.clientName, 200),
-    siteAddress: clean(body.siteAddress, 200),
-    projectBrief: clean(body.projectBrief, 1200),
-    inclusions: clean(body.inclusions, 1500),
-    responsibilities: clean(body.responsibilities, 1200),
-    paymentTerms: clean(body.paymentTerms, 800),
-    schedule: clean(body.schedule, 800),
+    projectContext: clean(body.projectContext, 800),
+    scopeSummary: clean(body.scopeSummary, 1500),
+    paymentStructure: clean(body.paymentStructure, 800),
+    responsibilities: clean(body.responsibilities, 1000),
     variations: clean(body.variations, 800),
-    specialTerms: clean(body.specialTerms, 800),
-    includeSignature: Boolean(body.includeSignature),
+    additionalTerms: clean(body.additionalTerms, 1000),
     brandContext: clean(body.brandContext, 500)
   };
 
@@ -34,21 +31,18 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const systemPrompt =
-    'You are Customer Agreement Assistant for Australian tradies. Turn the provided context into a clear agreement ready for clients to sign.' +
-    ' Write in short paragraphs or bullet lists, highlight expectations, responsibilities, payment milestones, variation rules, and compliance duties.' +
+    'You are a Terms & Conditions assistant for Australian tradies. Draft concise, plain-English terms that focus on obligations, payment expectations, and compliance rather than a full proposal.' +
+    ' Keep sections scannable, reference Australian standards where relevant, and make sure the tone suits small trade businesses.' +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
   const userContent = {
     clientName: payload.clientName,
-    siteAddress: payload.siteAddress,
-    projectBrief: payload.projectBrief,
-    inclusions: listFromText(payload.inclusions),
+    projectContext: payload.projectContext,
+    scope: listFromText(payload.scopeSummary),
+    paymentStructure: payload.paymentStructure,
     responsibilities: listFromText(payload.responsibilities),
-    paymentTerms: payload.paymentTerms,
-    schedule: payload.schedule,
     variations: payload.variations,
-    specialTerms: payload.specialTerms,
-    includeSignature: payload.includeSignature
+    additionalTerms: payload.additionalTerms
   };
 
   try {
@@ -66,10 +60,8 @@ export const POST: RequestHandler = async ({ request }) => {
           {
             role: 'user',
             content:
-              'Create the customer agreement using this JSON. Include headings like Overview, Inclusions, Responsibilities, Payment, Schedule, Variations, Terms.' +
-              (payload.includeSignature
-                ? ' Finish with an Acceptance / Sign-off panel for both parties.'
-                : '') +
+              'Using the following JSON, draft trade-friendly terms & conditions only. Include headings such as Overview, Scope & Inclusions, Payment Terms, Responsibilities, Variations & Extras, Compliance & Warranties, and Dispute Resolution / Termination.' +
+              ' Keep it distinct from a sales proposal and finish with a short reminder to review the terms before issuing.' +
               '\n' +
               JSON.stringify(userContent, null, 2)
           }
@@ -93,17 +85,14 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 };
 
-type AgreementRequest = {
+type TermsRequest = {
   clientName: string;
-  siteAddress: string;
-  projectBrief: string;
-  inclusions: string;
+  projectContext: string;
+  scopeSummary: string;
+  paymentStructure: string;
   responsibilities: string;
-  paymentTerms: string;
-  schedule: string;
   variations: string;
-  specialTerms: string;
-  includeSignature: boolean;
+  additionalTerms: string;
   brandContext: string;
 };
 
@@ -120,43 +109,36 @@ function listFromText(value: string): string[] {
     .slice(0, 40);
 }
 
-function buildFallback(payload: AgreementRequest): string {
+function buildFallback(payload: TermsRequest): string {
   const lines: string[] = [];
-  lines.push('# Customer Agreement');
-  if (payload.clientName || payload.siteAddress) {
+  lines.push('# Terms & Conditions');
+  if (payload.clientName || payload.projectContext) {
     lines.push(
-      `**Client:** ${payload.clientName || 'Not specified'}${payload.siteAddress ? ` — ${payload.siteAddress}` : ''}`
+      `**Client / project:** ${payload.clientName || 'Not specified'}${
+        payload.projectContext ? ` — ${payload.projectContext}` : ''
+      }`
     );
   }
-  if (payload.projectBrief) {
-    lines.push('\n## Overview', payload.projectBrief);
+  if (payload.projectContext) {
+    lines.push('\n## Overview', payload.projectContext);
   }
-  const inclusions = listFromText(payload.inclusions);
-  if (inclusions.length) {
-    lines.push('\n## Inclusions & scope', ...inclusions.map((item) => `- ${item}`));
+  const scope = listFromText(payload.scopeSummary);
+  if (scope.length) {
+    lines.push('\n## Scope & inclusions', ...scope.map((item) => `- ${item}`));
   }
   const responsibilities = listFromText(payload.responsibilities);
   if (responsibilities.length) {
-    lines.push('\n## Client responsibilities / prep', ...responsibilities.map((item) => `- ${item}`));
+    lines.push('\n## Responsibilities & site rules', ...responsibilities.map((item) => `- ${item}`));
   }
-  if (payload.paymentTerms) {
-    lines.push('\n## Payment terms', payload.paymentTerms);
-  }
-  if (payload.schedule) {
-    lines.push('\n## Schedule', payload.schedule);
+  if (payload.paymentStructure) {
+    lines.push('\n## Payment terms', payload.paymentStructure);
   }
   if (payload.variations) {
-    lines.push('\n## Variations & exclusions', payload.variations);
+    lines.push('\n## Variations & extras', payload.variations);
   }
-  if (payload.specialTerms) {
-    lines.push('\n## Terms & compliance', payload.specialTerms);
+  if (payload.additionalTerms) {
+    lines.push('\n## Compliance & other conditions', payload.additionalTerms);
   }
-  if (payload.includeSignature) {
-    lines.push(
-      '\n## Acceptance',
-      '- Contractor: ___________________________   Date: ____________',
-      '- Client: _______________________________   Date: ____________'
-    );
-  }
+  lines.push('\n> These terms are a guide only. Review with your legal adviser before sending.');
   return lines.join('\n').trim();
 }
