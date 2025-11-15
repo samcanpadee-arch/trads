@@ -29,11 +29,12 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const systemPrompt =
-    'You are a Terms & Conditions assistant for Australian tradies. Draft clear, plain-English clauses a tradie can attach to any quote or invoice.' +
-    ' Keep the focus on expectations, payment timing, variations, client responsibilities, access, warranties/compliance, and liability.' +
+    'You are a Terms & Conditions assistant for Australian tradies. Draft detailed, enforceable clauses they can attach to any quote, invoice, or onboarding pack.' +
+    ' Keep the focus on expectations, payment timing, variations, client responsibilities, access, warranties/compliance, insurance, and liability.' +
     ' Do not rewrite the broader proposal or marketing copy—deliver practical conditions only and avoid duplicating proposal content.' +
-    ' Reference Australian standards, licensing and warranty duties when relevant.' +
-    ' Use concise markdown headings covering Overview, Scope & Responsibilities, Payment Terms, Variations & Extras, Access & Client Duties, Warranty & Compliance, Liability & Disputes, and Project Add-ons (if supplied).' +
+    ' Reference Australian standards, state-based licensing, security of payment rules, and warranty duties when relevant.' +
+    ' Use markdown headings covering Overview, Scope & Responsibilities, Payment Terms, Variations & Extras, Access & Client Duties, Warranty & Compliance, Liability & Disputes, and Project Add-ons (if supplied).' +
+    ' Each section should include multiple bullet points (or numbered items) with enough detail that the clauses can stand up to formal review.' +
     (payload.trade ? `\nTrade focus: ${payload.trade}` : '') +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
@@ -60,8 +61,9 @@ export const POST: RequestHandler = async ({ request }) => {
           {
             role: 'user',
             content:
-              'Using the following JSON, produce general business terms and conditions a tradie can attach to any project.' +
-              ' Prioritise evergreen clauses (scope & responsibilities, payment milestones, variations, access, warranties/compliance, liability) and keep the tone direct and Australian.' +
+              'Using the following JSON, produce robust business terms and conditions a tradie can attach to any project.' +
+              ' Prioritise evergreen clauses (scope & responsibilities, payment milestones, variations, access, warranties/compliance, insurance, liability) and keep the tone formal, direct, and Australian.' +
+              ' Each heading should include at least four detailed bullet points or numbered clauses so the terms feel comprehensive.' +
               ' Finish with any project-specific notes (if supplied) and a reminder to review professionally.' +
               ' Suggested headings: Overview, Scope & Responsibilities, Payment Terms, Variations & Extras, Access & Client Duties, Warranty & Compliance, Liability & Disputes, Project Add-ons.' +
               '\n' +
@@ -123,8 +125,10 @@ function buildFallback(payload: TermsRequest): string {
   }
   lines.push(
     '\n## Overview',
-    'These general terms travel with every quote, invoice, and onboarding pack so expectations are locked in before work starts.',
-    'Review and customise for each client before sending.'
+    '- These terms accompany every quote, invoice, work order, or onboarding pack to confirm expectations before mobilisation.',
+    '- They sit alongside the applicable state Security of Payment legislation and Australian Consumer Law obligations.',
+    '- Adjust the clauses to reflect licensing requirements, insurance limits, and statutory warranty periods for each project.',
+    '- Provide a copy to the client before work begins and retain acceptance for your records.'
   );
 
   const generalLines = listFromText(payload.businessNotes);
@@ -134,38 +138,50 @@ function buildFallback(payload: TermsRequest): string {
 
   lines.push(
     '\n## Scope & responsibilities',
-    '- We deliver the works described in the quote and agreed variations, using licensed trades and following Australian Standards.',
-    '- Client ensures accurate information about site conditions and approvals; extra work caused by unknown issues is treated as a variation.'
+    '- We deliver the works described in the accepted quote, drawings, and written variations using licensed trades who follow the NCC and relevant Australian Standards.',
+    '- Materials are supplied as specified; equivalent substitutions are only used with written approval.',
+    '- Client must provide accurate information about underground/hidden services, asbestos, and structural conditions; unknown issues become a variation.',
+    '- Any work outside the documented scope, including coordination of other trades, is excluded unless explicitly listed.'
   );
 
   lines.push(
     '\n## Payment terms',
-    '- Deposits, progress claims, and balances are due per the quote schedule or within 5 business days if no date is listed.',
-    '- Late or missed payments may pause work and attract interest or debt recovery costs.'
+    '- Deposits, progress claims, and balances are due per the quote schedule or within 5 business days where no date is stated.',
+    '- Work may pause if a claim remains unpaid after the due date and extensions to the completion date will apply.',
+    '- Interest or debt-recovery costs may be charged on overdue amounts in line with local legislation.',
+    '- Title to materials stays with us until invoices are paid in full.'
   );
 
   lines.push(
     '\n## Variations & extras',
-    '- Any change to scope, materials, or access is priced in writing and approved before work proceeds.',
-    '- Emergency instructions given onsite are treated as variations and billed accordingly.'
+    '- Any change to scope, materials, sequencing, or access is costed in writing and requires approval before work proceeds.',
+    '- Delays, hidden services, rework caused by others, or client-supplied items outside spec are treated as variations.',
+    '- Rates for labour, materials, and plant are applied per the variation sheet or our standard schedule if none is provided.',
+    '- Emergency instructions given onsite are deemed accepted variations and billed accordingly.'
   );
 
   lines.push(
     '\n## Access & client duties',
-    '- Provide safe, continuous access, services (power/water), and clear work areas during agreed hours.',
-    '- Client is responsible for securing valuables, notifying neighbours, and arranging permits unless otherwise agreed.'
+    '- Provide safe, continuous access, power, water, and clear work areas during the agreed hours.',
+    '- Client is responsible for permits, neighbour notifications, and locating underground services unless otherwise agreed in writing.',
+    '- Secure valuables, pets, and sensitive equipment before works commence; we are not liable for damage outside our control.',
+    '- Site inductions, parking, and crane/delivery logistics that add time or cost will be charged as variations.'
   );
 
   lines.push(
     '\n## Warranty & compliance',
-    '- Workmanship is backed by statutory warranties under Australian Consumer Law and relevant state building laws.',
-    '- Manufacturer warranties apply to supplied products; maintenance instructions must be followed to keep cover valid.'
+    '- Workmanship is covered by statutory warranties under Australian Consumer Law and the relevant state-based building legislation.',
+    '- Manufacturer warranties apply to supplied products; maintenance instructions and service intervals must be followed to keep cover valid.',
+    '- Compliance certificates, test reports, and manuals are issued once invoices are paid in full.',
+    '- Warranty is void where others alter our work, materials are misused, or maintenance is ignored.'
   );
 
   lines.push(
     '\n## Liability & disputes',
-    '- We hold appropriate insurances and limit liability to the cost of re-performing the services, except where legislation prevents this.',
-    '- Disputes should be raised in writing within 7 days so both parties can resolve issues quickly; unresolved matters may go to the relevant tribunal.'
+    '- We carry public liability and workers compensation insurance as required; liability is otherwise limited to re-performing the services except where legislation prevents this.',
+    '- Loss of profit, consequential damages, or delays outside our control are excluded.',
+    '- Raise disputes in writing within 7 days so both parties can attempt resolution before escalating.',
+    '- Unresolved matters may proceed to the relevant state tribunal or court with jurisdiction.'
   );
 
   const projectLines = listFromText(payload.projectSpecificTerms);

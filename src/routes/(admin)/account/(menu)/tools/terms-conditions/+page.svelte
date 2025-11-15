@@ -109,7 +109,7 @@
         <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
         <h1 class="text-3xl font-bold leading-tight text-gray-900">Terms & Conditions Generator</h1>
         <p class="max-w-3xl text-base text-gray-800">
-          Tradies need more than a verbal nod. Spin up plain-English terms you can attach to quotes, invoices, and onboarding emails so every job is backed by clear expectations on scope, payments, variations, access, and liability.
+          Tradies need more than a verbal nod. Generate detailed terms that cover scope, payment timing, variations, access, warranties, and liability so you can attach them to quotes, invoices, onboarding packs, or approval emails before work starts.
         </p>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
@@ -127,10 +127,7 @@
         <input class="input input-bordered w-full" placeholder="https://yourbusiness.com.au" bind:value={businessWebsite} />
       </label>
       <label class="form-control gap-2">
-        <div class="space-y-1">
-          <span class="label-text">Trade focus</span>
-          <p class="text-xs text-gray-500">Helps the assistant lean into the right licensing and site duties.</p>
-        </div>
+        <span class="label-text">Trade focus</span>
         <select class="select select-bordered w-full" bind:value={trade}>
           <option value="General">General</option>
           <option value="HVAC">HVAC</option>
@@ -174,31 +171,22 @@
       <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
     {/if}
 
-    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-      <div class="flex flex-wrap items-center gap-3 p-5 sm:p-6">
-        <button type="submit" class="btn btn-primary" disabled={loading}>
-          {#if loading}
-            <span class="loading loading-dots"></span>
-          {/if}
-          <span>{loading ? "Drafting" : "Generate terms"}</span>
-        </button>
-        <button type="button" class="btn" on:click={useExample} disabled={loading}>Use example</button>
-        <button
-          class="btn btn-ghost"
-          type="button"
-          on:click={() => documentText && navigator.clipboard?.writeText(documentText)}
-          disabled={!documentText}
-        >
-          Copy
-        </button>
-        <p class="text-xs leading-relaxed text-gray-500">
-          Attach these clauses to quotes, invoices, onboarding packs, or approval emails so expectations are locked in early.
-        </p>
-      </div>
-    </div>
-
-    <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
-      These terms are AI-generated. Review them with your legal adviser and confirm they match your licensing obligations before you send or sign anything.
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="submit" class="btn btn-primary" disabled={loading}>
+        {#if loading}
+          <span class="loading loading-dots"></span>
+        {/if}
+        <span>{loading ? "Drafting" : "Generate terms"}</span>
+      </button>
+      <button type="button" class="btn" on:click={useExample} disabled={loading}>Use example</button>
+      <button
+        class="btn btn-ghost"
+        type="button"
+        on:click={() => documentText && navigator.clipboard?.writeText(documentText)}
+        disabled={!documentText}
+      >
+        Copy
+      </button>
     </div>
   </form>
 
@@ -211,7 +199,6 @@
       {:else}
         <p class="text-sm text-gray-500">Fill out the details above and hit Generate to see your clauses.</p>
       {/if}
-      <p class="text-xs text-gray-500">AI-generated content — double-check the wording and any legal references before sharing.</p>
     </div>
   </div>
 </section>
