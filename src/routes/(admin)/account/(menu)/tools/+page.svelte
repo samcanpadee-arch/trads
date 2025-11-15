@@ -66,7 +66,7 @@
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
       href="/account/tools/job-estimation"
-      aria-label="Open Job Estimation Wizard"
+      aria-label="Open Proposal & Estimate Builder"
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-3">
@@ -77,7 +77,7 @@
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-primary">Pricing</p>
-            <h2 class="text-lg font-semibold">Job Estimation Wizard</h2>
+            <h2 class="text-lg font-semibold">Proposal & Estimate Builder</h2>
           </div>
         </div>
         <p class="text-sm text-gray-600">Build out detailed estimates with materials, labour, overheads, and GST ready to send—no spreadsheet wrangling required.</p>

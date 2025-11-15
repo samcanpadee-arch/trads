@@ -166,7 +166,7 @@
               <p class="brand-copy brand-copy--small brand-copy--muted">Detailed Aussie trade clauses ready to attach to any quote.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="brand-heading brand-heading--xs">Job Estimation Wizard</div>
+              <div class="brand-heading brand-heading--xs">Proposal &amp; Estimate Builder</div>
               <p class="brand-copy brand-copy--small brand-copy--muted">Short brief → itemised, client-ready quote.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
@@ -237,7 +237,7 @@
             <p class="brand-eyebrow brand-eyebrow--subtle">1 • Price it</p>
             <h3 class="brand-heading brand-heading--md mt-2">Josh costs the job</h3>
             <p class="brand-copy brand-copy--small brand-copy--muted mt-3">
-              Terms &amp; Conditions Generator plus the Estimation Wizard turn a deck brief into an itemised quote with rock-solid fine print ready to paste.
+              Terms &amp; Conditions Generator plus the Proposal &amp; Estimate Builder turn a deck brief into an itemised quote with rock-solid fine print ready to paste.
             </p>
           </div>
           <div>

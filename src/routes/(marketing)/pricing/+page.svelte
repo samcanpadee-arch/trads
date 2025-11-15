@@ -135,7 +135,7 @@
         </div>
         <ul class="mt-6 space-y-3 text-sm">
           <li class="rounded-2xl border border-slate-200 bg-white/80 p-3">Terms &amp; Conditions Generator</li>
-          <li class="rounded-2xl border border-slate-200 bg-white/80 p-3">Job Estimation Wizard</li>
+          <li class="rounded-2xl border border-slate-200 bg-white/80 p-3">Proposal &amp; Estimate Builder</li>
           <li class="rounded-2xl border border-slate-200 bg-white/80 p-3">Scope Guard Day Log + review/social/email generators</li>
         </ul>
         <div class="mt-8">

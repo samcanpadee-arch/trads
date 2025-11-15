@@ -25,7 +25,7 @@
     <h2>2) Key definitions</h2>
     <ul>
       <li><strong>Service:</strong> the Tradie Assistant website and app.</li>
-      <li><strong>Smart Tools:</strong> our six focused tools (Terms &amp; Conditions Generator, Job Estimation Wizard, Scope Guard Day Log, Review Responder, Social Post Generator, Email Template Generator).</li>
+      <li><strong>Smart Tools:</strong> our six focused tools (Terms &amp; Conditions Generator, Proposal &amp; Estimate Builder, Scope Guard Day Log, Review Responder, Social Post Generator, Email Template Generator).</li>
       <li><strong>Smart Chat:</strong> AI chat for general guidance and drafting.</li>
       <li><strong>Smart Assistant:</strong> answers that can cite from manuals/guides/standards, including documents you upload.</li>
       <li><strong>Documents:</strong> files you upload (e.g., manuals, guides, standards, PDFs, images) for Smart Assistant.</li>
