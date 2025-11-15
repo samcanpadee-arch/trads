@@ -11,7 +11,6 @@
   let siteAddress = "";
   let projectBrief = ""; // drives AI (overview/scope/assumptions/risks/timeline)
   let costsText = "";
-  let adjustmentsText = "";
 
   type Trade =
     | "General"
@@ -100,9 +99,7 @@
   }
 
   let parsedCosts: ParsedBlock = { entries: [], notes: [] };
-  let parsedAdjustments: ParsedBlock = { entries: [], notes: [] };
   $: parsedCosts = parseLabelledAmounts(costsText);
-  $: parsedAdjustments = parseLabelledAmounts(adjustmentsText);
 
   $: {
     const pct = Math.min(100, Math.max(0, Number(gstRateInput) || 0));
@@ -113,20 +110,15 @@
   }
 
   $: baseCostsTotal = parsedCosts.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  $: adjustmentsTotal = parsedAdjustments.entries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  $: clientSubtotal = baseCostsTotal + adjustmentsTotal;
+  $: clientSubtotal = baseCostsTotal;
   $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
   $: grandTotal = clientSubtotal + gst;
 
-  const exampleCosts = `Materials supply: $10,500
-Labour crew (40 hrs): $6,400
-Equipment hire: $950
-Contingency: $750
-Markup: 12%`;
-
-  const exampleAdjustments = `Provisional sum — switchboard tidy: $650
-Risk allowance — hidden services: $400
-Client note: Access via rear lane only for deliveries`;
+  const exampleCosts = `Supply and install a Panasonic ducted system approx $20k (materials, controls, commissioning).
+Two technicians for 3 full days @ $95/hr each, plus one apprentice on day two.
+15% markup to cover procurement admin, variations buffer and warranty handling.
+Allow crane lift and traffic mgmt up to $1,100 if street parking is tight.
+Labour may increase if switchboard needs upgrades or ceiling access is restricted.`;
 
   function useExample() {
     clientName = "Jordan Moore";
@@ -135,7 +127,6 @@ Client note: Access via rear lane only for deliveries`;
     projectBrief =
       "Remove and replace two existing split systems (7.1kW) in lounge and master. Reuse circuits if compliant; allow minor switchboard tidy-up. Patch penetrations and leave clean.";
     costsText = exampleCosts;
-    adjustmentsText = exampleAdjustments;
   }
 
   function resetAll() {
@@ -143,7 +134,6 @@ Client note: Access via rear lane only for deliveries`;
     siteAddress = "";
     projectBrief = "";
     costsText = "";
-    adjustmentsText = "";
     trade = "General";
     includeGST = true;
     gstRateInput = 10;
@@ -187,10 +177,6 @@ Keep content practical and specific; avoid generic fluff.`;
     const parsedCostLines = parsedCosts.entries
       .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
       .join("\n");
-    const parsedAdjustmentLines = parsedAdjustments.entries
-      .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
-      .join("\n");
-
     const user =
       "Trade: " +
       trade +
@@ -202,10 +188,6 @@ Keep content practical and specific; avoid generic fluff.`;
       (costsText || "N/A") +
       "\n\n" +
       (parsedCostLines ? `Parsed cost lines:\n${parsedCostLines}\n\n` : "") +
-      "Adjustments text (raw):\n" +
-      (adjustmentsText || "N/A") +
-      "\n\n" +
-      (parsedAdjustmentLines ? `Parsed adjustments:\n${parsedAdjustmentLines}\n\n` : "") +
       `Totals before GST: ${fmt(clientSubtotal)}; Include GST: ${includeGST ? "Yes" : "No"}` +
       (brandContext ? `\nBusiness context:\n${brandContext}` : "");
 
@@ -420,26 +402,12 @@ Keep content practical and specific; avoid generic fluff.`;
       parsedCosts.entries.forEach((entry) => {
         md += `| ${entry.label} | ${fmt(entry.amount)} |\n`;
       });
-      md += `\n**Costs subtotal:** ${fmt(baseCostsTotal)}\n\n`;
+      md += `\n**Estimated subtotal:** ${fmt(baseCostsTotal)}\n\n`;
     } else {
-      md += `_List materials, labour, plant hire, markup or other allowances above to keep pricing transparent._\n\n`;
+      md += `_List your allowances, day rates, markups or contingencies above to keep pricing transparent._\n\n`;
     }
     if (parsedCosts.notes.length) {
-      md += `**Notes:**\n` + parsedCosts.notes.map((n) => `- ${n}`).join("\n") + `\n\n`;
-    }
-
-    if (parsedAdjustments.entries.length || parsedAdjustments.notes.length) {
-      md += `## Adjustments & Notes\n\n`;
-      if (parsedAdjustments.entries.length) {
-        md += `| Item | Amount (AUD) |\n|------|--------------:|\n`;
-        parsedAdjustments.entries.forEach((entry) => {
-          md += `| ${entry.label} | ${fmt(entry.amount)} |\n`;
-        });
-        md += `\n`;
-      }
-      if (parsedAdjustments.notes.length) {
-        md += parsedAdjustments.notes.map((n) => `- ${n}`).join("\n") + `\n\n`;
-      }
+      md += `**Context & reminders:**\n` + parsedCosts.notes.map((n) => `- ${n}`).join("\n") + `\n\n`;
     }
 
     if (usingAISuggestedLabour && ai.labourSuggest.length) {
@@ -471,7 +439,6 @@ Keep content practical and specific; avoid generic fluff.`;
     md += `## Summary & Totals\n\n`;
     md += `| Description | Amount |\n|-------------|-------:|\n`;
     md += `| Costs & Allowances | ${fmt(baseCostsTotal)} |\n`;
-    md += `| Adjustments | ${fmt(adjustmentsTotal)} |\n`;
     md += `| **Subtotal** | **${fmt(clientSubtotal)}** |\n`;
     if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
     md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
@@ -506,49 +473,48 @@ Keep content practical and specific; avoid generic fluff.`;
     </div>
   </header>
 
-  <form class="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm space-y-8" on:submit={generate}>
+  <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm space-y-8 sm:p-6" on:submit={generate}>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <label class="form-control gap-3">
+      <label class="form-control gap-2">
         <span class="label-text">Client name</span>
-        <input class="input input-bordered w-full" bind:value={clientName} placeholder="e.g. Jordan Moore" />
+        <input
+          class="input input-bordered w-full"
+          bind:value={clientName}
+          placeholder="Who’s the quote for or the main site contact?"
+        />
       </label>
-      <label class="form-control gap-3">
+      <label class="form-control gap-2">
         <span class="label-text">Site address</span>
-        <input class="input input-bordered w-full" bind:value={siteAddress} placeholder="e.g. 12 Rivergum Rd, Brunswick" />
+        <input
+          class="input input-bordered w-full"
+          bind:value={siteAddress}
+          placeholder="Street, suburb and state so the AI references the right site."
+        />
       </label>
     </div>
 
-    <label class="form-control gap-3">
-      <span class="label-text">Project brief (1–3 sentences)</span>
-      <textarea
-        class="textarea textarea-bordered h-28 w-full"
-        bind:value={projectBrief}
-        placeholder="Describe what's being supplied/installed, the rooms or areas involved, and any standards or timing constraints."
-      ></textarea>
-    </label>
-
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <label class="form-control gap-3">
-        <div class="space-y-1">
-          <span class="label-text">Costs &amp; allowances</span>
-          <p class="text-xs text-gray-500">List each allowance on its own line (e.g. "Materials supply: 10500"). We'll total any line that includes a colon and numbers.</p>
-        </div>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <label class="form-control gap-2">
+        <span class="label-text">Project brief (1–3 sentences)</span>
         <textarea
-          class="textarea textarea-bordered h-48 w-full"
-          bind:value={costsText}
-          placeholder="Materials supply: $10,500\nLabour crew (40 hrs): $6,400\nEquipment hire: $950\nContingency: $750\nMarkup: 12%"
+          class="textarea textarea-bordered h-32 w-full"
+          bind:value={projectBrief}
+          placeholder="Describe what's being supplied/installed, the rooms or areas involved, and any standards or timing constraints."
         ></textarea>
       </label>
 
-      <label class="form-control gap-3">
-        <div class="space-y-1">
-          <span class="label-text">Adjustments &amp; notes (optional)</span>
-          <p class="text-xs text-gray-500">Use this for provisional sums, risks, or client reminders. Add a colon before any figure so it's included in the totals.</p>
+      <label class="form-control gap-2">
+        <div class="space-y-2">
+          <span class="label-text">Cost &amp; pricing context</span>
+          <p class="text-xs leading-relaxed text-gray-500">
+            Write it like you would in an email to a client: include key materials, labour effort or day rates, markups, allowances,
+            access issues, and anything that could push the price up or down. We'll pick up any figures you mention and total them automatically.
+          </p>
         </div>
         <textarea
-          class="textarea textarea-bordered h-48 w-full"
-          bind:value={adjustmentsText}
-          placeholder="Provisional sum — switchboard tidy: $650\nRisk allowance — hidden services: $400\nClient note: Access via rear lane only for deliveries"
+          class="textarea textarea-bordered h-56 w-full"
+          bind:value={costsText}
+          placeholder="Explain materials, labour time or crew mix, hourly/day rates, markup %, provisional sums, access constraints, and any pricing caveats the AI should respect."
         ></textarea>
       </label>
     </div>
@@ -600,7 +566,6 @@ Keep content practical and specific; avoid generic fluff.`;
           <h2 class="text-lg font-semibold">Totals snapshot</h2>
           <div class="space-y-2">
             <div class="flex items-center justify-between"><span class="opacity-70">Costs &amp; allowances</span><span class="font-semibold">{fmt(baseCostsTotal)}</span></div>
-            <div class="flex items-center justify-between"><span class="opacity-70">Adjustments</span><span class="font-semibold">{fmt(adjustmentsTotal)}</span></div>
             <div class="flex items-center justify-between"><span class="opacity-70">Subtotal</span><span class="font-semibold">{fmt(clientSubtotal)}</span></div>
             {#if includeGST}
               <div class="flex items-center justify-between"><span class="opacity-70">GST ({(gstRate * 100).toFixed(0)}%)</span><span class="font-semibold">{fmt(gst)}</span></div>
@@ -616,13 +581,13 @@ Keep content practical and specific; avoid generic fluff.`;
             {#if loading}<span class="loading loading-dots"></span>{/if}
             <span>Generate proposal</span>
           </button>
-          <button type="button" class="btn" on:click={useExample}>Use example</button>
-          <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
-          <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-          <p class="text-xs text-gray-500">Tip: Paste rows straight from spreadsheets or emails—if a line reads "Thing: 1234" we'll crunch it before calling the AI.</p>
+            <button type="button" class="btn" on:click={useExample}>Use example</button>
+            <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
+            <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
+            <p class="text-xs text-gray-500">Tip: Rough numbers are fine—just mention them in plain English and we’ll crunch totals before the AI drafts your proposal.</p>
+          </div>
         </div>
       </div>
-    </div>
   </form>
 
   {#if output.trim().length}
