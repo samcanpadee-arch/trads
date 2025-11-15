@@ -34,6 +34,19 @@
   --color-error: #f77272;
   --color-error-content: oklch(98% 0.01 30);
 
+  /* secondary accent palette */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
   /* border radius */
   --radius-selector: 1rem;
   --radius-field: 0.5rem;
@@ -60,9 +73,10 @@
     --brand-color-muted-strong: color-mix(in srgb, var(--brand-color-text) 88%, white 12%);
     --brand-color-muted: color-mix(in srgb, var(--brand-color-text) 65%, white 35%);
     --brand-color-accent: var(--color-primary);
-    --brand-color-eyebrow-strong: color-mix(in srgb, var(--brand-color-accent) 82%, white 18%);
-    --brand-color-eyebrow-subtle: color-mix(in srgb, var(--brand-color-accent) 65%, white 35%);
-    --brand-color-eyebrow-deep: color-mix(in srgb, var(--brand-color-accent) 92%, black 8%);
+    --brand-color-secondary: var(--color-amber-700);
+    --brand-color-eyebrow-strong: color-mix(in srgb, var(--brand-color-secondary) 90%, white 10%);
+    --brand-color-eyebrow-subtle: color-mix(in srgb, var(--brand-color-secondary) 70%, white 30%);
+    --brand-color-eyebrow-deep: color-mix(in srgb, var(--brand-color-secondary) 95%, black 5%);
     --brand-heading-1: clamp(2.5rem, 1.5rem + 2vw, 3.8rem);
     --brand-heading-2: clamp(2rem, 1rem + 1.5vw, 2.8rem);
     --brand-heading-3: clamp(1.5rem, 0.9rem + 0.8vw, 2.1rem);
@@ -313,24 +327,39 @@ button[disabled].authBtn::before {
     border-color: color-mix(in srgb, var(--brand-color-text) 35%, white 65%);
   }
 
-  .text-amber-700,
-  .text-amber-600,
-  .text-amber-600\/90,
-  .text-amber-600\/80 {
-    color: var(--brand-color-eyebrow-strong);
+  .text-amber-700 {
+    color: var(--color-amber-700);
   }
 
-  .text-amber-500,
+  .text-amber-600 {
+    color: var(--color-amber-600);
+  }
+
+  .text-amber-600\/90 {
+    color: color-mix(in srgb, var(--color-amber-600) 90%, transparent);
+  }
+
+  .text-amber-600\/80 {
+    color: color-mix(in srgb, var(--color-amber-600) 80%, transparent);
+  }
+
+  .text-amber-500 {
+    color: var(--color-amber-500);
+  }
+
   .text-amber-500\/80 {
-    color: var(--brand-color-eyebrow-subtle);
+    color: color-mix(in srgb, var(--color-amber-500) 80%, transparent);
   }
 
   .text-amber-800 {
-    color: color-mix(in srgb, var(--brand-color-eyebrow-deep) 90%, black 10%);
+    color: var(--color-amber-800);
   }
 
-  .text-amber-900,
+  .text-amber-900 {
+    color: var(--color-amber-900);
+  }
+
   .text-amber-900\/90 {
-    color: var(--brand-color-eyebrow-deep);
+    color: color-mix(in srgb, var(--color-amber-900) 90%, transparent);
   }
 }
