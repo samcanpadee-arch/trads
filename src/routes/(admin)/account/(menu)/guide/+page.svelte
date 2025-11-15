@@ -1,130 +1,152 @@
 <script lang="ts">
-  type Pillar = {
-    name: string;
-    eyebrow: string;
-    summary: string;
-    useFor: string[];
-    proTips: string[];
-  };
+type Pillar = {
+  name: string;
+  eyebrow: string;
+  summary: string;
+  useFor: string[];
+  proTips: string[];
+};
 
-  type PromptRecipe = {
-    title: string;
-    formula: string;
-    example: string;
-  };
+type PromptRecipe = {
+  title: string;
+  formula: string;
+  example: string;
+};
 
-  type ToolHighlight = {
-    eyebrow: string;
-    name: string;
-    description: string;
-    extra: string;
-  };
+type ChatHabit = {
+  step: string;
+  title: string;
+  detail: string;
+};
+
+type GuidePlay = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  steps: string[];
+};
 
   const pillars: Pillar[] = [
     {
       name: 'Smart Tools',
-      eyebrow: 'Documents & pricing',
+      eyebrow: 'Paperwork without pain',
       summary:
-        'Six focused workflows for polished paperwork — Terms & Conditions, Proposal & Estimate Builder, Scope Guard Day Log, Review Responder, Social Post and Email Template.',
+        'Fill-in-the-blanks builders for quotes, Ts & Cs, day logs, reviews, socials and email packs. No spreadsheets or copy/paste gymnastics.',
       useFor: [
-        'Crunching materials, labour and markup into tidy client-ready numbers.',
-        'Locking in the fine print before the job kicks off.',
-        'Fast marketing touchpoints like socials, reviews and email kits.'
+        'Plugging materials, labour and markup into tidy proposals and estimates.',
+        'Locking in scope, site rules and variations before anyone is on the ladder.',
+        'Packaging socials, testimonials and email kits when you need a fast win.'
       ],
       proTips: [
-        'Keep quantities, units and rates together so totals stay accurate.',
-        'Reference a suburb or timeframe for more grounded copy.',
-        'Use Tools for structure + wording. Ask the Assistant for rules or specs.'
+        'Write numbers exactly how you’d scribble them down so totals stay true.',
+        'Drop in the suburb or little job story so the copy sounds local.',
+        'Let Tools handle the structure, then use Smart Chat for the final polish.'
       ]
     },
     {
       name: 'Smart Chat',
-      eyebrow: 'Everyday comms',
+      eyebrow: 'Back-and-forth answers',
       summary:
-        'Your on-call copywriter. Texts, emails, checklists and quick explainers that sound like you with none of the blank-page time sink.',
+        'Like a switched-on apprentice you can talk to all day. Keep the convo rolling until the reply sounds right, then ask it to remix the final version.',
       useFor: [
-        'Friendly SMS nudges, booking confirmations and payment reminders.',
-        'Explaining variations, delays or safety notes without sounding robotic.',
-        'Turning dot points into staff instructions or job checklists.'
+        'Working through a tricky client reply by asking for rewrites until it feels right.',
+        'Brainstorming instructions, toolbox talks, handover notes or meeting recaps.',
+        'Pressure-testing an idea by asking “what am I missing?” and “what could go wrong?”.'
       ],
       proTips: [
-        'Say the format first (SMS/email/checklist) then outline the situation.',
-        'Add tone nudges like “keep it casual” or “needs to sound formal”.',
-        'Stick to one scenario per message for sharper replies.'
+        'Keep chatting: say “nah, more casual” or “make it shorter” and it will try again.',
+        'Paste the latest message back in so it knows what you liked or hated.',
+        'Use follow-ups like “now turn that into a checklist/SMS/email” at the end.'
       ]
     },
     {
       name: 'Smart Assistant',
-      eyebrow: 'Tradie Library',
+      eyebrow: 'Manuals & standards on tap',
       summary:
-        'Technical answers backed by AU/NZ standards, manufacturer manuals, spec sheets, SDS and anything you upload.',
+        'Technical answers that point to AU/NZ rules, manufacturer manuals and the Tradie Library. Ask it for the clause, section or table you need.',
       useFor: [
-        'Citing clearances, wiring, gas pressures and compliance requirements.',
-        'Troubleshooting error codes with references to the correct section.',
-        'Summarising uploaded PDFs so you can brief clients or apprentices.'
+        'Pulling clearances, wiring sizes, gas pressures and compliance must-haves.',
+        'Answering site questions with references to the manual or standard you name.',
+        'Explaining the “why” behind a requirement so clients and apprentices trust it.'
       ],
       proTips: [
-        'Mention the trade, model and standard if you know it.',
-        'Upload the PDF before you ask so the Assistant can cite your exact doc.',
-        'Ask one technical question at a time to keep the answer laser focused.'
+        'Name the trade, model or standard even if it’s a rough guess.',
+        'Mention what part of the job you’re on and the condition on site.',
+        'Ask for cites or “show me the paragraph” whenever you need proof.'
       ]
     }
   ];
 
   const promptFormulas: PromptRecipe[] = [
     {
-      title: 'Message formula',
-      formula: 'Format + audience + job + tone + call-to-action',
-      example: '“Text • client Sarah • switchboard upgrade on Friday • friendly, clear • confirm access + parking.”'
+      title: 'Set the scene',
+      formula: 'Who you are + job + snag + what you need back',
+      example: '“I’m a chippy fixing a pergola for client Kat. Need a calm update about a 2-day delay because of rain.”'
     },
     {
-      title: 'Quote math',
-      formula: 'Qty + material + labour rate + markup + timeline',
-      example: '“42 m² spotted gum decking • $85/hr labour • 18% margin • finish by 12 July.”'
+      title: 'Money maths',
+      formula: 'Task + qty + materials + labour + extras + deadline',
+      example: '“Bathroom reno: waterproofing + tiling 18m² • tiles at $45/m² • labour $90/hr • add 12% margin • done before 5 Aug.”'
     },
     {
-      title: 'Assistant brief',
-      formula: 'Trade + model/standard + exact question + site detail',
-      example: '“HVAC • Mitsubishi MSZ-AP50 • minimum outdoor clearances for balcony install in Cairns.”'
+      title: 'Manual lookup',
+      formula: 'Trade + model/standard + question + why you need it',
+      example: '“Sparky • AS/NZS 3000 • explain minimum switchboard clearance for a laundry cupboard so I can include it in an email.”'
+    }
+  ];
+  const chatHabits: ChatHabit[] = [
+    {
+      step: '1',
+      title: 'Talk like you text',
+      detail: 'Skip the jargon. Say what’s happening in plain words and the AI will match your vibe.'
+    },
+    {
+      step: '2',
+      title: 'Reply to the reply',
+      detail: 'If it’s close, answer back with “shorter”, “add more detail about the bathroom” or “sound more confident”.'
+    },
+    {
+      step: '3',
+      title: 'Ask for the proof',
+      detail: 'Need backup? Say “show me the clause” or “cite the manual section” before you send it on.'
+    },
+    {
+      step: '4',
+      title: 'Save the gold',
+      detail: 'Star the prompts you love inside Assistant prompts so the crew can reuse them next time.'
     }
   ];
 
-  const toolHighlights: ToolHighlight[] = [
+  const guidePlays: GuidePlay[] = [
     {
-      eyebrow: 'Compliance',
-      name: 'Terms & Conditions Generator',
-      description: 'Lock in deposits, payment stages and site responsibilities with clauses written for Aussie jobs.',
-      extra: 'Copy straight into your quote or send as a PDF add-on.'
+      eyebrow: 'Quotes & paperwork',
+      title: 'Spin up a job pack',
+      description: 'Use Smart Tools to build the paperwork, then bounce to Chat for the client wording.',
+      steps: [
+        'Start with Proposal & Estimate to get the numbers locked in.',
+        'Copy the summary into Smart Chat and ask for a client-friendly breakdown.',
+        'Finish with Ts & Cs or a Day Log entry so you’ve covered scope and records.'
+      ]
     },
     {
-      eyebrow: 'Pricing',
-      name: 'Proposal & Estimate Builder',
-      description: 'Turn a rough scope into itemised materials, labour, markup and GST in minutes.',
-      extra: 'Exports clean summaries for quotes or longer-form proposals.'
+      eyebrow: 'On-site answers',
+      title: 'Settle a technical question',
+      description: 'When someone challenges a decision, make the Assistant find the reference.',
+      steps: [
+        'Tell it the trade, model and what you’re trying to prove.',
+        'Mention any weird site conditions (tight balcony, coastal, ceiling height).',
+        'Ask it to quote the manual or standard so you can copy/paste the proof.'
+      ]
     },
     {
-      eyebrow: 'Scope guard',
-      name: 'Day Log',
-      description: 'Capture progress, delays, weather and client chats each day to defend variations later.',
-      extra: 'Keeps timestamps plus a running photo/notes feed.'
-    },
-    {
-      eyebrow: 'Reputation',
-      name: 'Review Responder',
-      description: 'Reply to any 1–5 star review with warmth while addressing the real issue.',
-      extra: 'Great for Google, Hipages and Facebook feedback.'
-    },
-    {
-      eyebrow: 'Marketing',
-      name: 'Social Media Post Generator',
-      description: 'Feed it a job, suburb and vibe — get captions, hooks and hashtags ready for Insta, FB or LinkedIn.',
-      extra: 'Saves variations so you can post across channels quickly.'
-    },
-    {
-      eyebrow: 'Comms',
-      name: 'Email Template Generator',
-      description: 'Job updates, payment nudges, wrap-ups and onboarding kits that still sound like you.',
-      extra: 'Pair with Smart Chat when you want an SMS + email combo.'
+      eyebrow: 'Client updates',
+      title: 'Handle a curveball calmly',
+      description: 'Keep Smart Chat open while you talk through the issue like you would with a mate.',
+      steps: [
+        'Explain the situation, the person you’re talking to and what outcome you want.',
+        'Ask for two or three tone options so you can pick the one that fits.',
+        'Finish with “wrap this in dot points / SMS / email” for the final send.'
+      ]
     }
   ];
 </script>
@@ -134,16 +156,10 @@
     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Workflow guide</p>
     <h1 class="mt-3 text-3xl font-semibold text-slate-900">Make every request land the first time</h1>
     <p class="mt-3 text-base text-slate-600">
-      Tradie Assistant is three parts working together: Smart Tools for paperwork and pricing, Smart Chat for
-      on-the-fly comms, and Smart Assistant for technical answers. Use this playbook to give clearer briefs, get better
-      citations, and show off our refreshed toolset to the team.
+      Tradie Assistant is three parts working together. Tools handle the paperwork, Chat keeps the conversation going, and the
+      Assistant backs you with manuals and standards. This guide shows how to brief it like a human, not a robot, so you keep
+      winning jobs and arguments.
     </p>
-    <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-amber-800">
-      <span class="inline-flex items-center rounded-full border border-amber-200 bg-white/70 px-3 py-1">Smart Tools</span>
-      <span class="inline-flex items-center rounded-full border border-amber-200 bg-white/70 px-3 py-1">Smart Chat</span>
-      <span class="inline-flex items-center rounded-full border border-amber-200 bg-white/70 px-3 py-1">Smart Assistant</span>
-      <span class="inline-flex items-center rounded-full border border-amber-200 bg-white/70 px-3 py-1">Tradie Library</span>
-    </div>
   </header>
 
   <section class="grid gap-5 md:grid-cols-3">
@@ -177,8 +193,8 @@
   <section class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-start">
     <div class="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm">
       <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Prompt recipes</p>
-      <h2 class="mt-2 text-2xl font-semibold text-slate-900">Give it the good stuff</h2>
-      <p class="mt-2 text-sm text-slate-600">Use these shorthand formulas when you’re briefing the AI.</p>
+      <h2 class="mt-2 text-2xl font-semibold text-slate-900">Easy briefs that land</h2>
+      <p class="mt-2 text-sm text-slate-600">Say it how you’d say it on site. These quick formulas keep things clear.</p>
       <div class="mt-5 space-y-4">
         {#each promptFormulas as recipe}
           <div class="rounded-2xl border border-amber-100/80 bg-amber-50/40 p-4">
@@ -190,29 +206,22 @@
       </div>
     </div>
     <div class="rounded-3xl border border-slate-200 bg-slate-900 text-slate-50 p-6 shadow-md">
-      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Keep context handy</p>
-      <h2 class="mt-2 text-2xl font-semibold">Upload docs & cite sources</h2>
-      <ul class="mt-4 space-y-3 text-sm">
-        <li class="flex gap-3">
-          <span class="text-amber-300">1</span>
-          <p>Drop PDFs (≤4&nbsp;MB) into the Assistant before you ask your question.</p>
-        </li>
-        <li class="flex gap-3">
-          <span class="text-amber-300">2</span>
-          <p>Mention what you uploaded — “Use my switchboard spec PDF for this answer.”</p>
-        </li>
-        <li class="flex gap-3">
-          <span class="text-amber-300">3</span>
-          <p>Highlight the cite callouts in your reply when sending to inspectors or clients.</p>
-        </li>
-        <li class="flex gap-3">
-          <span class="text-amber-300">4</span>
-          <p>Save favourite prompts inside <strong>Assistant prompts</strong> so the team stays consistent.</p>
-        </li>
+      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Keep it rolling</p>
+      <h2 class="mt-2 text-2xl font-semibold">Chat like you would on site</h2>
+      <ul class="mt-4 space-y-4 text-sm">
+        {#each chatHabits as habit}
+          <li class="flex gap-3">
+            <span class="text-amber-300 font-semibold">{habit.step}</span>
+            <div>
+              <p class="font-semibold">{habit.title}</p>
+              <p class="text-white/80">{habit.detail}</p>
+            </div>
+          </li>
+        {/each}
       </ul>
       <div class="mt-6 rounded-2xl border border-white/40 bg-white/10 p-4 text-sm text-white/90">
-        <p class="font-semibold">Need a reminder?</p>
-        <p class="mt-1 text-white/80">Swipe over to <em>Account → Assistant</em> and pin the “What you get” card for quick links.</p>
+        <p class="font-semibold">Tip</p>
+        <p class="mt-1 text-white/80">Pin your favourite prompts or replies so apprentices and office staff can grab them fast.</p>
       </div>
     </div>
   </section>
@@ -220,20 +229,24 @@
   <section class="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm">
     <div class="flex flex-col gap-6 md:flex-row md:items-start">
       <div class="md:w-1/3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Toolbox refresh</p>
-        <h2 class="mt-2 text-2xl font-semibold text-slate-900">Everything that’s new</h2>
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Playbook</p>
+        <h2 class="mt-2 text-2xl font-semibold text-slate-900">How tradies get the best out of it</h2>
         <p class="mt-2 text-sm text-slate-600">
-          We replaced the older beta tools with a tighter set tuned for real jobs. Pick the card that matches what you’re
-          doing and let it walk you through the fields.
+          Try these simple plays whenever you’re quoting, sorting drama on site or keeping clients calm. Follow the steps and
+          tweak them to suit your trade.
         </p>
       </div>
       <div class="md:w-2/3 grid gap-4 sm:grid-cols-2">
-        {#each toolHighlights as tool}
+        {#each guidePlays as play}
           <article class="rounded-2xl border border-slate-100 bg-white/90 p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{tool.eyebrow}</p>
-            <h3 class="mt-1 text-lg font-semibold text-slate-900">{tool.name}</h3>
-            <p class="mt-2 text-sm text-slate-600">{tool.description}</p>
-            <p class="mt-2 text-xs text-slate-500">{tool.extra}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{play.eyebrow}</p>
+            <h3 class="mt-1 text-lg font-semibold text-slate-900">{play.title}</h3>
+            <p class="mt-2 text-sm text-slate-600">{play.description}</p>
+            <ul class="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-600">
+              {#each play.steps as step}
+                <li>{step}</li>
+              {/each}
+            </ul>
           </article>
         {/each}
       </div>
