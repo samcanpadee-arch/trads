@@ -163,9 +163,9 @@
   $: gst = includeGST ? clientSubtotal * (gstRate || 0) : 0;
   $: grandTotal = clientSubtotal + gst;
 
-  const exampleCosts = `Materials + equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
-Labour effort: Two techs on site for three full days, apprentice support on day two, allow overtime if ceilings are tight.
-Program + supervision: 15% markup to cover design checks, procurement and warranty handling.
+  const exampleCosts = `Materials & equipment: Supply and install Panasonic ducted system, dampers and controls – approx $20,000.
+Labour effort: Two techs on site for 3 full days @ $95/hr each, apprentice support on day two for 6 hrs.
+Program & supervision: 15% markup to cover design checks, procurement and warranty handling.
 Access / cranage: Allowance of $1,100 for traffic control and crane if parking is limited.
 Risks: Labour may increase if the existing switchboard needs upgrades or ceiling access is restricted.`;
 
@@ -231,7 +231,9 @@ Rules:
 - If labour rates are provided (e.g. two techs for 3 days @ $95/hr), multiply them out and explain the assumption in the detail field.
 - If only percentages are given (e.g. 15% markup), apply them to the detected base costs to estimate the amount.
 - Always produce a timeline, even if you must infer it from trade best practice.
-- Prefer practical Australian trade language.`;
+- Prefer practical Australian trade language.
+- Never copy the user's raw cost sentences verbatim—rewrite allowances, markups and caveats in polished, client-facing language.
+- Pricing notes should summarise the key assumptions or caveats from the brief instead of repeating the same sentences.`;
 
     const parsedCostLines = parsedCosts.entries
       .map((entry) => `${entry.label}: ${fmt(entry.amount)}`)
@@ -339,6 +341,7 @@ Rules:
     const ai = await aiSections();
     const usingAISuggestedLabour = ai.labourSuggest.length > 0;
     const aiCostRows = ai.costSummary && ai.costSummary.length ? ai.costSummary : [];
+    const aiCostRowsClean = aiCostRows.filter((row) => !/(subtotal|total|gst|tax)/i.test(row.label || ""));
     const title = deriveTitle(projectBrief);
     const quoteRef = randomRef();
 
@@ -473,7 +476,7 @@ Rules:
       amount: entry.amount
     }));
     md += `## Pricing Summary\n\n`;
-    const pricingSource = aiCostRows.length ? aiCostRows : fallbackCostRows;
+    const pricingSource = aiCostRowsClean.length ? aiCostRowsClean : fallbackCostRows;
     if (pricingSource.length) {
       md += `| Item | Amount (AUD) | Notes |\n|------|--------------:|-------|\n`;
       pricingSource.forEach((entry) => {
@@ -527,13 +530,6 @@ Rules:
 
     md += `## Timeline (indicative)\n\n`;
     md += timeline.map((t) => `- ${t}`).join("\n") + `\n\n`;
-
-    md += `## Summary & Totals\n\n`;
-    md += `| Description | Amount |\n|-------------|-------:|\n`;
-    md += `| Costs & Allowances | ${fmt(baseCostsTotal)} |\n`;
-    md += `| **Subtotal** | **${fmt(clientSubtotal)}** |\n`;
-    if (includeGST) md += `| **GST (${(gstRate * 100).toFixed(0)}%)** | **${fmt(gst)}** |\n`;
-    md += `| **Total (AUD)** | **${fmt(grandTotal)}** |\n\n`;
 
     md += `## Payment Terms & Acceptance\n\n`;
     md += `**Estimate validity:** ${validityDays} days from the date of issue. After this period, pricing and availability of materials and labour may be subject to change. \n`;
@@ -703,7 +699,11 @@ Rules:
             <button type="button" class="btn" on:click={useExample}>Use example</button>
             <button type="button" class="btn btn-ghost" on:click={copyOut} disabled={!output}>Copy</button>
             <button type="button" class="btn btn-outline" on:click={resetAll}>Reset</button>
-            <p class="text-xs text-gray-500">Tip: No special format needed—describe costs in plain English and we’ll total any figures before drafting.</p>
+            <p class="text-xs leading-relaxed text-gray-500">
+              <span class="font-semibold text-gray-600">Tip:</span>
+              Describe costs in plain English and we’ll total any figures before drafting.
+              <span class="block text-[11px] text-gray-500/90 sm:inline">Reminder: costs, allowances and timelines are AI-generated from your brief—double check numbers before sending to a client.</span>
+            </p>
           </div>
         </div>
       </div>
@@ -713,6 +713,7 @@ Rules:
     <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm mt-4">
       <div class="p-5 sm:p-6">
         <RichAnswer text={output} />
+        <p class="mt-3 text-xs text-gray-500">AI-generated content—review the pricing and timeline before sharing externally.</p>
       </div>
     </div>
   {/if}
