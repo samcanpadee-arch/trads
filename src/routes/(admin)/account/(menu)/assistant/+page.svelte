@@ -42,88 +42,84 @@
   let share = false;
   let message = "";
 
-  type TradePlaybook = {
+  type AssistantPlaybook = {
     trade: string;
     title: string;
     summary: string;
-    prompt: string;
-    ctas?: Array<{ label: string; href: string }>;
+    references: string[];
+    form: {
+      trade?: string;
+      brandModel?: string;
+      focus: typeof focuses[number]["value"];
+      message: string;
+    };
   };
 
-  const tradePlaybooks: TradePlaybook[] = [
+  const assistantPlaybooks: AssistantPlaybook[] = [
     {
       trade: "Electrical",
-      title: "Quote follow-up that wins the work",
+      title: "RCD discrimination + switchboard upgrade brief",
       summary:
-        "Polish the technical guts of a switchboard upgrade quote, then turn it into a friendly SMS + email follow-up.",
-      prompt:
-        "I’m an electrician quoting a switchboard upgrade with RCBOs in an older brick home. Draft the quote summary, list the safety upgrades in bullet points, and give me a follow-up SMS that nudges the client to approve it this week.",
-      ctas: [{ label: "Open proposal tool", href: "/account/tools/proposal" }]
-    },
-    {
-      trade: "Plumbing",
-      title: "Maintenance contract play",
-      summary:
-        "Frame recurring drain maintenance as a value-add with ROI talking points and a tidy attachment for strata.",
-      prompt:
-        "I’m a plumber pitching a quarterly drain maintenance plan for a 12-unit block. Outline the inclusions, pricing options, and a short paragraph I can paste into a proposal explaining why preventative jetting saves money.",
-      ctas: [{ label: "Material & cost calc", href: "/account/tools/material-cost" }]
+        "Loads AS/NZS 3000 clause info plus the SafeWork risk guide so the Assistant cites the right sections when reviewing your board design.",
+      references: [
+        "AS/NZS 3000:2018 cl.2.6 Residual current devices",
+        "Managing Electrical Risks in the Workplace (Safe Work Australia)"
+      ],
+      form: {
+        trade: "Electrical",
+        brandModel: "AS/NZS 3000:2018 cl.2.6 — RCD discrimination",
+        focus: "compliance",
+        message:
+          "I’m upgrading a 2010-era domestic switchboard with RCBOs. Confirm discrimination requirements for lighting vs power circuits and reference AS/NZS 3000:2018 clause 2.6 plus Safe Work Australia’s Managing Electrical Risks guide. Include recommended insulation resistance + polarity test steps to note on the CCEW."
+      }
     },
     {
       trade: "HVAC",
-      title: "Commissioning checklist & client summary",
+      title: "Daikin multi-split commissioning pack",
       summary:
-        "Use the library to double-check clearances, then send the client a commissioning note with warranty reminders.",
-      prompt:
-        "I’ve just installed a Daikin multi split (4 heads) in a two-storey townhouse. Give me the commissioning checklist with AS/NZS references plus a client-facing summary that covers maintenance and warranty steps.",
-      ctas: [{ label: "Email templates", href: "/account/tools/email-template" }]
+        "Prefills the CTXM/FTXM manual number so the Assistant can cite torque settings, vacuum targets, and leak test steps.",
+      references: [
+        "Daikin CTXM-A / FTXM-A Installation Manual 3PEN697375-8B",
+        "Daikin FTXM20-50A Operation Manual 3PEN728539-3"
+      ],
+      form: {
+        trade: "HVAC",
+        brandModel: "Daikin CTXM-A / FTXM-A multi split 3PEN697375-8B",
+        focus: "install",
+        message:
+          "Commissioning a Daikin 4-head multi split (CTXM/FTXM series) in a two-storey townhouse. Summarise final flare torque specs, maximum pipe runs per port, target micron level before opening service valves, and the client handover checklist with references to manuals 3PEN697375-8B and 3PEN728539-3."
+      }
     },
     {
-      trade: "Landscaping",
-      title: "Variation & upsell helper",
+      trade: "Solar",
+      title: "PV compliance summary + client email",
       summary:
-        "Capture the extra scope (decks, lighting, planting) and translate it into a variation email with clear next steps.",
-      prompt:
-        "I’m mid-way through a landscaping project and the client wants to add a spotted-gum deck extension plus garden lighting. Draft the variation summary with new costs, a timeline adjustment, and an upsell paragraph for maintenance visits.",
-      ctas: [{ label: "Job estimation", href: "/account/tools/job-estimation" }]
-    }
-  ];
-
-  type LibraryShortcut = {
-    title: string;
-    description: string;
-    prompt: string;
-    link: { label: string; href: string };
-  };
-
-  const libraryShortcuts: LibraryShortcut[] = [
-    {
-      title: "Win more maintenance contracts",
-      description: "Bundle Smart Assistant briefs with proposal + email templates.",
-      prompt:
-        "Create a short plan that shows the ROI of quarterly HVAC maintenance for a medical clinic. Include key checks, pricing ranges, and a paragraph I can drop into a proposal.",
-      link: { label: "Proposal workflow", href: "/account/tools/proposal" }
+        "Sets the fields for a Panasonic VKR inverter job so responses cite Clean Energy Council + OEM requirements.",
+      references: [
+        "Panasonic VKR Operating Manual",
+        "CEC Install & Supervision Guidelines"
+      ],
+      form: {
+        trade: "Electrical",
+        brandModel: "Panasonic VKR 6.6kW inverter",
+        focus: "compliance",
+        message:
+          "Need a compliance summary for a 6.6kW Panasonic VKR install in WA. Reference the Panasonic VKR operating manual plus CEC guidelines for shutdown labelling, DC isolator locations, and routine maintenance notes. Finish with an email paragraph I can send the homeowner."
+      }
     },
     {
-      title: "Upsell EV chargers",
-      description: "Answer safety questions, then jump straight into Smart Tools.",
-      prompt:
-        "Give me the key standards and homeowner talking points when upselling a single-phase EV charger install in Victoria. Include clearance reminders and inspection steps.",
-      link: { label: "Quote builder", href: "/account/tools/material-cost" }
-    },
-    {
-      title: "Close variations without fuss",
-      description: "Summaries + email copy ready to paste.",
-      prompt:
-        "Summarise a variation for a bathroom reno where the client added underfloor heating and premium tapware. Include bulletproof reasons for the price increase and a polite approval request.",
-      link: { label: "Email helper", href: "/account/tools/email-template" }
-    },
-    {
-      title: "Prep insurance-ready job notes",
-      description: "Use manual citations, then export to Smart Tools.",
-      prompt:
-        "I’m documenting storm damage to a colorbond roof for an insurance report. Draft the job notes with photos to capture, temporary works completed, and references to QBCC guidance.",
-      link: { label: "Job estimation", href: "/account/tools/job-estimation" }
+      trade: "Mechanical",
+      title: "Bulkhead cassette service log",
+      summary:
+        "Targets the Mitsubishi MLZ-KP service doc so maintenance notes cite filter and condensate tray requirements.",
+      references: ["Mitsubishi MLZ-KP Bulkhead Installation Manual DG79T870H01"],
+      form: {
+        trade: "HVAC",
+        brandModel: "Mitsubishi MLZ-KP bulkhead cassette",
+        focus: "maintenance",
+        message:
+          "Prepare a maintenance worksheet for a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Include access requirements, condensate tray cleaning, filter replacement intervals, and leak test pressures referencing manual DG79T870H01. Add a sentence noting warranty impacts if intervals are missed."
+      }
     }
   ];
 
@@ -355,8 +351,11 @@
     }
   }
 
-  function usePromptText(text: string) {
-    message = text;
+  function applyAssistantPlaybook(playbook: AssistantPlaybook) {
+    trade = playbook.form.trade ?? "";
+    brandModel = playbook.form.brandModel ?? "";
+    focus = playbook.form.focus;
+    message = playbook.form.message;
   }
 </script>
 
@@ -374,60 +373,34 @@
     </p>
   </header>
 
-  <div class="grid gap-4 lg:grid-cols-2">
-    <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm">
-      <div class="flex flex-wrap items-center gap-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Trade playbooks</p>
-        <p class="text-sm text-gray-600">Drop in a proven brief to keep the convo moving.</p>
-      </div>
-      <div class="mt-4 space-y-3">
-        {#each tradePlaybooks as playbook}
-          <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{playbook.trade}</p>
-            <h3 class="text-base font-semibold text-gray-900">{playbook.title}</h3>
-            <p class="mt-1 text-sm text-gray-600">{playbook.summary}</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="btn btn-primary btn-xs"
-                on:click={() => usePromptText(playbook.prompt)}
-              >
-                Use playbook
-              </button>
-              {#if playbook.ctas?.length}
-                {#each playbook.ctas as cta}
-                  <a class="btn btn-ghost btn-xs" href={cta.href}>{cta.label}</a>
-                {/each}
-              {/if}
-            </div>
-          </article>
-        {/each}
-      </div>
+  <div class="rounded-3xl border border-amber-100 bg-white/90 p-5 shadow-sm">
+    <div class="flex flex-wrap items-center gap-3">
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Assistant playbooks</p>
+      <p class="text-sm text-gray-600">Loads the trade, manual, and focus fields for you.</p>
     </div>
-
-    <div class="rounded-3xl border border-gray-200 bg-white/90 p-5 shadow-sm">
-      <div class="flex flex-wrap items-center gap-3">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">Outcome shortcuts</p>
-        <p class="text-sm text-gray-600">Start with the goal, then open the right tool.</p>
-      </div>
-      <div class="mt-4 space-y-3">
-        {#each libraryShortcuts as shortcut}
-          <article class="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-            <h3 class="text-base font-semibold text-gray-900">{shortcut.title}</h3>
-            <p class="mt-1 text-sm text-gray-600">{shortcut.description}</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="btn btn-outline btn-xs"
-                on:click={() => usePromptText(shortcut.prompt)}
-              >
-                Ask this
-              </button>
-              <a class="btn btn-ghost btn-xs" href={shortcut.link.href}>{shortcut.link.label}</a>
-            </div>
-          </article>
-        {/each}
-      </div>
+    <div class="mt-4 space-y-3">
+      {#each assistantPlaybooks as playbook}
+        <article class="rounded-2xl border border-white/60 bg-gradient-to-br from-white via-amber-50/60 to-white p-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{playbook.trade}</p>
+          <h3 class="text-base font-semibold text-gray-900">{playbook.title}</h3>
+          <p class="mt-1 text-sm text-gray-600">{playbook.summary}</p>
+          <div class="mt-3 text-xs text-amber-800">
+            <p class="font-semibold uppercase tracking-wide">Cites</p>
+            <ul class="mt-1 space-y-0.5">
+              {#each playbook.references as ref}
+                <li>• {ref}</li>
+              {/each}
+            </ul>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary btn-xs mt-3"
+            on:click={() => applyAssistantPlaybook(playbook)}
+          >
+            Load playbook
+          </button>
+        </article>
+      {/each}
     </div>
   </div>
 

@@ -21,6 +21,64 @@
   ];
   let model = models[0].id; // default
 
+  type ChatPlaybook = {
+    trade: string;
+    title: string;
+    summary: string;
+    prompt: string;
+  };
+
+  const chatPlaybooks: ChatPlaybook[] = [
+    {
+      trade: 'Electrical',
+      title: 'Quote follow-up that wins the work',
+      summary:
+        'Turn a switchboard upgrade scope into polished quote wording plus a friendly follow-up.',
+      prompt:
+        "I’m an electrician quoting a switchboard upgrade with RCBOs in an older brick home. Draft the quote summary, list the safety upgrades in bullet points, and give me a follow-up SMS that nudges the client to approve it this week."
+    },
+    {
+      trade: 'Plumbing',
+      title: 'Maintenance contract play',
+      summary:
+        'Pitch quarterly drain maintenance with ROI talking points and tidy proposal copy.',
+      prompt:
+        "I’m a plumber pitching a quarterly drain maintenance plan for a 12-unit block. Outline the inclusions, pricing options, and a short paragraph I can paste into a proposal explaining why preventative jetting saves money."
+    },
+    {
+      trade: 'HVAC',
+      title: 'Commissioning checklist & client summary',
+      summary:
+        'Get commissioning steps plus a customer-friendly note after a multi-split install.',
+      prompt:
+        "I’ve just installed a Daikin multi split (4 heads) in a two-storey townhouse. Give me the commissioning checklist with AS/NZS references plus a client-facing summary that covers maintenance and warranty steps."
+    },
+    {
+      trade: 'Roofing',
+      title: 'Insurance-ready job notes',
+      summary:
+        'Document storm damage clearly and tee up the right insurer wording.',
+      prompt:
+        "I’m a roofer on the Gold Coast helping a homeowner lodge a storm-damage claim. Draft a job note that documents the damage, temporary works completed, and the replacement scope tied to QBCC guidelines."
+    },
+    {
+      trade: 'Solar',
+      title: 'Compliance summary + upsell',
+      summary:
+        'Explain why a CCTV or monitoring add-on matters and capture compliance notes.',
+      prompt:
+        "I run a solar crew in Perth. We just finished a 6.6kW install with a Fronius Primo. Draft the compliance summary for the customer pack, referencing Clean Energy Council requirements and warranty pointers."
+    },
+    {
+      trade: 'Landscaping',
+      title: 'Variation & upsell helper',
+      summary:
+        'Capture the extra scope and turn it into approval-ready wording.',
+      prompt:
+        "I’m a landscaper in Adelaide. Mid-project, the client added a spotted-gum deck extension and upgraded lighting. Give me a variation email outlining new scope, costs, and next steps while sounding like a friendly tradie."
+    }
+  ];
+
   let input = '';
   let streaming = false;
   let streamingIndex: number | null = null;
@@ -74,6 +132,10 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 
+  function loadChatPlaybook(prompt: string) {
+    input = prompt;
+  }
+
   function handleScroll() {
     if (!chatContainer) return;
     const distanceFromBottom =
@@ -86,7 +148,8 @@
     if (!input.trim() || streaming) return;
 
     errorMsg = null;
-    const nextMessages = [...messages, { role: 'user', content: input }];
+    const userMessage: Msg = { role: 'user', content: input };
+    const nextMessages = [...messages, userMessage];
     const payload = { messages: nextMessages, model };
 
     messages = nextMessages;
@@ -269,6 +332,29 @@
     </div>
 
     <aside class="space-y-4">
+      <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white via-amber-50/70 to-white p-5 shadow-sm backdrop-blur">
+        <div class="flex flex-wrap items-center gap-3">
+          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Trade playbooks</p>
+          <p class="text-sm text-gray-600">Insert a proven scenario without typing it all out.</p>
+        </div>
+        <div class="mt-4 space-y-3">
+          {#each chatPlaybooks as playbook}
+            <article class="rounded-2xl border border-white/60 bg-white/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">{playbook.trade}</p>
+              <h3 class="text-sm font-semibold text-gray-900">{playbook.title}</h3>
+              <p class="mt-1 text-xs text-gray-600">{playbook.summary}</p>
+              <button
+                type="button"
+                class="btn btn-outline btn-xs mt-2"
+                on:click={() => loadChatPlaybook(playbook.prompt)}
+              >
+                Use this playbook
+              </button>
+            </article>
+          {/each}
+        </div>
+      </div>
+
       <div class="rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-amber-50/70 to-rose-50/70 p-5 shadow-sm backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Best results</p>
         <ul class="mt-3 space-y-2 text-sm text-gray-700">
@@ -290,16 +376,6 @@
             </p>
             <p class="text-xs text-gray-500">Handy when you need to modernise legacy docs without starting from scratch.</p>
           </div>
-        </div>
-      </div>
-      <div class="rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm">
-        <p class="text-sm font-semibold text-gray-900">Need manuals or pricing tools?</p>
-        <p class="mt-1 text-sm text-gray-600">
-          Jump into the Tradie Library or Smart Tools when you need standards, proposals, or calculators to back up the chat.
-        </p>
-        <div class="mt-4 flex flex-wrap gap-2 text-sm font-medium">
-          <a class="btn btn-outline btn-sm" href="/account/assistant">Tradie Library</a>
-          <a class="btn btn-ghost btn-sm" href="/account/tools">Smart Tools</a>
         </div>
       </div>
     </aside>

@@ -55,6 +55,9 @@
       <p class="text-lg text-slate-700">
         Save hours on quotes, proposals, job notes, and emails. Upgrade to Pro to unlock the Tradie Library — thousands of manuals and technical guides with Smart Assistant answers.
       </p>
+      <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm">
+        <span>✨ 14-day free trial on Standard &amp; Pro for new accounts</span>
+      </div>
       <div class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-2 py-1 shadow-sm">
         <button class={toggleBtn(billingInterval === 'month')} onclick={() => (billingInterval = 'month')}>
           Monthly
@@ -156,6 +159,7 @@
             {/if}
           </div>
           <p class="text-sm text-slate-700">Everything in Free plus Smart Chat.</p>
+          <p class="text-xs font-semibold text-emerald-700">Includes a 14-day free trial for new accounts.</p>
         </header>
         <div class="mt-5 text-sm text-slate-600 space-y-2">
           <p>Unlimited Smart Chat conversations</p>
@@ -188,6 +192,7 @@
             {/if}
           </div>
           <p class="text-sm text-slate-700">Unlock the Tradie Library + Smart Assistant.</p>
+          <p class="text-xs font-semibold text-emerald-700">Includes a 14-day free trial for new accounts.</p>
         </header>
         <div class="mt-5 text-sm text-slate-600 space-y-2">
           <p>Smart Assistant answers from manuals, codes & spec sheets</p>
