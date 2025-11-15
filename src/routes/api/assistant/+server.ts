@@ -696,16 +696,6 @@ STYLE:
       );
     }
 
-    if (docReferences.length) {
-      const docList = docReferences.map((name) => `- ${name}`).join("\n");
-      text += `\n\nReferenced documents:\n${docList}`;
-    }
-
-    // SOFT NUDGE: if MANUAL but no hint of a page/clause pattern, add a reminder note
-    if (sourceFlag === "MANUAL" && !/\bp\.\s*\d+|\b§\s*\d+/.test(text)) {
-      text += "\n\n_Note: If the page or section isn’t listed above, please refer to the cited document to confirm the exact location._";
-    }
-
     return new Response(
       JSON.stringify({
         answer: text,

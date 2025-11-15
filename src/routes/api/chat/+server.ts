@@ -6,6 +6,10 @@ type Msg = { role: Role; content: string };
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const CHAT_SYSTEM_PROMPT = `You are Smart Chat, a conversational co-worker for Australian tradies.
+- Give practical, plain-English answers about jobs, clients, and business admin.
+- Remind people they can paste their own quotes, emails, or site copy if polishing would help.
+- Always finish by suggesting a next step or asking a follow-up question so the chat keeps going (e.g. "Want me to turn that into an SMS?" or "Need me to tighten the wording?").`;
 
 const CHAT_LIMIT = Number.isFinite(Number(process.env.CHAT_RATE_LIMIT)) && Number(process.env.CHAT_RATE_LIMIT) > 0
   ? Number(process.env.CHAT_RATE_LIMIT)
@@ -47,6 +51,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   // TODO: add real auth/quotas using your existing locals/session helpers
 
+  const hasSystem = messages.some((m) => m.role === 'system');
+  const finalMessages = hasSystem
+    ? messages
+    : ([{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...messages] as Msg[]);
+
   const upstream = await fetch(OPENAI_URL, {
     method: 'POST',
     headers: {
@@ -56,7 +65,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     body: JSON.stringify({
       model,
       stream: true,
-      messages: messages.map((m) => ({ role: m.role, content: m.content }))
+      messages: finalMessages.map((m) => ({ role: m.role, content: m.content }))
     })
   });
 

@@ -58,70 +58,70 @@
   const assistantPrompts: AssistantPrompt[] = [
     {
       trade: "HVAC",
-      title: "Commission a Daikin multi split without missing steps",
+      title: "Bulkhead cassette service sheet",
       summary:
-        "Loads the CTXM/FTXM manuals so you get torque, vacuum, and handover notes straight from Daikin.",
+        "Great for tight medical tenancies where you need the Mitsubishi MLZ-KP checklist filled out with real manual references.",
       references: [
-        "Daikin CTXM-A / FTXM-A Installation Manual 3PEN697375-8B",
-        "Daikin FTXM20-50A Operation Manual 3PEN728539-3"
+        "Mitsubishi MLZ-KP Bulkhead Cassette Manual DG79T870H01",
+        "Mitsubishi Indoor Unit Maintenance Guide"
       ],
       form: {
         trade: "HVAC",
-        brandModel: "Daikin CTXM/FTXM multi split manuals 3PEN697375-8B + 3PEN728539-3",
-        focus: "install",
+        brandModel: "Mitsubishi MLZ-KP bulkhead cassette manual DG79T870H01",
+        focus: "maintenance",
         message:
-          "Commissioning a four-head Daikin CTXM/FTXM multi split in a two-storey townhouse. Walk me through the flare torque targets, acceptable pipe runs per port, the micron level before opening the service valves, and the key handover tips Daikin spells out. Keep it in everyday language but cite the manuals."
+          "Servicing a Mitsubishi MLZ-KP bulkhead cassette in a medical tenancy. Need a maintenance worksheet that covers access, filter and condensate care, leak checks, and what to note on the service docket with references to the factory manual."
       }
     },
     {
       trade: "Electrical",
-      title: "Switchboard upgrade checklist with plain-English tests",
+      title: "Switchboard changeover game plan",
       summary:
-        "References AS/NZS 3000 and the Safe Work electrical risks guide without expecting the tradie to quote clauses.",
+        "Maps out the site checks, tests, and safety notes using the Wiring Rules and Managing Electrical Risks guide.",
       references: [
         "AS/NZS 3000:2018 – Wiring Rules",
         "Safe Work Australia – Managing Electrical Risks guide"
       ],
       form: {
         trade: "Electrical",
-        brandModel: "AS/NZS 3000:2018 + Managing Electrical Risks guide",
+        brandModel: "AS/NZS 3000:2018 and Safe Work Managing Electrical Risks guide",
         focus: "compliance",
         message:
-          "Upgrading an older weatherboard switchboard to RCBOs. Spell out how to keep the lighting and power circuits coordinated, what insulation resistance + polarity tests to record on the CCEW, and any Safe Work reminders I should give the apprentice. Refer to the Wiring Rules and Managing Electrical Risks guide by name, not clause numbers."
+          "Upgrading a weatherboard home to RCBOs after repeated nuisance trips. Give me the isolation steps, discrimination tips, and insulation/polarity tests to log so I can brief the crew and finish the CCEW. Keep it grounded in the Wiring Rules and the Safe Work guide."
       }
     },
     {
       trade: "Carpentry",
-      title: "Timber stair variation that cites the right standards",
+      title: "Pergola + stair variation notes",
       summary:
-        "Points the Assistant at AS 1684 and NCC Vol 2 so the answer fills the form with believable references.",
+        "Helps you talk through structural changes while pointing at AS 1684 and the NCC housing provisions.",
       references: [
         "AS 1684 Timber Framing Code",
-        "NCC Volume Two – Housing Provisions (stair + balustrade sections)"
+        "NCC Volume Two – Housing Provisions"
       ],
       form: {
         trade: "Carpentry",
-        brandModel: "AS 1684 Timber Framing + NCC Volume Two",
+        brandModel: "AS 1684 Timber Framing and NCC Volume Two",
         focus: "compliance",
         message:
-          "Client wants to widen a hardwood stair and add a new balustrade in a 90s townhouse. Help me outline the material spec, fixing approach, and compliance notes that AS 1684 and NCC Volume Two call for. Include anything I should photograph for the variation file."
+          "Client wants the rear pergola extended and the stairs widened with a new balustrade on a 90s townhouse. Outline the framing sizes, fixings, balustrade heights, and any inspection photos I should grab so the variation paperwork lines up with AS 1684 and the NCC."
       }
     },
     {
       trade: "Plumbing",
-      title: "Maintenance plan for repeat sewer blockages",
+      title: "Trade waste maintenance log",
       summary:
-        "Uses AS/NZS 3500 and WaterMark guidance so you can fill every field before sending the job off.",
+        "Turns AS/NZS 3500 guidance into a ready-to-send plan for strata or facility managers dealing with repeat blockages.",
       references: [
         "AS/NZS 3500 Plumbing and Drainage",
-        "Queensland Urban Drainage Manual / WaterMark maintenance notes"
+        "Building and Plumbing Handbook / WaterMark service notes"
       ],
       form: {
         trade: "Plumbing",
-        brandModel: "AS/NZS 3500 + WaterMark maintenance notes",
+        brandModel: "AS/NZS 3500 and Building & Plumbing Handbook",
         focus: "maintenance",
         message:
-          "Body corporate keeps calling us for the same 12-unit sewer choke. Draft a maintenance worksheet that covers access requirements, jetting intervals, CCTV recommendations, and anything AS/NZS 3500 says about documenting repeat blockages. Wrap up with how to brief the committee in plain English."
+          "Strata has ongoing trade waste blockages in a 12-unit block. Need a maintenance plan covering access, jetting/CCTV cadence, paperwork to keep for compliance, and how to explain the schedule to the committee based on AS/NZS 3500 guidance."
       }
     }
   ];

@@ -31,35 +31,35 @@
   const chatPrompts: ChatPrompt[] = [
     {
       trade: 'HVAC',
-      title: 'Service recap + next steps',
+      title: 'After-hours breakdown update',
       summary:
-        'Have Smart Chat summarise what you serviced and what the client should do next.',
+        'Use when you need to calm a facility manager after a late-night rooftop fault.',
       prompt:
-        "Just wrapped a quarterly service on three ducted systems at a childcare centre. Summarise what we checked, highlight any follow-up work, and write an SMS so the centre manager knows the systems are healthy."
+        "Got called to an after-hours rooftop package unit fault at a supermarket. We stabilised it but need a proper fix tomorrow. Help me summarise what we did, what’s still pending, and ask the manager to confirm access for the morning crew."
     },
     {
       trade: 'Electrical',
-      title: 'Quote follow-up that feels human',
+      title: 'Coach the apprentice on quoting',
       summary:
-        'Turn a switchboard upgrade scope into friendly quote wording plus a nudge to accept.',
+        'Chat through how to explain an EV charger install without sounding robotic.',
       prompt:
-        "I’m chasing up a switchboard upgrade quote on a 1970s brick home. Turn my scope into a short summary with 3 dot points, then draft a follow-up SMS that sounds like a real tradie and nudges them to approve it this week."
+        "My apprentice has to call a client about installing a 7 kW EV charger in an older brick home. Draft the talking points so they can explain the scope, rough budget, and what info we still need, while sounding confident but relaxed."
     },
     {
       trade: 'Carpentry',
-      title: 'Variation explainer for custom joinery',
+      title: 'Weather delay chat with a client',
       summary:
-        'Explain a scope change in plain English and keep the relationship warm.',
+        'Keep the relationship warm when rain stalls framing or decking work.',
       prompt:
-        "Midway through a kitchen reno the client asked for custom oak shelving and LED strips. Help me write a variation email that sets out the extra labour/materials, adjusted timeline, and keeps the tone positive."
+        "Week of rain has pushed back a deck build in Geelong. Help me write a friendly update that explains what’s already done, what’s waiting on dry weather, and offers a revised schedule plus ways we can keep momentum."
     },
     {
       trade: 'Plumbing',
-      title: 'Recurring maintenance pitch',
+      title: 'Warranty callback boundaries',
       summary:
-        'Sell a preventative plan without sounding salesy.',
+        'Talk through what’s covered and what’s billable on repeat leaks.',
       prompt:
-        "Body corporate for a 16-unit block keeps calling us for blocked stacks. Draft a short plan that explains quarterly jetting + CCTV checks, rough pricing tiers, and a follow-up SMS to get approval."
+        "Client keeps ringing about a leaking mixer we replaced six months ago. Draft a message that walks through the warranty position, what checks we’ll run on the next visit, and how we’ll handle charges if it’s a new issue."
     }
   ];
 
@@ -271,7 +271,7 @@
       </div>
 
       <div
-        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[480px] sm:h-[620px] max-h-[80vh] overflow-y-auto space-y-4"
+        class="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-inner h-[540px] sm:h-[720px] max-h-[80vh] overflow-y-auto space-y-4"
         bind:this={chatContainer}
         on:scroll={handleScroll}
       >
