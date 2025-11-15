@@ -31,8 +31,9 @@ export const POST: RequestHandler = async ({ request }) => {
   const systemPrompt =
     'You are a Terms & Conditions assistant for Australian tradies. Draft clear, plain-English clauses a tradie can attach to any quote or invoice.' +
     ' Keep the focus on expectations, payment timing, variations, client responsibilities, access, warranties/compliance, and liability.' +
-    ' Do not rewrite the broader proposal or marketing copy—deliver practical conditions only.' +
+    ' Do not rewrite the broader proposal or marketing copy—deliver practical conditions only and avoid duplicating proposal content.' +
     ' Reference Australian standards, licensing and warranty duties when relevant.' +
+    ' Use concise markdown headings covering Overview, Scope & Responsibilities, Payment Terms, Variations & Extras, Access & Client Duties, Warranty & Compliance, Liability & Disputes, and Project Add-ons (if supplied).' +
     (payload.trade ? `\nTrade focus: ${payload.trade}` : '') +
     (payload.brandContext ? '\nBrand context: ' + payload.brandContext : '');
 
@@ -72,7 +73,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     if (!response.ok) {
       const err = await response.text();
-      console.warn('[customer-agreement] upstream error', err);
+      console.warn('[terms-conditions] upstream error', err);
       return json({ document: fallback, error: err || 'OpenAI error' }, { status: 200 });
     }
 
@@ -80,7 +81,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const text = data?.choices?.[0]?.message?.content?.trim();
     return json({ document: text || fallback });
   } catch (error) {
-    console.error('[customer-agreement] request failed', error);
+    console.error('[terms-conditions] request failed', error);
     const message = error instanceof Error ? error.message : 'LLM request failed';
     return json({ document: fallback, error: message }, { status: 200 });
   }
@@ -120,7 +121,11 @@ function buildFallback(payload: TermsRequest): string {
   if (payload.trade && payload.trade !== 'General') {
     lines.push(`**Trade focus:** ${payload.trade}`);
   }
-  lines.push('These general terms sit alongside every quote and invoice issued by our team. They set expectations before work starts.');
+  lines.push(
+    '\n## Overview',
+    'These general terms travel with every quote, invoice, and onboarding pack so expectations are locked in before work starts.',
+    'Review and customise for each client before sending.'
+  );
 
   const generalLines = listFromText(payload.businessNotes);
   if (generalLines.length) {

@@ -16,7 +16,7 @@
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <a
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
-      href="/account/tools/material-cost"
+      href="/account/tools/terms-conditions"
       aria-label="Open Terms & Conditions Generator"
     >
       <div class="flex flex-col gap-3">

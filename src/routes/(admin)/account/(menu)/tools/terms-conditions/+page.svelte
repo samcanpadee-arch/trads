@@ -1,4 +1,4 @@
-<!-- /account/tools/material-cost → Terms & Conditions Generator -->
+<!-- /account/tools/terms-conditions → Terms & Conditions Generator -->
 <script lang="ts">
   import RichAnswer from "$lib/components/RichAnswer.svelte";
   import { profileBrandContext, type ProfileBasics } from "$lib/utils/profile-brand";
@@ -7,8 +7,9 @@
   const profile = data?.profile ?? null;
   const brandContext = profileBrandContext(profile);
 
-  const defaultBusinessName = (profile?.company_name ?? "").trim();
-  const defaultWebsite = (profile?.website ?? "").trim();
+  const cleanStr = (value: string | null | undefined) => (value ?? "").trim();
+  const defaultBusinessName = cleanStr(profile?.company_name);
+  const defaultWebsite = cleanStr(profile?.website);
 
   type Trade =
     | "General"
@@ -70,7 +71,7 @@
     };
 
     try {
-      const res = await fetch("/api/material-cost", {
+      const res = await fetch("/api/terms-conditions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -108,7 +109,7 @@
         <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Compliance</p>
         <h1 class="text-3xl font-bold leading-tight text-gray-900">Terms & Conditions Generator</h1>
         <p class="max-w-3xl text-base text-gray-800">
-          Keep every quote, invoice, and onboarding email backed by clear expectations. This tool drafts tradie-ready terms in seconds so you can attach them to paperwork and get clients aligned on scope, payments, variations, warranties, access, and liability.
+          Tradies need more than a verbal nod. Spin up plain-English terms you can attach to quotes, invoices, and onboarding emails so every job is backed by clear expectations on scope, payments, variations, access, and liability.
         </p>
       </div>
       <a href="/account/tools" class="btn btn-ghost self-start text-sm">← Back to Smart Tools</a>
@@ -116,43 +117,42 @@
   </header>
 
   <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm space-y-8 sm:p-6" on:submit|preventDefault={generate}>
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
       <label class="form-control gap-2">
         <span class="label-text">Business name</span>
-        <input class="input input-bordered" placeholder="e.g. Lawson Civil" bind:value={businessName} />
+        <input class="input input-bordered w-full" placeholder="e.g. Lawson Civil" bind:value={businessName} />
       </label>
       <label class="form-control gap-2">
         <span class="label-text">Website or booking link</span>
-        <input class="input input-bordered" placeholder="https://yourbusiness.com.au" bind:value={businessWebsite} />
+        <input class="input input-bordered w-full" placeholder="https://yourbusiness.com.au" bind:value={businessWebsite} />
+      </label>
+      <label class="form-control gap-2">
+        <div class="space-y-1">
+          <span class="label-text">Trade focus</span>
+          <p class="text-xs text-gray-500">Helps the assistant lean into the right licensing and site duties.</p>
+        </div>
+        <select class="select select-bordered w-full" bind:value={trade}>
+          <option value="General">General</option>
+          <option value="HVAC">HVAC</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Carpentry">Carpentry</option>
+          <option value="Tiling">Tiling</option>
+          <option value="Construction">Construction</option>
+          <option value="Landscaping">Landscaping</option>
+          <option value="Painting">Painting</option>
+          <option value="Other">Other</option>
+        </select>
       </label>
     </div>
-
-    <label class="form-control gap-2">
-      <div class="space-y-1">
-        <span class="label-text">Trade focus</span>
-        <p class="text-xs text-gray-500">Helps the assistant lean into the right licensing, materials, and site expectations.</p>
-      </div>
-      <select class="select select-bordered" bind:value={trade}>
-        <option value="General">General</option>
-        <option value="HVAC">HVAC</option>
-        <option value="Electrical">Electrical</option>
-        <option value="Plumbing">Plumbing</option>
-        <option value="Carpentry">Carpentry</option>
-        <option value="Tiling">Tiling</option>
-        <option value="Construction">Construction</option>
-        <option value="Landscaping">Landscaping</option>
-        <option value="Painting">Painting</option>
-        <option value="Other">Other</option>
-      </select>
-    </label>
 
     <label class="form-control gap-3">
       <div class="space-y-1">
         <span class="label-text">Project-specific terms</span>
-        <p class="text-xs text-gray-500">Access notes, staged payments, client responsibilities, or site quirks for this job.</p>
+        <p class="text-xs text-gray-500">Site quirks, staged payments, client responsibilities, or approvals to call out for this job.</p>
       </div>
       <textarea
-        class="textarea textarea-bordered h-32"
+        class="textarea textarea-bordered h-32 w-full"
         placeholder="Example: Allow one shutdown of water (max 2 hrs). Client to confirm tile selections before demo."
         bind:value={projectSpecificTerms}
       ></textarea>
@@ -160,11 +160,11 @@
 
     <label class="form-control gap-3">
       <div class="space-y-1">
-        <span class="label-text">General trade policies</span>
+        <span class="label-text">Evergreen business policies</span>
         <p class="text-xs text-gray-500">Payment schedule, variation rules, licensing info, insurances, warranties, or guarantees.</p>
       </div>
       <textarea
-        class="textarea textarea-bordered h-40"
+        class="textarea textarea-bordered h-40 w-full"
         placeholder="Example: 40% deposit, balance within 5 days of completion. Variations priced in writing before work proceeds."
         bind:value={businessNotes}
       ></textarea>
@@ -174,21 +174,25 @@
       <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
     {/if}
 
-    <div class="rounded-3xl border border-gray-200 bg-white/80 p-4 shadow-sm">
-      <div class="flex flex-wrap items-center gap-3">
+    <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3 p-5 sm:p-6">
         <button type="submit" class="btn btn-primary" disabled={loading}>
           {#if loading}
-            Drafting…
-          {:else}
-            Generate terms
+            <span class="loading loading-dots"></span>
           {/if}
+          <span>{loading ? "Drafting" : "Generate terms"}</span>
         </button>
         <button type="button" class="btn" on:click={useExample} disabled={loading}>Use example</button>
-        {#if documentText}
-          <button class="btn btn-ghost" type="button" on:click={() => navigator.clipboard?.writeText(documentText)}>Copy</button>
-        {/if}
+        <button
+          class="btn btn-ghost"
+          type="button"
+          on:click={() => documentText && navigator.clipboard?.writeText(documentText)}
+          disabled={!documentText}
+        >
+          Copy
+        </button>
         <p class="text-xs leading-relaxed text-gray-500">
-          Shareable clauses to attach to quotes, invoices, onboarding packs, or email approvals.
+          Attach these clauses to quotes, invoices, onboarding packs, or approval emails so expectations are locked in early.
         </p>
       </div>
     </div>
@@ -199,17 +203,15 @@
   </form>
 
   <div class="rounded-3xl border border-gray-200 bg-white/95 shadow-sm">
-    <div class="border-b border-gray-100 p-5 sm:p-6">
-      <h2 class="text-xl font-semibold text-gray-900">Terms & conditions</h2>
-    </div>
-    <div class="p-5 sm:p-6">
+    <div class="p-5 sm:p-6 space-y-4">
       {#if loading && !documentText}
         <p class="text-sm text-gray-500">Building your terms…</p>
       {:else if __rich}
         <RichAnswer text={__rich} />
       {:else}
-        <p class="text-sm text-gray-500">Fill out the details above and generate to see your clauses here.</p>
+        <p class="text-sm text-gray-500">Fill out the details above and hit Generate to see your clauses.</p>
       {/if}
+      <p class="text-xs text-gray-500">AI-generated content — double-check the wording and any legal references before sharing.</p>
     </div>
   </div>
 </section>
