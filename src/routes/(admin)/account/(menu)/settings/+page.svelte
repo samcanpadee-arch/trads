@@ -88,7 +88,7 @@
             <p class="text-xs font-semibold uppercase tracking-widest text-rose-500">Danger zone</p>
             <h3 class="text-xl font-semibold text-gray-900">Close & delete your account</h3>
             <p class="text-sm text-rose-900/80">
-              Removing your account wipes chat history, docs, and access to billing. Only continue when you’ve wrapped up billing tasks.
+              Removing your account cuts off access to billing and clears your saved company details. Only continue when you’ve wrapped up billing jobs.
             </p>
           </div>
           <a
@@ -107,7 +107,7 @@
           </li>
           <li class="flex gap-2">
             <span class="text-rose-500">•</span>
-            <span>Save any manuals, quotes, or chats you’ll need later.</span>
+            <span>Once it’s gone you can’t log back in, so double-check any open jobs or team invites.</span>
           </li>
         </ul>
       </div>
