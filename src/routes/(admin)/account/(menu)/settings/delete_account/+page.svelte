@@ -16,12 +16,17 @@
 
 <section class="max-w-3xl mx-auto px-4 py-10 space-y-6">
   <header class="rounded-3xl bg-gradient-to-r from-rose-100 via-amber-100 to-white border border-rose-200/70 px-6 py-8 shadow-sm">
-    <p class="text-xs font-semibold uppercase tracking-widest text-rose-600">Danger zone</p>
-    <h1 class="mt-2 text-3xl font-bold text-gray-900">Delete your Tradie Assistant account</h1>
-    <p class="mt-3 text-sm text-gray-700">
-      This permanently removes your login, chat history, documents, and access to the Stripe billing portal. Once deleted, you can’t
-      download invoices, update payment methods, or restart your subscription without creating a fresh account.
-    </p>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-rose-600">Danger zone</p>
+        <h1 class="mt-2 text-3xl font-bold text-gray-900">Delete your Tradie Assistant account</h1>
+        <p class="mt-3 text-sm text-gray-700">
+          This permanently removes your login and shuts off billing portal access. Once deleted, you can’t download invoices,
+          update payment methods, or restart your subscription without creating a fresh account.
+        </p>
+      </div>
+      <a class="btn btn-ghost self-start text-sm sm:self-auto" href="/account/settings">← Back to Settings</a>
+    </div>
   </header>
 
   <div class="rounded-2xl border border-rose-200 bg-white/80 px-6 py-5 shadow-sm">
@@ -37,7 +42,7 @@
       </li>
       <li class="flex gap-2">
         <span class="text-rose-500">•</span>
-        <span>Export any quotes, manuals, or notes that you still need.</span>
+        <span>Double-check any open jobs or invites since you won’t be able to log back in.</span>
       </li>
     </ul>
     <p class="mt-3 text-xs text-rose-700">

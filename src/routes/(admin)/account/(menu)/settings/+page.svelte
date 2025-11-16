@@ -19,8 +19,8 @@
     <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Account</p>
     <h1 class="mt-3 text-3xl font-bold text-gray-900">Settings</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
-      Give your Tradie Assistant profile a once-over: refresh your details, swap the login email, set a new password, or
-      delete the account when the job&rsquo;s done. Quick tune-up, then back on the tools.
+      Tune up your Tradie Assistant account in one spot—polish your profile, swap the login email or password, manage updates,
+      or pull the pin when a job&rsquo;s wrapped. Straightforward admin with a bit of tradie polish.
     </p>
   </header>
 
