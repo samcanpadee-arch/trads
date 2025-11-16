@@ -92,32 +92,39 @@
     ]}
   />
 {:else}
-  <div class="card p-6 pb-7 mt-8 max-w-xl flex flex-col md:flex-row shadow-sm max-w-md">
-    <div class="flex flex-col gap-y-4">
-      {#if usingOAuth}
-        <div class="font-bold">Set a password from your inbox</div>
-        <div>
-          You usually sign in with oAuth ("Sign in with GitHub" or similar),
-          but you can add a Tradie password too. We'll send the same reset link
-          below so you can pick one.
-        </div>
-      {:else}
-        <div class="font-bold">Reset your password via email</div>
-      {/if}
-      <div>
-        The button below emails {user?.email} a secure reset link so you can set
-        a fresh password. We'll double-check you're sure before we send it.
+  <div
+    class="mt-8 rounded-2xl border border-gray-200 bg-white/80 shadow-sm w-full flex flex-col gap-5 p-6 md:flex-row"
+  >
+    <div class="flex-none space-y-1 md:w-52">
+      <p class="text-xs font-semibold uppercase tracking-widest text-amber-700">
+        Details
+      </p>
+      <div class="text-xl font-semibold text-gray-900">
+        {usingOAuth ? "Add a Tradie password" : "Reset via email"}
+      </div>
+    </div>
+    <div class="w-full min-w-48">
+      <div
+        class="mb-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      >
+        {#if usingOAuth}
+          You usually sign in with oAuth, but you can add a Tradie password too.
+          We'll email the reset link below so you can pick one.
+        {:else}
+          We'll email {user?.email} a secure reset link so you can set a fresh password.
+        {/if}
+        We'll double-check you're sure before we send it.
       </div>
       <button
-        class="btn btn-outline btn-wide {sentEmail ? 'hidden' : ''}"
+        class="btn btn-outline btn-sm min-w-[145px] {sentEmail ? 'hidden' : ''}"
         disabled={sendBtnDisabled}
         onclick={sendForgotPassword}
       >
         {sendBtnText}
       </button>
-      <div class="success alert alert-success {sentEmail ? '' : 'hidden'}">
-        Reset email sent! Check your inbox and follow the link to choose your
-        new password.
+      <div class="success alert alert-success mt-4 {sentEmail ? '' : 'hidden'}">
+        <div class="text-base font-semibold">Reset email sent</div>
+        <p>Check your inbox and follow the link to choose your new password.</p>
       </div>
     </div>
   </div>
