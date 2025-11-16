@@ -89,7 +89,7 @@
 </svelte:head>
 
 <div class="w-full max-w-lg md:max-w-xl mx-auto px-4 py-10">
-  <form class="space-y-6" onsubmit={handleSubmit}>
+  <form class="space-y-6" method="post" onsubmit={handleSubmit}>
     <div class="space-y-4">
       <div class="form-control">
         <label class="label" for="email">
