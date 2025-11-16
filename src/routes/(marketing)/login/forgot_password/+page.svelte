@@ -9,7 +9,12 @@
   <title>Forgot Password</title>
 </svelte:head>
 
-<h1 class="text-2xl font-bold mb-6">Forgot Password</h1>
+<div class="max-w-md mx-auto px-4 pt-10 text-center space-y-2">
+  <h1 class="text-4xl md:text-5xl font-bold leading-tight tracking-tight">Forgot password</h1>
+  <p class="text-base md:text-lg opacity-80">
+    Enter your email and we'll send a reset link so you can get back into your account.
+  </p>
+</div>
 <Auth
   supabaseClient={data.supabase}
   view="forgotten_password"
