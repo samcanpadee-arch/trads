@@ -123,7 +123,7 @@
           <button
             type="button"
             class="btn btn-ghost btn-xs absolute right-2 top-1/2 -translate-y-1/2"
-            on:click={() => (showPassword = !showPassword)}
+            onclick={() => (showPassword = !showPassword)}
             aria-pressed={showPassword}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             title={showPassword ? 'Hide password' : 'Show password'}

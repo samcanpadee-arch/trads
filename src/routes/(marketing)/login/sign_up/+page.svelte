@@ -160,12 +160,16 @@
       <div class="form-control">
         <label class="label" for="password">
           <span class="label-text">Create a password</span>
-          <span class="label-text-alt tooltip tooltip-left" data-tip={PASSWORD_GUIDANCE} tabindex="0">
-            <span class="sr-only">{PASSWORD_GUIDANCE}</span>
+          <button
+            type="button"
+            class="label-text-alt tooltip tooltip-left"
+            data-tip={PASSWORD_GUIDANCE}
+            aria-label={PASSWORD_GUIDANCE}
+          >
             <span aria-hidden="true" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-base-300 text-xs font-semibold">
               i
             </span>
-          </span>
+          </button>
         </label>
         <div class="relative">
           <input
@@ -178,10 +182,10 @@
             aria-describedby="password-guidelines"
             required
           />
-          <button
-            type="button"
-            class="btn btn-ghost btn-xs absolute right-2 top-1/2 -translate-y-1/2"
-            on:click={() => (showPassword = !showPassword)}
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs absolute right-2 top-1/2 -translate-y-1/2"
+              onclick={() => (showPassword = !showPassword)}
             aria-pressed={showPassword}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             title={showPassword ? 'Hide password' : 'Show password'}
