@@ -1,6 +1,4 @@
 <script lang="ts">
-  const SIGNIN = '/login/sign_in';
-
   let { data } = $props();
 
   let email = $state('');
@@ -60,9 +58,9 @@
       }
 
       if (!signUpSession) {
-        message = 'Check your email for the confirmation link.';
+        message = '🎉 Confirmation sent! Peek at your inbox for the magic link to finish setting things up.';
       } else {
-        message = 'Your account has been created.';
+        message = '🎉 You are all set! Your account has been created.';
       }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -117,8 +115,14 @@
     {/if}
 
     {#if message}
-      <div class="alert alert-success">
-        <span>{message}</span>
+      <div class="alert bg-gradient-to-r from-success via-emerald-400 to-success text-white shadow-lg border border-success">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl" aria-hidden="true">✨</span>
+          <div class="text-left">
+            <p class="font-semibold">You're almost there!</p>
+            <p class="text-sm md:text-base leading-snug">{message}</p>
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -130,9 +134,5 @@
       {/if}
     </button>
 
-    <p class="text-sm text-center">
-      Already have an account?
-      <a class="link" href={SIGNIN}>Sign in</a>.
-    </p>
   </form>
 </div>
