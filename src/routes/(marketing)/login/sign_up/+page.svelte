@@ -42,6 +42,7 @@
   let loading = $state(false);
   let message = $state('');
   let error = $state('');
+  let showPasswordHelp = $state(false);
 
   const passwordChecklist = $derived(
     PASSWORD_RULES.map((rule) => ({
@@ -158,18 +159,44 @@
       </div>
 
       <div class="form-control">
-        <label class="label" for="password">
+        <label class="label items-start justify-between gap-2" for="password">
           <span class="label-text">Create a password</span>
-          <button
-            type="button"
-            class="label-text-alt tooltip tooltip-left"
-            data-tip={PASSWORD_GUIDANCE}
-            aria-label={PASSWORD_GUIDANCE}
-          >
-            <span aria-hidden="true" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-base-300 text-xs font-semibold">
-              i
-            </span>
-          </button>
+          <span class="relative inline-flex">
+            <button
+              type="button"
+              class="label-text-alt inline-flex h-6 w-6 items-center justify-center rounded-full border border-base-300 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content"
+              aria-label={PASSWORD_GUIDANCE}
+              aria-expanded={showPasswordHelp}
+              aria-controls="password-guidance-popover"
+              aria-haspopup="dialog"
+              onclick={() => (showPasswordHelp = !showPasswordHelp)}
+              onkeydown={(event) => {
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  showPasswordHelp = false;
+                }
+              }}
+            >
+              <span aria-hidden="true">i</span>
+            </button>
+            {#if showPasswordHelp}
+              <div
+                id="password-guidance-popover"
+                role="status"
+                class="absolute right-0 top-full z-30 mt-2 min-w-[12rem] max-w-[calc(100vw-2.5rem)] sm:w-64 sm:max-w-xs rounded-2xl border border-base-300 bg-base-100 p-4 text-left text-xs leading-snug text-base-content shadow-2xl max-h-60 overflow-y-auto"
+              >
+                <p class="font-semibold text-base-content/80">Password tips</p>
+                <p class="mt-1">{PASSWORD_GUIDANCE}</p>
+                <button
+                  type="button"
+                  class="btn btn-link btn-xs px-0 mt-2"
+                  onclick={() => (showPasswordHelp = false)}
+                >
+                  Got it
+                </button>
+              </div>
+            {/if}
+          </span>
         </label>
         <div class="relative">
           <input
@@ -180,6 +207,7 @@
             bind:value={password}
             autocomplete="new-password"
             aria-describedby="password-guidelines"
+            onfocus={() => (showPasswordHelp = false)}
             required
           />
             <button
