@@ -5,6 +5,9 @@
     test: (value: string) => boolean;
   };
 
+  const PASSWORD_GUIDANCE =
+    'Use at least 6 characters and include uppercase, lowercase, and numeric characters.';
+
   const PASSWORD_RULES: PasswordRule[] = [
     {
       id: 'length',
@@ -157,41 +160,23 @@
       <div class="form-control">
         <label class="label" for="password">
           <span class="label-text">Create a password</span>
+          <span class="label-text-alt tooltip tooltip-left" data-tip={PASSWORD_GUIDANCE} tabindex="0">
+            <span class="sr-only">{PASSWORD_GUIDANCE}</span>
+            <span aria-hidden="true" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-base-300 text-xs font-semibold">
+              i
+            </span>
+          </span>
         </label>
-        <div class="relative">
-          <input
-            id="password"
-            class="input input-bordered w-full pr-12"
-            type={showPassword ? 'text' : 'password'}
-            name="password"
-            bind:value={password}
-            autocomplete="new-password"
-            aria-describedby="password-guidelines"
-            required
-          />
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs absolute right-2 top-1/2 -translate-y-1/2"
-              onclick={() => (showPassword = !showPassword)}
-            aria-pressed={showPassword}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-            title={showPassword ? 'Hide password' : 'Show password'}
-          >
-            {#if showPassword}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-10-8-10-8a21.77 21.77 0 0 1 5.06-6.94" />
-                <path d="m1 1 22 22" />
-                <path d="M9.53 9.53a3 3 0 0 0 4.95 3.11" />
-              </svg>
-            {:else}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s3-7 11-7 11 7 11 7-3 7-11 7S1 12 1 12Z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            {/if}
-            <span class="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
-          </button>
-        </div>
+        <input
+          id="password"
+          class="input input-bordered w-full"
+          type="password"
+          name="password"
+          bind:value={password}
+          autocomplete="new-password"
+          aria-describedby="password-guidelines"
+          required
+        />
         <ul id="password-guidelines" class="mt-2 space-y-1 text-sm">
           {#each passwordChecklist as rule (rule.id)}
             <li class={`flex items-center gap-2 ${rule.satisfied ? 'text-success' : 'text-base-content/70'}`}>
