@@ -1,4 +1,39 @@
 <script lang="ts">
+  type PasswordRule = {
+    id: string;
+    label: string;
+    test: (value: string) => boolean;
+  };
+
+  const PASSWORD_GUIDANCE =
+    'Use at least 6 characters and include uppercase, lowercase, and numeric characters.';
+
+  const PASSWORD_RULES: PasswordRule[] = [
+    {
+      id: 'length',
+      label: 'At least 6 characters',
+      test: (value) => value.length >= 6,
+    },
+    {
+      id: 'lowercase',
+      label: 'Contains a lowercase letter',
+      test: (value) => /[a-z]/.test(value),
+    },
+    {
+      id: 'uppercase',
+      label: 'Contains an uppercase letter',
+      test: (value) => /[A-Z]/.test(value),
+    },
+    {
+      id: 'number',
+      label: 'Contains a number',
+      test: (value) => /\d/.test(value),
+    },
+  ];
+
+  const FRIENDLY_PASSWORD_ERROR =
+    'Passwords must be at least 6 characters and include uppercase, lowercase, and numeric characters.';
+
   let { data } = $props();
 
   let email = $state('');
@@ -6,6 +41,23 @@
   let loading = $state(false);
   let message = $state('');
   let error = $state('');
+
+  const passwordChecklist = $derived(
+    PASSWORD_RULES.map((rule) => ({
+      ...rule,
+      satisfied: rule.test(password),
+    })),
+  );
+
+  function getPasswordValidationError(value: string) {
+    for (const rule of PASSWORD_RULES) {
+      if (!rule.test(value)) {
+        return FRIENDLY_PASSWORD_ERROR;
+      }
+    }
+
+    return null;
+  }
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -29,6 +81,13 @@
       return;
     }
 
+    const passwordValidationError = getPasswordValidationError(password);
+
+    if (passwordValidationError) {
+      error = passwordValidationError;
+      return;
+    }
+
     loading = true;
 
     try {
@@ -43,6 +102,11 @@
       if (signUpError) {
         if (signUpError.message === 'User already registered') {
           error = 'An account with this email already exists. Please sign in instead.';
+        } else if (
+          signUpError.message.includes('Password should be at least 6 characters') ||
+          signUpError.message.includes('Password should contain at least one character')
+        ) {
+          error = FRIENDLY_PASSWORD_ERROR;
         } else {
           error = signUpError.message;
         }
@@ -95,6 +159,12 @@
       <div class="form-control">
         <label class="label" for="password">
           <span class="label-text">Create a password</span>
+          <span class="label-text-alt tooltip tooltip-left" data-tip={PASSWORD_GUIDANCE} tabindex="0">
+            <span class="sr-only">{PASSWORD_GUIDANCE}</span>
+            <span aria-hidden="true" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-base-300 text-xs font-semibold">
+              i
+            </span>
+          </span>
         </label>
         <input
           id="password"
@@ -103,14 +173,34 @@
           name="password"
           bind:value={password}
           autocomplete="new-password"
+          aria-describedby="password-guidelines"
           required
         />
+        <ul id="password-guidelines" class="mt-2 space-y-1 text-sm">
+          {#each passwordChecklist as rule (rule.id)}
+            <li class={`flex items-center gap-2 ${rule.satisfied ? 'text-success' : 'text-base-content/70'}`}>
+              <span
+                class={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs ${
+                  rule.satisfied ? 'border-success bg-success/10 text-success' : 'border-base-300 text-base-content/60'
+                }`}
+                aria-hidden="true"
+              >
+                {#if rule.satisfied}
+                  ✓
+                {:else}
+                  ·
+                {/if}
+              </span>
+              <span>{rule.label}</span>
+            </li>
+          {/each}
+        </ul>
       </div>
     </div>
 
     {#if error}
-      <div class="alert alert-error">
-        <span>{error}</span>
+      <div class="alert alert-error shadow-lg">
+        <span class="font-semibold">{error}</span>
       </div>
     {/if}
 
