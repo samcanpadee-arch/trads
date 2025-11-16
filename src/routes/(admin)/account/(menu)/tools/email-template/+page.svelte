@@ -26,6 +26,15 @@
   let loading = false;
   let briefTouched = false;
 
+  const pillBaseClass =
+    "inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-sm font-medium transition focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400";
+  const pillClass = (active: boolean) =>
+    `${pillBaseClass} ${
+      active
+        ? "border-amber-500 bg-amber-50 text-amber-800 shadow-sm"
+        : "border-gray-200 text-gray-600 hover:border-gray-300"
+    }`;
+
   let businessPrefilled = false;
   let contactPrefilled = false;
   $: if (!businessPrefilled) {
@@ -167,10 +176,10 @@ Return only the email body text (no preface, no quotes, no markdown).`;
 
   <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
     <!-- Brief (the only required field) -->
-    <div class="form-control gap-3">
-      <label for="brief" class="label">
-        <span class="label-text">Quick brief <span class="text-error">*</span></span>
-      </label>
+    <label class="form-control gap-3" for="brief">
+      <span class="label-text flex items-center gap-1">
+        Quick brief <span class="text-error">*</span>
+      </span>
       <textarea
         id="brief"
         class="textarea textarea-bordered h-32 w-full"
@@ -178,13 +187,13 @@ Return only the email body text (no preface, no quotes, no markdown).`;
         on:blur={() => (briefTouched = true)}
         placeholder="In one or two sentences, what did you do / what’s the purpose? (e.g., Completed switchboard upgrade, added kitchen GPOs, replaced 6x downlights; now ready to send a completion email.)"
       ></textarea>
+    </label>
       {#if __briefInvalid}
         <span class="mt-1 text-xs text-error">Please enter a quick brief.</span>
       {/if}
       <p class="break-words text-xs leading-relaxed text-base-content/70 sm:text-sm">
         Tip: If you prefer bullet points, put each point on a new line — we’ll format it nicely.
       </p>
-    </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left column: core meta -->
@@ -210,7 +219,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
 
       <!-- Right column: brand & tone -->
-      <div class="space-y-6">
+      <div class="space-y-6 sm:space-y-7">
         <label class="form-control gap-3">
           <span class="label-text">Email signature / contact details (optional)</span>
           <input
@@ -238,12 +247,13 @@ Return only the email body text (no preface, no quotes, no markdown).`;
           </select>
         </label>
 
-        <label class="label cursor-pointer justify-start gap-3">
-          <input type="checkbox" class="checkbox" bind:checked={keepItShort} />
-          <span class="label-text text-xs leading-relaxed text-base-content/70 sm:text-sm"
-            >Keep it concise (~150–220 words)</span
-          >
-        </label>
+        <fieldset class="space-y-2">
+          <span class="label-text text-sm font-semibold text-gray-700">Options</span>
+          <label class={pillClass(keepItShort)}>
+            <input type="checkbox" class="sr-only" bind:checked={keepItShort} />
+            <span>Keep it concise (~150–220 words)</span>
+          </label>
+        </fieldset>
       </div>
     </div>
 
