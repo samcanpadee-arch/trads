@@ -183,7 +183,8 @@
               <div
                 id="password-guidance-popover"
                 role="status"
-                class="absolute right-0 top-full z-30 mt-2 min-w-[12rem] max-w-[calc(100vw-2.5rem)] sm:w-64 sm:max-w-xs rounded-2xl border border-base-300 bg-base-100 p-4 text-left text-xs leading-snug text-base-content shadow-2xl max-h-60 overflow-y-auto"
+                class="absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 rounded-2xl border border-base-300 bg-base-100 p-4 text-left text-xs leading-snug text-base-content shadow-2xl max-h-60 overflow-y-auto sm:left-auto sm:right-0 sm:translate-x-0"
+                style="width: min(18rem, calc(100vw - 2.5rem));"
               >
                 <p class="font-semibold text-base-content/80">Password tips</p>
                 <p class="mt-1">{PASSWORD_GUIDANCE}</p>
