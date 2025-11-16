@@ -39,8 +39,7 @@ export const actions = {
     }
 
     const formData = await request.formData()
-    const email = formData.get("email") as string
-    const confirmEmail = formData.get("confirmEmail") as string
+    const email = formData.get("email")?.toString().trim() ?? ""
 
     let validationError
     const errorFields: string[] = []
@@ -54,19 +53,12 @@ export const actions = {
     else if (!email.includes("@")) {
       validationError = "A valid email address is required"
       errorFields.push("email")
-    } else if (!confirmEmail || confirmEmail === "") {
-      validationError = "Please re-type the new email to confirm"
-      errorFields.push("confirmEmail")
-    } else if (email !== confirmEmail) {
-      validationError = "The email addresses must match"
-      errorFields.push("email", "confirmEmail")
     }
     if (validationError) {
       return fail(400, {
         errorMessage: validationError,
         errorFields,
         email,
-        confirmEmail,
       })
     }
 
@@ -84,7 +76,6 @@ export const actions = {
 
     return {
       email,
-      confirmEmail,
     }
   },
   updatePassword: async ({ request, locals: { supabase, safeGetSession } }) => {
