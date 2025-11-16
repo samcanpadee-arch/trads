@@ -38,6 +38,7 @@
 
   let email = $state('');
   let password = $state('');
+  let showPassword = $state(false);
   let loading = $state(false);
   let message = $state('');
   let error = $state('');

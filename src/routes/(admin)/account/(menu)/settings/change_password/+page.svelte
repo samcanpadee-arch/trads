@@ -47,7 +47,10 @@
   <title>Change Password</title>
 </svelte:head>
 
-<h1 class="text-2xl font-bold mb-6">Change Password</h1>
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold">Settings</h1>
+  <a href="/account/settings" class="btn btn-ghost btn-sm text-sm">← Back to Settings</a>
+</div>
 
 {#if hasPassword}
   <SettingsModule
@@ -80,33 +83,47 @@
   />
 {:else}
   <div
-    class="card p-6 pb-7 mt-8 max-w-xl flex flex-col md:flex-row shadow-sm max-w-md"
+    class="mt-8 w-full max-w-3xl rounded-2xl border border-amber-100 bg-white/80 p-6 shadow-sm"
   >
-    <div class="flex flex-col gap-y-4">
-      {#if usingOAuth}
-        <div class="font-bold">Set Password By Email</div>
-        <div>
-          You use oAuth to sign in ("Sign in with Github" or similar). You can
-          continue to access your account using only oAuth if you like!
-        </div>
-      {:else}
-        <div class="font-bold">Change Password By Email</div>
-      {/if}
+    <div class="space-y-4">
       <div>
-        The button below will send you an email at {user?.email} which will allow
-        you to set your password.
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-700">
+          Details
+        </p>
+        <h2 class="mt-1 text-xl font-semibold text-gray-900">
+          {usingOAuth ? "Set Password by Email" : "Change Password by Email"}
+        </h2>
       </div>
+
+      {#if usingOAuth}
+        <p class="text-sm text-gray-700">
+          You currently sign in with an OAuth provider such as GitHub or Google. You can keep using that method, but if you
+          would like a password on file we can send you a quick link.
+        </p>
+      {:else}
+        <p class="text-sm text-gray-700">
+          Your account does not have a password yet. Use the button below to receive a secure link where you can create one.
+        </p>
+      {/if}
+
+      <p class="text-sm text-gray-700">
+        We will email {user?.email ?? "your account email"}. Follow the link inside to set your password.
+      </p>
+
       <button
-        class="btn btn-outline btn-wide {sentEmail ? 'hidden' : ''}"
+        type="button"
+        class="btn btn-outline btn-sm min-w-[165px] {sentEmail ? 'hidden' : ''}"
         disabled={sendBtnDisabled}
         onclick={sendForgotPassword}
       >
         {sendBtnText}
       </button>
-      <div class="success alert alert-success {sentEmail ? '' : 'hidden'}">
-        Sent email! Please check your inbox and use the link to set your
-        password.
-      </div>
+
+      {#if sentEmail}
+        <div class="alert alert-success text-sm">
+          Sent! Please check your inbox and use the link to set your password.
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
