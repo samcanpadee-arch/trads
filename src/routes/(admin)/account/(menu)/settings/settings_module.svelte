@@ -56,19 +56,27 @@
     confirmMessage = null,
   }: Props = $props()
 
-  const handleSubmit: SubmitFunction = ({ data, cancel }) => {
-    if (confirmMessage) {
-      const message =
-        typeof confirmMessage === "function"
-          ? confirmMessage(data)
-          : confirmMessage
-
-      if (message && !confirm(message)) {
-        cancel()
-        return
-      }
+  const maybeConfirm = (event: SubmitEvent) => {
+    if (!confirmMessage) {
+      return
     }
 
+    const form = event.currentTarget as HTMLFormElement | null
+    if (!form) {
+      return
+    }
+
+    const data = new FormData(form)
+    const message =
+      typeof confirmMessage === "function" ? confirmMessage(data) : confirmMessage
+
+    if (message && !confirm(message)) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
+  const handleSubmit: SubmitFunction = () => {
     loading = true
     return async ({ update, result }) => {
       await update({ reset: false })
@@ -120,6 +128,7 @@
         class="form-widget flex flex-col"
         method="POST"
         action={formTarget}
+        on:submit={maybeConfirm}
         use:enhance={handleSubmit}
       >
         {#each fields as field}
