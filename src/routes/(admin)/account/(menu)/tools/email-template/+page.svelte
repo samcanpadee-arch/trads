@@ -177,7 +177,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
   <form class="rounded-3xl border border-gray-200 bg-white/95 p-5 shadow-sm sm:p-6 space-y-6" on:submit={generate}>
     <!-- Brief (the only required field) -->
     <label class="form-control gap-3" for="brief">
-      <span class="label-text flex items-center gap-1">
+      <span class="label-text flex items-center gap-1 text-gray-700">
         Quick brief <span class="text-error">*</span>
       </span>
       <textarea
@@ -219,7 +219,7 @@ Return only the email body text (no preface, no quotes, no markdown).`;
       </div>
 
       <!-- Right column: brand & tone -->
-      <div class="space-y-6 sm:space-y-7">
+      <div class="space-y-7 sm:space-y-9">
         <label class="form-control gap-3">
           <span class="label-text">Email signature / contact details (optional)</span>
           <input

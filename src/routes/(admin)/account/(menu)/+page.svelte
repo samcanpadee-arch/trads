@@ -126,20 +126,6 @@
         Visit tradieassistant.com ↗
       </a>
     </div>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat tip</p>
-        <p class="mt-1 text-sm text-gray-800">
-          Drop in site photos or voice notes and the assistant will flag risks, compliance wording, and a ready-to-send reply.
-        </p>
-      </div>
-      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Library spotlight</p>
-        <p class="mt-1 text-sm text-gray-800">
-          Star your go-to manuals, calculators, and checklists so they stay pinned for quick access on every job.
-        </p>
-      </div>
-    </div>
   </header>
 
   <!-- Smart surface -->
