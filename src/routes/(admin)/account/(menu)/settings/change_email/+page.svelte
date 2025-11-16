@@ -20,23 +20,21 @@
 <SettingsModule
   title="Change Email"
   editable={true}
-  dangerous={true}
-  message="Enter the new address twice so we know you're sure about the change."
-  successTitle="Email change underway"
-  successBody="We've emailed both inboxes. Click the links to finalise the switch, then keep signing in with your current email until it's confirmed."
+  successTitle="Email change initiated"
+  successBody="We've emailed both inboxes. Click each link to finalise the change, then keep signing in with your current email until it's confirmed."
   formTarget="/account/api?/updateEmail"
+  confirmMessage={(data) => {
+    const nextEmail = (data.get("email") as string)?.trim()
+    return nextEmail
+      ? `Change your login email to ${nextEmail}? We'll send confirmation links to both addresses.`
+      : "Change your login email?"
+  }}
   fields={[
     {
       id: "email",
-      label: "New email",
-      initialValue: "",
-      placeholder: "new@email.com",
-    },
-    {
-      id: "confirmEmail",
-      label: "Confirm new email",
-      initialValue: "",
-      placeholder: "Type it again to confirm",
+      label: "Email",
+      initialValue: user?.email ?? "",
+      placeholder: "Email address",
     },
   ]}
 />

@@ -21,6 +21,8 @@
     maxlength?: number
   }
 
+  type ConfirmMessage = string | null | ((data: FormData) => string | null)
+
   interface Props {
     // Module context
     editable?: boolean
@@ -35,6 +37,7 @@
     editLink?: string | null
     saveButtonTitle?: string
     className?: string
+    confirmMessage?: ConfirmMessage
   }
 
   let {
@@ -50,9 +53,22 @@
     editLink = null,
     saveButtonTitle = "Save",
     className = "mt-8",
+    confirmMessage = null,
   }: Props = $props()
 
-  const handleSubmit: SubmitFunction = () => {
+  const handleSubmit: SubmitFunction = ({ data, cancel }) => {
+    if (confirmMessage) {
+      const message =
+        typeof confirmMessage === "function"
+          ? confirmMessage(data)
+          : confirmMessage
+
+      if (message && !confirm(message)) {
+        cancel()
+        return
+      }
+    }
+
     loading = true
     return async ({ update, result }) => {
       await update({ reset: false })
