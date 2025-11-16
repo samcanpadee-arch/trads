@@ -126,20 +126,6 @@
         Visit tradieassistant.com ↗
       </a>
     </div>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Smart Chat tip</p>
-        <p class="mt-1 text-sm text-gray-800">
-          Drop in site photos or voice notes and the assistant will flag risks, compliance wording, and a ready-to-send reply.
-        </p>
-      </div>
-      <div class="rounded-2xl border border-white/60 bg-white/60 backdrop-blur p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Library spotlight</p>
-        <p class="mt-1 text-sm text-gray-800">
-          Star your go-to manuals, calculators, and checklists so they stay pinned for quick access on every job.
-        </p>
-      </div>
-    </div>
   </header>
 
   <!-- Smart surface -->
@@ -148,7 +134,7 @@
       href="/account/chat"
       class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Conversations</p>
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Conversations</p>
       <h2 class="mt-2 text-2xl font-semibold">Smart Chat</h2>
       <p class="mt-2 text-sm text-gray-600">
         Ask for word-perfect comms, site-ready advice, or quick explainers. Ideal for clear, confident replies on the go.
@@ -159,7 +145,7 @@
       href="/account/assistant"
       class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Manuals & knowledge</p>
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Manuals & knowledge</p>
       <h2 class="mt-2 text-2xl font-semibold">Smart Assistant</h2>
       <p class="mt-2 text-sm text-gray-600">
         Tap into the Tradie Library for technical references, standards, and how-tos so every answer cites the right material.
@@ -170,7 +156,7 @@
       href="/account/tools"
       class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <p class="text-xs font-semibold uppercase tracking-wide text-primary">Documents & pricing</p>
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Documents & pricing</p>
       <h2 class="mt-2 text-2xl font-semibold">Smart Tools</h2>
       <p class="mt-2 text-sm text-gray-600">
         Generate quotes, proposals, calculators, and marketing copy that feel on-brand so you spend less time in spreadsheets.
@@ -184,7 +170,7 @@
       <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div class="space-y-1 text-gray-800">
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Plan & billing</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Plan & billing</p>
             <h3 class="text-xl font-semibold">{billingSummary ? billingSummary.planName : 'Free plan'}</h3>
             <p class="text-sm text-gray-600">{billingDetail}</p>
           </div>
@@ -199,7 +185,7 @@
       <div class="rounded-2xl border border-gray-200 bg-white/80 px-5 py-6 shadow-sm">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div class="flex-1 space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary">Stay site-ready</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Stay site-ready</p>
             <h3 class="text-xl font-semibold text-gray-900">Pin Tradie Assistant to your home screen</h3>
             <p class="text-sm text-gray-600">
               Save it beside your other field tools so the next quote, checklist, or manual is one tap away.

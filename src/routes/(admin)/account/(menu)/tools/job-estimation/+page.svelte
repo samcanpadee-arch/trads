@@ -21,6 +21,15 @@
   let projectBrief = ""; // drives AI (overview/scope/assumptions/risks/timeline)
   let costsText = "";
 
+  const pillBaseClass =
+    "inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-sm font-medium transition focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400";
+  const pillClass = (active: boolean) =>
+    `${pillBaseClass} ${
+      active
+        ? "border-amber-500 bg-amber-50 text-amber-800 shadow-sm"
+        : "border-gray-200 text-gray-600 hover:border-gray-300"
+    }`;
+
   type Trade =
     | "General"
     | "HVAC"
@@ -925,13 +934,13 @@ Rules:
           </select>
         </label>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <label class="form-control gap-2">
+          <div class="form-control gap-2">
             <span class="label-text">Include GST?</span>
-            <label class="label cursor-pointer justify-start gap-2">
-              <input type="checkbox" class="checkbox" bind:checked={includeGST} />
-              <span class="label-text">Yes, apply {gstRateInput.toFixed(0)}%</span>
+            <label class={pillClass(includeGST)}>
+              <input type="checkbox" class="sr-only" bind:checked={includeGST} />
+              <span>Apply {gstRateInput.toFixed(0)}% GST</span>
             </label>
-          </label>
+          </div>
           <label class="form-control gap-2">
             <span class="label-text">GST rate (%)</span>
             <input type="number" min="0" max="100" step="0.1" class="input input-bordered" bind:value={gstRateInput} />

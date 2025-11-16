@@ -38,6 +38,15 @@
     }
   }
 
+  const pillBaseClass =
+    "inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-sm font-medium transition focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400";
+  const pillClass = (active: boolean) =>
+    `${pillBaseClass} ${
+      active
+        ? "border-amber-500 bg-amber-50 text-amber-800 shadow-sm"
+        : "border-gray-200 text-gray-600 hover:border-gray-300"
+    }`;
+
   function useExample() {
     businessName = "BrightBuild Renovations";
     customerName = "Jordan";
@@ -222,14 +231,19 @@ ${brandContext ? `Brand context:\n${brandContext}` : ""}`;
           </select>
         </label>
 
-        <label class="label cursor-pointer justify-start gap-3">
-          <input type="checkbox" class="checkbox" bind:checked={keepItShort} />
-          <span class="label-text text-sm">Keep it short (about a paragraph)</span>
-        </label>
-        <label class="label cursor-pointer justify-start gap-3">
-          <input type="checkbox" class="checkbox" bind:checked={includeEmojis} />
-          <span class="label-text text-sm">Include 1–2 light emojis</span>
-        </label>
+        <fieldset class="space-y-2">
+          <span class="text-sm font-semibold text-gray-700">Options</span>
+          <div class="flex flex-wrap gap-2">
+            <label class={pillClass(keepItShort)}>
+              <input type="checkbox" class="sr-only" bind:checked={keepItShort} />
+              <span>Keep it short (about a paragraph)</span>
+            </label>
+            <label class={pillClass(includeEmojis)}>
+              <input type="checkbox" class="sr-only" bind:checked={includeEmojis} />
+              <span>Include 1–2 light emojis</span>
+            </label>
+          </div>
+        </fieldset>
       </div>
     </div>
 
