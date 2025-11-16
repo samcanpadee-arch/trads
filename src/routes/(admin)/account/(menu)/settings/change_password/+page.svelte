@@ -22,24 +22,34 @@
   let usingOAuth = user?.amr?.find((x) => x.method === "oauth") ? true : false
 
   let sendBtnDisabled = $state(false)
-  let sendBtnText = $state("Send Set Password Email")
+  const sendBtnDefaultText = "Send password reset email"
+  let sendBtnText = $state(sendBtnDefaultText)
   let sentEmail = $state(false)
   let sendForgotPassword = () => {
+    const email = user?.email
+    if (!email) {
+      return
+    }
+
+    const confirmed = confirm(
+      `Send a password reset link to ${email}? You'll be able to pick a new password from that email.`,
+    )
+    if (!confirmed) {
+      return
+    }
+
     sendBtnDisabled = true
     sendBtnText = "Sending..."
 
-    let email = user?.email
-    if (email) {
-      supabase.auth
-        .resetPasswordForEmail(email, {
-          redirectTo: `${$page.url.origin}/auth/callback?next=%2Faccount%2Fsettings%2Freset_password`,
-        })
-        .then((d) => {
-          sentEmail = d.error ? false : true
-          sendBtnDisabled = false
-          sendBtnText = "Send Forgot Password Email"
-        })
-    }
+    supabase.auth
+      .resetPasswordForEmail(email, {
+        redirectTo: `${$page.url.origin}/auth/callback?next=%2Faccount%2Fsettings%2Freset_password`,
+      })
+      .then((d) => {
+        sentEmail = d.error ? false : true
+        sendBtnDisabled = false
+        sendBtnText = sendBtnDefaultText
+      })
   }
 </script>
 
@@ -79,22 +89,21 @@
     ]}
   />
 {:else}
-  <div
-    class="card p-6 pb-7 mt-8 max-w-xl flex flex-col md:flex-row shadow-sm max-w-md"
-  >
+  <div class="card p-6 pb-7 mt-8 max-w-xl flex flex-col md:flex-row shadow-sm max-w-md">
     <div class="flex flex-col gap-y-4">
       {#if usingOAuth}
-        <div class="font-bold">Set Password By Email</div>
+        <div class="font-bold">Set a password from your inbox</div>
         <div>
-          You use oAuth to sign in ("Sign in with Github" or similar). You can
-          continue to access your account using only oAuth if you like!
+          You usually sign in with oAuth ("Sign in with GitHub" or similar),
+          but you can add a Tradie password too. We'll send the same reset link
+          below so you can pick one.
         </div>
       {:else}
-        <div class="font-bold">Change Password By Email</div>
+        <div class="font-bold">Reset your password via email</div>
       {/if}
       <div>
-        The button below will send you an email at {user?.email} which will allow
-        you to set your password.
+        The button below emails {user?.email} a secure reset link so you can set
+        a fresh password. We'll double-check you're sure before we send it.
       </div>
       <button
         class="btn btn-outline btn-wide {sentEmail ? 'hidden' : ''}"
@@ -104,8 +113,8 @@
         {sendBtnText}
       </button>
       <div class="success alert alert-success {sentEmail ? '' : 'hidden'}">
-        Sent email! Please check your inbox and use the link to set your
-        password.
+        Reset email sent! Check your inbox and follow the link to choose your
+        new password.
       </div>
     </div>
   </div>

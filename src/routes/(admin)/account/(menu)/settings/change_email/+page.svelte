@@ -20,15 +20,23 @@
 <SettingsModule
   title="Change Email"
   editable={true}
-  successTitle="Email change initiated"
-  successBody="You should receive emails at both the old and new address to confirm the change. Please click the link in both emails to finalized the change. Until finalized, you must sign in with your current email."
+  dangerous={true}
+  message="Enter the new address twice so we know you're sure about the change."
+  successTitle="Email change underway"
+  successBody="We've emailed both inboxes. Click the links to finalise the switch, then keep signing in with your current email until it's confirmed."
   formTarget="/account/api?/updateEmail"
   fields={[
     {
       id: "email",
-      label: "Email",
-      initialValue: user?.email ?? "",
-      placeholder: "Email address",
+      label: "New email",
+      initialValue: "",
+      placeholder: "new@email.com",
+    },
+    {
+      id: "confirmEmail",
+      label: "Confirm new email",
+      initialValue: "",
+      placeholder: "Type it again to confirm",
     },
   ]}
 />
