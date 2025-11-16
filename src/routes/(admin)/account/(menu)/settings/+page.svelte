@@ -19,8 +19,8 @@
     <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Account</p>
     <h1 class="mt-3 text-3xl font-bold text-gray-900">Settings</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
-      Update your Tradie Assistant profile, login details, and notification preferences so Smart Chat, Smart Assistant,
-      and every Smart Tool stay on-brand across proposals, manuals, and client comms.
+      Manage your Tradie Assistant profile, login details, and notification preferences from one place. Keep everything up to
+      date whenever your crew or business info changes.
     </p>
   </header>
 
@@ -49,7 +49,7 @@
         />
 
         <SettingsModule
-          title="Email"
+          title="Change Email"
           editable={false}
           fields={[{ id: "email", label: "Login email", initialValue: user?.email || "" }]}
           editButtonTitle="Change Email"
@@ -58,7 +58,7 @@
         />
 
         <SettingsModule
-          title="Password"
+          title="Change Password"
           editable={false}
           fields={[{ id: "password", label: "Password", initialValue: "••••••••••••••••" }]}
           editButtonTitle="Change Password"
@@ -107,7 +107,7 @@
           </li>
           <li class="flex gap-2">
             <span class="text-rose-500">•</span>
-            <span>Save any manuals, quotes, or chats you’ll need later.</span>
+            <span>Save any proposals, quotes, or chats you’ll need later.</span>
           </li>
         </ul>
       </div>
@@ -118,7 +118,7 @@
         <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Consistency matters</p>
         <h3 class="mt-2 text-xl font-semibold text-gray-900">Look pro across every workflow</h3>
         <p class="mt-2 text-sm text-gray-700">
-          Smart Chat, Smart Assistant, and every Smart Tool now pull your business name and website straight from these settings.
+          Smart Chat, Smart Assistant, and every Smart Tool use your business name and website straight from these settings.
           Keep them current so every proposal, email, and checklist sounds like it came from your crew.
         </p>
         <ul class="mt-4 space-y-2 text-sm text-gray-800">

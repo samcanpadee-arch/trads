@@ -526,6 +526,7 @@
             </div>
           {/if}
         </div>
+        </div>
       </details>
     </div>
 

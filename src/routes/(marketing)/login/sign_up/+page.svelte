@@ -1,13 +1,54 @@
 <script lang="ts">
-  const SIGNIN = '/login/sign_in';
+  type PasswordRule = {
+    id: string;
+    label: string;
+    test: (value: string) => boolean;
+  };
+
+  const PASSWORD_RULES: PasswordRule[] = [
+    {
+      id: 'length',
+      label: 'At least 6 characters',
+      test: (value) => value.length >= 6,
+    },
+    {
+      id: 'lowercase',
+      label: 'Contains a lowercase letter',
+      test: (value) => /[a-z]/.test(value),
+    },
+    {
+      id: 'uppercase',
+      label: 'Contains an uppercase letter',
+      test: (value) => /[A-Z]/.test(value),
+    },
+    {
+      id: 'number',
+      label: 'Contains a number',
+      test: (value) => /\d/.test(value),
+    },
+  ];
+
+  const FRIENDLY_PASSWORD_ERROR =
+    'Passwords must be at least 6 characters and include uppercase, lowercase, and numeric characters.';
 
   let { data } = $props();
 
   let email = $state('');
   let password = $state('');
+  let showPassword = $state(false);
   let loading = $state(false);
   let message = $state('');
   let error = $state('');
+
+  function getPasswordValidationError(value: string) {
+    for (const rule of PASSWORD_RULES) {
+      if (!rule.test(value)) {
+        return FRIENDLY_PASSWORD_ERROR;
+      }
+    }
+
+    return null;
+  }
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -31,6 +72,13 @@
       return;
     }
 
+    const passwordValidationError = getPasswordValidationError(password);
+
+    if (passwordValidationError) {
+      error = passwordValidationError;
+      return;
+    }
+
     loading = true;
 
     try {
@@ -45,6 +93,11 @@
       if (signUpError) {
         if (signUpError.message === 'User already registered') {
           error = 'An account with this email already exists. Please sign in instead.';
+        } else if (
+          signUpError.message.includes('Password should be at least 6 characters') ||
+          signUpError.message.includes('Password should contain at least one character')
+        ) {
+          error = FRIENDLY_PASSWORD_ERROR;
         } else {
           error = signUpError.message;
         }
@@ -60,9 +113,9 @@
       }
 
       if (!signUpSession) {
-        message = 'Check your email for the confirmation link.';
+        message = '🎉 Confirmation sent! Peek at your inbox for the magic link to finish setting things up.';
       } else {
-        message = 'Your account has been created.';
+        message = '🎉 You are all set! Your account has been created.';
       }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -98,27 +151,57 @@
         <label class="label" for="password">
           <span class="label-text">Create a password</span>
         </label>
-        <input
-          id="password"
-          class="input input-bordered w-full"
-          type="password"
-          name="password"
-          bind:value={password}
-          autocomplete="new-password"
-          required
-        />
+        <div class="relative">
+          <input
+            id="password"
+            class="input input-bordered w-full pr-12"
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            bind:value={password}
+            autocomplete="new-password"
+            required
+          />
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs absolute right-2 top-1/2 -translate-y-1/2"
+              onclick={() => (showPassword = !showPassword)}
+            aria-pressed={showPassword}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            title={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {#if showPassword}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-10-8-10-8a21.77 21.77 0 0 1 5.06-6.94" />
+                <path d="m1 1 22 22" />
+                <path d="M9.53 9.53a3 3 0 0 0 4.95 3.11" />
+              </svg>
+            {:else}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s3-7 11-7 11 7 11 7-3 7-11 7S1 12 1 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            {/if}
+            <span class="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+          </button>
+        </div>
       </div>
     </div>
 
     {#if error}
-      <div class="alert alert-error">
-        <span>{error}</span>
+      <div class="alert alert-error shadow-lg">
+        <span class="font-semibold">{error}</span>
       </div>
     {/if}
 
     {#if message}
-      <div class="alert alert-success">
-        <span>{message}</span>
+      <div class="alert bg-gradient-to-r from-success via-emerald-400 to-success text-white shadow-lg border border-success">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl" aria-hidden="true">✨</span>
+          <div class="text-left">
+            <p class="font-semibold">You're almost there!</p>
+            <p class="text-sm md:text-base leading-snug">{message}</p>
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -130,9 +213,5 @@
       {/if}
     </button>
 
-    <p class="text-sm text-center">
-      Already have an account?
-      <a class="link" href={SIGNIN}>Sign in</a>.
-    </p>
   </form>
 </div>

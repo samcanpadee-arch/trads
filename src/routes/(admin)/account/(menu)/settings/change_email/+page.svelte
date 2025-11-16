@@ -15,7 +15,10 @@
   <title>Change Email</title>
 </svelte:head>
 
-<h1 class="text-2xl font-bold mb-6">Settings</h1>
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold">Settings</h1>
+  <a href="/account/settings" class="btn btn-ghost btn-sm text-sm">← Back to Settings</a>
+</div>
 
 <SettingsModule
   title="Change Email"
