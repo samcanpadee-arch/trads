@@ -5,7 +5,7 @@
 <div class="max-w-md mx-auto px-4 pt-10 text-center space-y-2">
   <h1 class="text-4xl md:text-5xl font-bold leading-tight tracking-tight">Create your account</h1>
   <p class="text-base md:text-lg opacity-80">
-    Too easy — pop in your email, set a password, confirm the email we send, then jump back in to pick a plan and get cracking.
+    Too easy — pop in your email, set a password, confirm the email we send, then jump back in and get cracking.
   </p>
 </div>
 
@@ -18,6 +18,8 @@
   <p class="mt-2 text-sm opacity-80">
     Already have an account?
     <a class="link" href="/login/sign_in"> Sign in</a>
+    &nbsp;·&nbsp;
+    <a class="link" href="/login/forgot_password">Forgot password?</a>
     &nbsp;·&nbsp;
     <a class="link" href={HELP}>Need help?</a>
   </p>
