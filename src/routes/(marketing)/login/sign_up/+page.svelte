@@ -5,9 +5,6 @@
     test: (value: string) => boolean;
   };
 
-  const PASSWORD_GUIDANCE =
-    'Use at least 6 characters and include uppercase, lowercase, and numeric characters.';
-
   const PASSWORD_RULES: PasswordRule[] = [
     {
       id: 'length',
@@ -159,12 +156,6 @@
       <div class="form-control">
         <label class="label" for="password">
           <span class="label-text">Create a password</span>
-          <span class="label-text-alt tooltip tooltip-left" data-tip={PASSWORD_GUIDANCE} tabindex="0">
-            <span class="sr-only">{PASSWORD_GUIDANCE}</span>
-            <span aria-hidden="true" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-base-300 text-xs font-semibold">
-              i
-            </span>
-          </span>
         </label>
         <input
           id="password"

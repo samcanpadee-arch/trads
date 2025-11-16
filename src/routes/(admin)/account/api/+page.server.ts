@@ -39,22 +39,25 @@ export const actions = {
     }
 
     const formData = await request.formData()
-    const email = formData.get("email") as string
+    const email = formData.get("email")?.toString().trim() ?? ""
 
     let validationError
+    const errorFields: string[] = []
     if (!email || email === "") {
       validationError = "An email address is required"
+      errorFields.push("email")
     }
     // Dead simple check -- there's no standard here (which is followed),
     // and lots of errors will be missed until we actually email to verify, so
     // just do that
     else if (!email.includes("@")) {
       validationError = "A valid email address is required"
+      errorFields.push("email")
     }
     if (validationError) {
       return fail(400, {
         errorMessage: validationError,
-        errorFields: ["email"],
+        errorFields,
         email,
       })
     }

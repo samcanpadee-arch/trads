@@ -121,3 +121,101 @@ describe("toggleEmailSubscription", () => {
     })
   })
 })
+
+describe("updateEmail", () => {
+  const mockUpdateUser = vi.fn()
+  const mockSupabase = {
+    auth: {
+      updateUser: mockUpdateUser,
+    },
+  }
+  const mockSafeGetSession = vi.fn()
+
+  const buildRequest = (emailValue: string | null | undefined) => ({
+    formData: vi.fn().mockResolvedValue({
+      get: (key: string) => {
+        if (key === "email") {
+          return emailValue ?? null
+        }
+        return null
+      },
+    }),
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSafeGetSession.mockResolvedValue({ session: { user: { id: "user123" } } })
+    mockUpdateUser.mockResolvedValue({ error: null })
+  })
+
+  it("redirects to login when no session is present", async () => {
+    mockSafeGetSession.mockResolvedValue({ session: null })
+
+    await expect(
+      actions.updateEmail({
+        request: buildRequest("tradie@example.com") as any,
+        locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
+      } as any),
+    ).rejects.toThrow("Redirect error")
+
+    expect(redirect).toHaveBeenCalledWith(303, "/login")
+  })
+
+  it("fails when no email is provided", async () => {
+    const request = buildRequest("")
+
+    await actions.updateEmail({
+      request: request as any,
+      locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
+    } as any)
+
+    expect(fail).toHaveBeenCalledWith(400, {
+      errorMessage: "An email address is required",
+      errorFields: ["email"],
+      email: "",
+    })
+  })
+
+  it("fails when email is invalid", async () => {
+    const request = buildRequest("not-an-email")
+
+    await actions.updateEmail({
+      request: request as any,
+      locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
+    } as any)
+
+    expect(fail).toHaveBeenCalledWith(400, {
+      errorMessage: "A valid email address is required",
+      errorFields: ["email"],
+      email: "not-an-email",
+    })
+  })
+
+  it("updates the user email and returns payload on success", async () => {
+    const request = buildRequest(" new-email@example.com ")
+
+    const result = await actions.updateEmail({
+      request: request as any,
+      locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
+    } as any)
+
+    expect(mockUpdateUser).toHaveBeenCalledWith({ email: "new-email@example.com" })
+    expect(result).toEqual({ email: "new-email@example.com" })
+  })
+
+  it("surfaces unknown Supabase errors", async () => {
+    mockUpdateUser.mockResolvedValueOnce({ error: new Error("nope") })
+
+    const request = buildRequest("tradie@example.com")
+
+    await actions.updateEmail({
+      request: request as any,
+      locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
+    } as any)
+
+    expect(fail).toHaveBeenCalledWith(500, {
+      errorMessage: "Unknown error. If this persists please contact us.",
+      email: "tradie@example.com",
+    })
+  })
+})

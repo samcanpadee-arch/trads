@@ -9,7 +9,10 @@
   <title>Change Email Subscription</title>
 </svelte:head>
 
-<h1 class="text-2xl font-bold mb-6">Email Subscription</h1>
+<div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  <h1 class="text-2xl font-bold">Email Subscription</h1>
+  <a class="btn btn-ghost self-start text-sm sm:self-auto" href="/account/settings">← Back to Settings</a>
+</div>
 
 <SettingsModule
   editable={true}
