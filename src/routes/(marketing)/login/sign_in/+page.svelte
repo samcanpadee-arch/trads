@@ -51,7 +51,7 @@
         return;
       }
 
-      message = 'Success! Redirecting you to your account...';
+      message = "Too easy! We'll scoot you over to your account in a tick...";
       await goto('/account');
     } catch (err) {
       error = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
