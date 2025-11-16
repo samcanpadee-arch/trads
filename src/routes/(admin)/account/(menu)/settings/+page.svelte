@@ -19,8 +19,8 @@
     <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Account</p>
     <h1 class="mt-3 text-3xl font-bold text-gray-900">Settings</h1>
     <p class="mt-2 text-gray-700 max-w-3xl">
-      Update your Tradie Assistant profile, login details, and notification preferences so Smart Chat, Smart Assistant,
-      and every Smart Tool stay on-brand across proposals, manuals, and client comms.
+      Give your Tradie Assistant profile a once-over: refresh your details, swap the login email, set a new password, or
+      delete the account when the job&rsquo;s done. Quick tune-up, then back on the tools.
     </p>
   </header>
 
@@ -49,7 +49,7 @@
         />
 
         <SettingsModule
-          title="Email"
+          title="Change Email"
           editable={false}
           fields={[{ id: "email", label: "Login email", initialValue: user?.email || "" }]}
           editButtonTitle="Change Email"
@@ -58,7 +58,7 @@
         />
 
         <SettingsModule
-          title="Password"
+          title="Change Password"
           editable={false}
           fields={[{ id: "password", label: "Password", initialValue: "••••••••••••••••" }]}
           editButtonTitle="Change Password"
@@ -115,24 +115,23 @@
 
     <aside class="space-y-6">
       <div class="rounded-3xl border border-white/60 bg-white/80 px-6 py-6 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Consistency matters</p>
-        <h3 class="mt-2 text-xl font-semibold text-gray-900">Look pro across every workflow</h3>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Why it matters</p>
+        <h3 class="mt-2 text-xl font-semibold text-gray-900">Keep Smart Tools in the loop</h3>
         <p class="mt-2 text-sm text-gray-700">
-          Smart Chat, Smart Assistant, and every Smart Tool now pull your business name and website straight from these settings.
-          Keep them current so every proposal, email, and checklist sounds like it came from your crew.
+          Smart Chat, Smart Assistant, and every Smart Tool pull your name, business name, and business website straight from these settings so replies land with the right context.
         </p>
         <ul class="mt-4 space-y-2 text-sm text-gray-800">
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Share one profile across mobile, desktop, and every workflow.</span>
+            <span>Your name keeps greetings and sign-offs sounding like you, not a robot.</span>
           </li>
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Email, proposal, review, and social templates now auto-fill with your company info.</span>
+            <span>Your business name lets proposals and estimates stay on-brand.</span>
           </li>
           <li class="flex gap-2">
             <span class="text-amber-500">•</span>
-            <span>Smart Chat and Smart Assistant sign-offs stay on-brand without extra typing.</span>
+            <span>Your business website gives Smart Tools the context they need to back up the chat.</span>
           </li>
         </ul>
       </div>
