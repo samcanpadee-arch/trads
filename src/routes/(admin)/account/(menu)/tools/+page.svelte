@@ -153,7 +153,7 @@
 
     <a
       href="/account/image"
-      aria-label="Open Photo Q&A"
+      aria-label="Open TradeScope Vision"
       class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
     >
       <div class="flex flex-col gap-3">
@@ -169,11 +169,11 @@
           </div>
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">On-site help</p>
-            <h2 class="text-lg font-semibold">Photo Q&amp;A</h2>
+            <h2 class="text-lg font-semibold">TradeScope Vision</h2>
           </div>
         </div>
         <p class="text-sm text-gray-600">
-          Take a quick photo on site, ask what is happening, and get safety-first guidance without storing your image.
+          Capture or upload a job photo, describe the fault, and get trade-level diagnostics with hazards, tools, and fix steps.
         </p>
         <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
       </div>

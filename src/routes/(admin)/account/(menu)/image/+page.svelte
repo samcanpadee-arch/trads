@@ -6,11 +6,57 @@
   let question = '';
   let error: string | null = null;
   let answer = '';
+  let answerHtml = '';
   let loading = false;
+
+  let cameraInput: HTMLInputElement | null = null;
+  let uploadInput: HTMLInputElement | null = null;
 
   function resetImage() {
     imageDataUrl = null;
     imageName = '';
+  }
+
+  function escapeHtml(text: string) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatAnswer(text: string) {
+    const lines = text.trim().split(/\n+/).map((line) => line.trim());
+    const blocks: string[] = [];
+    let listItems: string[] = [];
+
+    const flushList = () => {
+      if (listItems.length) {
+        const listHtml = listItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+        blocks.push(`<ul class="list-disc pl-5 space-y-1">${listHtml}</ul>`);
+        listItems = [];
+      }
+    };
+
+    for (const line of lines) {
+      if (!line) {
+        flushList();
+        continue;
+      }
+
+      const bullet = line.match(/^[-*]\s+(.+)/);
+      if (bullet) {
+        listItems.push(bullet[1]);
+        continue;
+      }
+
+      flushList();
+      blocks.push(`<p>${escapeHtml(line)}</p>`);
+    }
+
+    flushList();
+    return blocks.join('');
   }
 
   async function handleFileChange(event: Event) {
@@ -18,6 +64,7 @@
     const file = target.files?.[0];
     error = null;
     answer = '';
+    answerHtml = '';
 
     if (!file) {
       resetImage();
@@ -86,6 +133,7 @@
 
       const data = (await res.json()) as { answer?: string };
       answer = (data.answer || 'No answer received.').trim();
+      answerHtml = formatAnswer(answer);
     } catch (err) {
       console.error('image QA failed', err);
       error = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -96,33 +144,50 @@
 </script>
 
 <svelte:head>
-  <title>Photo Q&A</title>
+  <title>TradeScope Vision</title>
 </svelte:head>
 
 <section class="mx-auto max-w-4xl space-y-8 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
     <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">On-site help</p>
-    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">Photo Q&amp;A</h1>
+    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">TradeScope Vision</h1>
     <p class="mt-3 max-w-3xl text-base text-gray-700">
-      Snap a photo on site, tell the assistant what you are seeing, and get a quick read on the issue.
-      Images are only held in this session — refresh the page and they are gone.
+      Point the assistant at any job photo — site fault, component close-up, or material issue — and ask for trade-grade analysis
+      with next steps and safety flags.
     </p>
   </header>
 
   <form class="rounded-2xl border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur" on:submit|preventDefault={submitQuestion}>
     <div class="space-y-4">
-      <div class="space-y-2">
-        <label class="text-sm font-semibold text-gray-800" for="photo-upload">Add a site photo</label>
+      <div class="space-y-3">
+        <label class="text-sm font-semibold text-gray-800" for="photo-upload">Add a photo to troubleshoot</label>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" class="btn btn-outline" on:click={() => cameraInput?.click()}>
+            Take a photo (camera)
+          </button>
+          <button type="button" class="btn" on:click={() => uploadInput?.click()}>
+            Upload from library
+          </button>
+        </div>
+        <p class="text-xs text-gray-500">Camera will ask for permission on mobile. You can also pick an existing image.</p>
         <input
           id="photo-upload"
-          name="photo"
+          name="photo-camera"
           type="file"
           accept="image/*"
           capture="environment"
-          class="file-input file-input-bordered w-full"
+          class="hidden"
+          bind:this={cameraInput}
           on:change={handleFileChange}
         />
-        <p class="text-xs text-gray-500">Use your phone camera or gallery. No images are stored after you leave this page.</p>
+        <input
+          name="photo-upload"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          bind:this={uploadInput}
+          on:change={handleFileChange}
+        />
       </div>
 
       {#if imageDataUrl}
@@ -142,11 +207,11 @@
         <textarea
           id="question"
           class="textarea textarea-bordered w-full"
-          placeholder="Eg. This wire looks burnt — what failed and how do I make it safe?"
+          placeholder="Eg. Burnt TPS near the switchboard — likely cause, isolation steps, and compliant repair?"
           rows={3}
           bind:value={question}
         ></textarea>
-        <p class="text-xs text-gray-500">Keep it short and mention the trade, fault, or safety concern.</p>
+        <p class="text-xs text-gray-500">Mention the trade, context, test readings, or safety risks for a sharper response.</p>
       </div>
 
       {#if error}
@@ -164,15 +229,17 @@
             Ask the assistant
           {/if}
         </button>
-        <p class="text-xs text-gray-500">Powered by AI vision. Replies aim for under 150 words.</p>
+        <p class="text-xs text-gray-500">Powered by AI vision tuned for trade diagnostics.</p>
       </div>
 
       {#if answer}
         <div class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
           <p class="text-sm font-semibold text-primary">Assistant response</p>
-          <p class="mt-2 whitespace-pre-line text-sm text-gray-800">{answer}</p>
+          <div class="prose prose-sm mt-2 text-gray-800" {@html answerHtml}></div>
         </div>
       {/if}
+
+      <p class="text-[11px] text-gray-500">Images stay in this session only. Refresh and they are gone.</p>
     </div>
   </form>
 </section>

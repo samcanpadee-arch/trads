@@ -4,7 +4,7 @@ import { consumeRateLimit } from '$lib/server/rate_limit';
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const MODEL = process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini';
 const MAX_BASE64_BYTES = 4 * 1024 * 1024; // ~4 MB cap to keep costs predictable
-const TOKENS = 500;
+const TOKENS = 650;
 const RATE_LIMIT = 20;
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
@@ -60,7 +60,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     {
       role: 'system',
       content:
-        'You are a safety-first assistant for Australian tradies. Give concise, practical advice (under ~150 words) about the uploaded photo and user question. Flag any hazards, suggest safe next steps, and recommend a licensed professional when required. If the photo is unclear, say so and ask for a clearer shot.'
+        'You are a senior Australian trades assistant (sparky, plumber, HVAC, carpenter, etc). Give concise but technically detailed guidance (aim for 3–6 bullet points within ~180 words) about the uploaded photo and question. Call out hazards and standards, specify isolation/lockout steps, tools/meters to use, likely root causes, and when to engage a licensed pro. If the photo is unclear, say so and request a clearer shot.'
     },
     {
       role: 'user',
