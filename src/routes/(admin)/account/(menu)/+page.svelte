@@ -129,7 +129,7 @@
   </header>
 
   <!-- Smart surface -->
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
     <a
       href="/account/chat"
       class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
@@ -160,6 +160,17 @@
       <h2 class="mt-2 text-2xl font-semibold">Smart Tools</h2>
       <p class="mt-2 text-sm text-gray-600">
         Generate quotes, proposals, calculators, and marketing copy that feel on-brand so you spend less time in spreadsheets.
+      </p>
+    </a>
+
+    <a
+      href="/account/image"
+      class="rounded-2xl border border-base-300/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">On-site vision</p>
+      <h2 class="mt-2 text-2xl font-semibold">Smart Vision</h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Capture or upload a job photo, describe the fault, and get trade-ready diagnostics with safety checks and fix steps.
       </p>
     </a>
   </div>

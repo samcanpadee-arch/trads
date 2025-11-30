@@ -151,32 +151,5 @@
       </div>
     </a>
 
-    <a
-      href="/account/image"
-      aria-label="Open TradeScope Vision"
-      class="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring focus:ring-primary/30 backdrop-blur"
-    >
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="h-6 w-6">
-              <path
-                fill="currentColor"
-                d="M3 7a2 2 0 0 1 2-2h2l1-2h6l1 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
-              />
-              <path fill="currentColor" d="M12 9.5A3.5 3.5 0 1 1 8.5 13 3.5 3.5 0 0 1 12 9.5m0-1A4.5 4.5 0 1 0 16.5 13 4.5 4.5 0 0 0 12 8.5" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">On-site help</p>
-            <h2 class="text-lg font-semibold">TradeScope Vision</h2>
-          </div>
-        </div>
-        <p class="text-sm text-gray-600">
-          Capture or upload a job photo, describe the fault, and get trade-level diagnostics with hazards, tools, and fix steps.
-        </p>
-        <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
-      </div>
-    </a>
   </div>
 </section>

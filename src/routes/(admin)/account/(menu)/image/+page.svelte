@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
+
   const MAX_BYTES = 4 * 1024 * 1024; // ~4 MB cap to keep costs down
 
   let imageDataUrl: string | null = null;
@@ -11,10 +13,13 @@
 
   let cameraInput: HTMLInputElement | null = null;
   let uploadInput: HTMLInputElement | null = null;
+  const isMobileDevice = browser && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
   function resetImage() {
     imageDataUrl = null;
     imageName = '';
+    if (cameraInput) cameraInput.value = '';
+    if (uploadInput) uploadInput.value = '';
   }
 
   function escapeHtml(text: string) {
@@ -26,36 +31,72 @@
       .replace(/'/g, '&#39;');
   }
 
+  function formatInline(text: string) {
+    const escaped = escapeHtml(text);
+    return escaped
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  }
+
   function formatAnswer(text: string) {
     const lines = text.trim().split(/\n+/).map((line) => line.trim());
     const blocks: string[] = [];
     let listItems: string[] = [];
+    let orderedItems: string[] = [];
 
-    const flushList = () => {
+    const flushUnordered = () => {
       if (listItems.length) {
-        const listHtml = listItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+        const listHtml = listItems.map((item) => `<li>${formatInline(item)}</li>`).join('');
         blocks.push(`<ul class="list-disc pl-5 space-y-1">${listHtml}</ul>`);
         listItems = [];
       }
     };
 
+    const flushOrdered = () => {
+      if (orderedItems.length) {
+        const listHtml = orderedItems.map((item) => `<li>${formatInline(item)}</li>`).join('');
+        blocks.push(`<ol class="list-decimal pl-5 space-y-1">${listHtml}</ol>`);
+        orderedItems = [];
+      }
+    };
+
+    const flushLists = () => {
+      flushUnordered();
+      flushOrdered();
+    };
+
     for (const line of lines) {
       if (!line) {
-        flushList();
+        flushLists();
         continue;
       }
 
       const bullet = line.match(/^[-*]\s+(.+)/);
       if (bullet) {
+        flushOrdered();
         listItems.push(bullet[1]);
         continue;
       }
 
-      flushList();
-      blocks.push(`<p>${escapeHtml(line)}</p>`);
+      const ordered = line.match(/^\d+[.)]\s+(.+)/);
+      if (ordered) {
+        flushUnordered();
+        orderedItems.push(ordered[1]);
+        continue;
+      }
+
+      const labelled = line.match(/^([A-Za-z][\w\s\/\-]{2,}):\s*(.+)$/);
+      flushLists();
+      if (labelled) {
+        blocks.push(
+          `<p><strong>${formatInline(labelled[1])}:</strong> ${formatInline(labelled[2])}</p>`
+        );
+      } else {
+        blocks.push(`<p>${formatInline(line)}</p>`);
+      }
     }
 
-    flushList();
+    flushLists();
     return blocks.join('');
   }
 
@@ -105,6 +146,7 @@
     event.preventDefault();
     error = null;
     answer = '';
+    answerHtml = '';
 
     const trimmedQuestion = question.trim();
 
@@ -141,19 +183,27 @@
       loading = false;
     }
   }
+
+  function resetConversation() {
+    resetImage();
+    question = '';
+    answer = '';
+    answerHtml = '';
+    error = null;
+  }
 </script>
 
 <svelte:head>
-  <title>TradeScope Vision</title>
+  <title>Smart Vision</title>
 </svelte:head>
 
 <section class="mx-auto max-w-4xl space-y-8 px-4 py-10">
   <header class="rounded-3xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-6 py-8 shadow-sm">
     <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">On-site help</p>
-    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">TradeScope Vision</h1>
+    <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-900">Smart Vision</h1>
     <p class="mt-3 max-w-3xl text-base text-gray-700">
-      Point the assistant at any job photo — site fault, component close-up, or material issue — and ask for trade-grade analysis
-      with next steps and safety flags.
+      Point the assistant at any photo — site fault, damaged kit, weird readings, material mismatch — and ask for trade-grade
+      analysis with next steps and safety flags.
     </p>
   </header>
 
@@ -161,15 +211,20 @@
     <div class="space-y-4">
       <div class="space-y-3">
         <label class="text-sm font-semibold text-gray-800" for="photo-upload">Add a photo to troubleshoot</label>
-        <div class="flex flex-wrap gap-3">
-          <button type="button" class="btn btn-outline" on:click={() => cameraInput?.click()}>
-            Take a photo (camera)
-          </button>
+        <div class="flex flex-wrap items-center gap-3">
+          {#if isMobileDevice}
+            <button type="button" class="btn btn-outline" on:click={() => cameraInput?.click()}>
+              Take a photo
+            </button>
+          {/if}
           <button type="button" class="btn" on:click={() => uploadInput?.click()}>
             Upload from library
           </button>
+          <span class="text-xs text-gray-500">Max 4 MB. Larger files are blocked to keep things fast.</span>
         </div>
-        <p class="text-xs text-gray-500">Camera will ask for permission on mobile. You can also pick an existing image.</p>
+        <p class="text-xs text-gray-500">
+          Use your camera or an existing photo. Your device will prompt if camera permission is needed.
+        </p>
         <input
           id="photo-upload"
           name="photo-camera"
@@ -228,6 +283,9 @@
           {:else}
             Ask the assistant
           {/if}
+        </button>
+        <button type="button" class="btn btn-ghost" on:click={resetConversation} disabled={loading}>
+          Reset
         </button>
         <p class="text-xs text-gray-500">Powered by AI vision tuned for trade diagnostics.</p>
       </div>
