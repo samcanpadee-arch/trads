@@ -235,7 +235,7 @@
       {#if answer}
         <div class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
           <p class="text-sm font-semibold text-primary">Assistant response</p>
-          <div class="prose prose-sm mt-2 text-gray-800" {@html answerHtml}></div>
+          <div class="prose prose-sm mt-2 text-gray-800">{@html answerHtml}</div>
         </div>
       {/if}
 
