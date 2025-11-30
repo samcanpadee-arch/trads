@@ -67,7 +67,7 @@
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <div class="space-y-6">
-          <div class="brand-eyebrow brand-eyebrow--pill">Built for AU/NZ tradies</div>
+          <div class="brand-eyebrow brand-eyebrow--pill">Built for tradies</div>
           <h1 class="brand-heading brand-heading--xl">
             <span>Tradie Assistant</span>
             <span class="block text-amber-600/90">your AI mate for jobs, clients, and the hard bits</span>
@@ -147,7 +147,7 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
       <div class="text-center max-w-3xl mx-auto">
         <p class="brand-eyebrow brand-eyebrow--subtle">Everything in one spot</p>
-        <h2 class="brand-heading brand-heading--lg mt-3">Tools, chat, and the Tradie Library in one tap</h2>
+        <h2 class="brand-heading brand-heading--lg mt-3">Tools, chat, vision, and the Tradie Library in one tap</h2>
         <p class="brand-copy brand-copy--muted mt-3">From first quote to final review, every part of your trade day gets easier.</p>
       </div>
 
@@ -155,25 +155,16 @@
         Workflow image placeholder — drop in Smart Tools screenshots here
       </div>
 
-      <div class="grid gap-8 lg:grid-cols-3">
+      <div class="grid gap-8 lg:grid-cols-4">
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
           <div class="brand-eyebrow brand-eyebrow--subtle">Smart Tools</div>
           <h3 class="brand-heading brand-heading--md mt-3">Job-ready workflows</h3>
-          <p class="brand-copy brand-copy--muted mt-2">Price jobs, turn quotes into polished proposals, and handle client comms without the back-and-forth.</p>
-          <div class="mt-6 grid grid-cols-1 gap-3 text-sm">
-            <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="brand-heading brand-heading--xs">Terms &amp; Conditions Generator</div>
-              <p class="brand-copy brand-copy--small brand-copy--muted">Detailed Aussie trade clauses ready to attach to any quote.</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="brand-heading brand-heading--xs">Proposal &amp; Estimate Builder</div>
-              <p class="brand-copy brand-copy--small brand-copy--muted">Short brief → itemised, client-ready quote.</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <div class="brand-heading brand-heading--xs">Scope Guard Day Log</div>
-              <p class="brand-copy brand-copy--small brand-copy--muted">Daily site diary covering progress, delays, and approvals.</p>
-            </div>
-          </div>
+          <p class="brand-copy brand-copy--muted mt-2">Quote, propose, and follow up without wrestling templates.</p>
+          <ul class="mt-4 space-y-2 text-sm brand-copy brand-copy--muted">
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Terms &amp; Conditions Generator with trade clauses</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Proposal &amp; Estimate Builder with markup maths</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Scope Guard day logs and tidy review/social/email drafts</span></li>
+          </ul>
           <div class="mt-6">
             <a href="/account/tools" class="btn btn-outline border-slate-300 text-slate-900 btn-sm">Open Smart Tools</a>
           </div>
@@ -182,15 +173,15 @@
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
           <div class="brand-eyebrow brand-eyebrow--subtle">Smart Chat</div>
           <h3 class="brand-heading brand-heading--md mt-3">Advice on tap</h3>
-          <p class="brand-copy brand-copy--muted mt-2">Safety notes, tidy SMS messages, troubleshooting, or “how do I fix this?” — ask it anything.</p>
+          <p class="brand-copy brand-copy--muted mt-2">Safety notes, punchy SMS, troubleshooting, or client comms in your tone.</p>
           <div class="mt-4 space-y-3 text-sm">
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <p class="brand-copy">Apprentice starts Monday — safety induction checklist?</p>
-              <p class="mt-2 text-xs text-amber-600/80">Comes back with PPE, hazards, reporting, plus an optional printable one-pager.</p>
+              <p class="brand-copy">“Apprentice starts Monday — give me an induction checklist.”</p>
+              <p class="mt-2 text-xs text-amber-600/80">Returns PPE, hazards, reporting, plus a printable one-pager.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white/70 p-3">
-              <p class="brand-copy">Need a friendly SMS reminder for 8am access.</p>
-              <p class="mt-2 text-xs text-amber-600/80">You’ll get a ready-to-send message and optional email.</p>
+              <p class="brand-copy">“Need a friendly 8am access SMS.”</p>
+              <p class="mt-2 text-xs text-amber-600/80">Gives a ready-to-send text and optional email.</p>
             </div>
           </div>
           <div class="mt-6">
@@ -199,27 +190,28 @@
         </div>
 
         <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
+          <div class="brand-eyebrow brand-eyebrow--subtle">Smart Vision</div>
+          <h3 class="brand-heading brand-heading--md mt-3">See it, fix it</h3>
+          <p class="brand-copy brand-copy--muted mt-2">Upload or snap a site photo for trade-specific diagnostics and next steps.</p>
+          <ul class="mt-4 space-y-2 text-sm brand-copy brand-copy--muted">
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Flags safety/isolation risks before you touch it</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Suggests likely fault causes and parts to check</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Gives repair/test steps and handover notes</span></li>
+          </ul>
+          <div class="mt-6">
+            <a href="/account/image" class="btn btn-outline border-slate-300 text-slate-900 btn-sm">Open Smart Vision</a>
+          </div>
+        </div>
+
+        <div class="rounded-[28px] border border-slate-200 bg-white/90 p-6 flex flex-col shadow-sm">
           <div class="brand-eyebrow brand-eyebrow--subtle">Smart Assistant</div>
           <h3 class="brand-heading brand-heading--md mt-3">Tradie Library answers</h3>
-          <p class="brand-copy brand-copy--muted mt-2">Your on-site brain — thousands of AU/NZ codes, manufacturer manuals, spec sheets, install guides, SDS, and textbooks.</p>
-          <div class="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm space-y-4">
-            <div>
-              <div class="badge badge-ghost badge-sm mb-2 text-slate-600">Example output</div>
-              <div class="brand-heading brand-heading--xs">Mitsubishi MSZ-FS clearances & electrics?</div>
-              <p class="brand-copy brand-copy--small brand-copy--muted opacity-90 mt-1">
-                Indoor: 50/100/65&nbsp;mm. Outdoor: ≥400&nbsp;mm front, ≥1000&nbsp;mm above. Max fuse 15–20&nbsp;A; MCA 10–18&nbsp;A; copper conductors AWG14–12; wiring per local code.
-              </p>
-              <div class="mt-1 text-xs text-amber-600/80 italic">References where possible.</div>
-            </div>
-            <div class="divider"></div>
-            <div>
-              <div class="badge badge-ghost badge-sm mb-2 text-slate-600">Example output</div>
-              <div class="brand-heading brand-heading--xs">Domestic hot water storage vs outlet temps?</div>
-              <p class="brand-copy brand-copy--small brand-copy--muted opacity-90 mt-1">
-                Store ≥60&nbsp;°C to control Legionella. Temper to ≤50&nbsp;°C for bathrooms (≤45&nbsp;°C childcare/aged care) using approved TMV sized to fixture units and run length.
-              </p>
-            </div>
-          </div>
+          <p class="brand-copy brand-copy--muted mt-2">Manual-backed answers with citations for specs, clearances, and compliance.</p>
+          <ul class="mt-4 space-y-2 text-sm brand-copy brand-copy--muted">
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Mitsubishi MSZ-FS clearances? 50/100/65 mm indoor; ≥400 mm front and ≥1000 mm above outdoors.</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Domestic hot water: store ≥60 °C, temper to ≤50 °C for bathrooms (≤45 °C aged care/childcare).</span></li>
+            <li class="flex gap-2"><span class="text-amber-600">•</span><span>Upload your own PDFs for niche products and keep them private.</span></li>
+          </ul>
           <div class="mt-6">
             <a href="/account/assistant" class="btn btn-outline border-slate-300 text-slate-900 btn-sm">Meet the Assistant</a>
           </div>

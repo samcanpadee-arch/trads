@@ -53,7 +53,7 @@
       <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Pricing</p>
       <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Straightforward pricing for Aussie tradies</h1>
       <p class="text-lg text-slate-700">
-        Save hours on quotes, proposals, job notes, and emails. Upgrade to Pro to unlock the Tradie Library — thousands of manuals and technical guides with Smart Assistant answers.
+        Save hours on quotes, proposals, job notes, and emails. Standard unlocks Smart Chat and Smart Vision photo diagnostics; Pro layers in the Tradie Library with Smart Assistant answers from manuals and specs.
       </p>
       <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm">
         <span>✨ 14-day free trial on Standard &amp; Pro for new accounts</span>
@@ -96,8 +96,8 @@
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
           <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-            <p class="text-sm font-semibold text-slate-900">Standard plan</p>
-            <p class="text-sm text-slate-600">Unlimited Smart Chat + Smart Tools</p>
+          <p class="text-sm font-semibold text-slate-900">Standard plan</p>
+          <p class="text-sm text-slate-600">Unlimited Smart Chat + Smart Vision + Smart Tools</p>
             <ul class="mt-3 text-sm text-slate-600 space-y-1">
               <li>• 15–20 mins saved per quote & job note</li>
               <li>• Templates ready to paste into SMS/email</li>
@@ -158,16 +158,18 @@
               </span>
             {/if}
           </div>
-          <p class="text-sm text-slate-700">Everything in Free plus Smart Chat.</p>
+          <p class="text-sm text-slate-700">Everything in Free plus Smart Chat and Smart Vision.</p>
           <p class="text-xs font-semibold text-emerald-700">Includes a 14-day free trial for new accounts.</p>
         </header>
         <div class="mt-5 text-sm text-slate-600 space-y-2">
           <p>Unlimited Smart Chat conversations</p>
           <p>Ask for quotes, emails, troubleshooting & compliance notes</p>
+          <p>Smart Vision photo uploads for on-site diagnostics</p>
           <p>Fast responses tuned for trade work</p>
         </div>
         <ul class="mt-6 space-y-3 text-sm">
           <li class="rounded-2xl border border-amber-200 bg-white/70 p-3">All six Smart Tools + Smart Chat</li>
+          <li class="rounded-2xl border border-amber-200 bg-white/70 p-3">Smart Vision for mobile and desktop photo Q&amp;A</li>
           <li class="rounded-2xl border border-amber-200 bg-white/70 p-3">Keep convo history, docs & prompts synced</li>
           <li class="rounded-2xl border border-amber-200 bg-white/70 p-3">Priority feature updates & support</li>
         </ul>
@@ -191,12 +193,13 @@
               </span>
             {/if}
           </div>
-          <p class="text-sm text-slate-700">Unlock the Tradie Library + Smart Assistant.</p>
+          <p class="text-sm text-slate-700">Unlock the Tradie Library + Smart Assistant and Smart Vision.</p>
           <p class="text-xs font-semibold text-emerald-700">Includes a 14-day free trial for new accounts.</p>
         </header>
         <div class="mt-5 text-sm text-slate-600 space-y-2">
           <p>Smart Assistant answers from manuals, codes & spec sheets</p>
           <p>Reference callouts where possible</p>
+          <p>Smart Vision included for photo-led troubleshooting</p>
           <p>Perfect for teams handling complex installs & compliance</p>
         </div>
         <ul class="mt-6 space-y-3 text-sm">
@@ -241,6 +244,12 @@
             </tr>
             <tr>
               <td class="py-3 px-4">Smart Chat (AI answers & drafting)</td>
+              <td class="text-center">—</td>
+              <td class="text-center">✅</td>
+              <td class="text-center">✅</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">Smart Vision (photo Q&amp;A)</td>
               <td class="text-center">—</td>
               <td class="text-center">✅</td>
               <td class="text-center">✅</td>
