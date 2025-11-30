@@ -1,8 +1,9 @@
 <script lang="ts">
   import "../../../../app.css"
-  import { writable } from "svelte/store"
   import { setContext } from "svelte"
+  import { writable } from "svelte/store"
   import { WebsiteName } from "../../../../config"
+  import { TooltipProvider } from "$lib/components/ui/tooltip"
   interface Props {
     children?: import("svelte").Snippet
   }
@@ -27,33 +28,35 @@
 <div class="drawer lg:drawer-open">
   <input id="admin-drawer" type="checkbox" class="drawer-toggle" />
   <div class="drawer-content">
-    <div class="navbar bg-base-100 lg:hidden">
-      <div class="flex-1">
-        <a class="btn btn-ghost normal-case text-xl" href="/account">{WebsiteName}</a>
-      </div>
-      <div class="flex-none">
-        <div class="dropdown dropdown-end">
-          <label for="admin-drawer" class="btn btn-ghost btn-circle">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h7"
-              /></svg
-            >
-          </label>
+    <TooltipProvider>
+      <div class="navbar bg-base-100 lg:hidden">
+        <div class="flex-1">
+          <a class="btn btn-ghost normal-case text-xl" href="/account">{WebsiteName}</a>
+        </div>
+        <div class="flex-none">
+          <div class="dropdown dropdown-end">
+            <label for="admin-drawer" class="btn btn-ghost btn-circle">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                ><path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h7"
+                /></svg
+              >
+            </label>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="container px-6 lg:px-12 py-3 lg:py-6">
-      {@render children?.()}
-    </div>
+      <div class="container px-6 lg:px-12 py-3 lg:py-6">
+        {@render children?.()}
+      </div>
+    </TooltipProvider>
   </div>
 
   <div class="drawer-side">
