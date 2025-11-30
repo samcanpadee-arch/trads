@@ -74,6 +74,22 @@ type GuidePlay = {
         'Mention what part of the job you’re on and the condition on site.',
         'Ask for cites or “show me the paragraph” whenever you need proof.'
       ]
+    },
+    {
+      name: 'Smart Vision',
+      eyebrow: 'See it, fix it',
+      summary:
+        'On-site visual diagnostics for faults, damage, or weird readings. Upload or snap a photo and get fix steps, tests, and safety flags in minutes.',
+      useFor: [
+        'Confirming likely causes before you open a panel or pull a fitting apart.',
+        'Getting isolation steps and PPE reminders before touching a live or wet area.',
+        'Capturing evidence for a variation or escalation while you have the site in front of you.'
+      ],
+      proTips: [
+        'Add a one-liner about the trade, environment, and symptoms for sharper calls.',
+        'Mention meter readings or material type so the AI can sanity-check the photo.',
+        'If it guesses wrong, reply with what you see and the test results to refine it.'
+      ]
     }
   ];
 
@@ -156,9 +172,9 @@ type GuidePlay = {
     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Workflow guide</p>
     <h1 class="mt-3 text-3xl font-semibold text-slate-900">Make every request land the first time</h1>
     <p class="mt-3 text-base text-slate-600">
-      Tradie Assistant is three parts working together. Tools handle the paperwork, Chat keeps the conversation going, and the
-      Assistant backs you with manuals and standards. This guide shows how to brief it like a human, not a robot, so you keep
-      winning jobs and arguments.
+      Tradie Assistant is four parts working together. Tools handle the paperwork, Chat keeps the conversation going, Vision
+      gives you photo diagnostics on site, and the Assistant backs you with manuals and standards. This guide shows how to brief
+      it like a human, not a robot, so you keep winning jobs and arguments.
     </p>
   </header>
 

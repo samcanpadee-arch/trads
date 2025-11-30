@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import RichAnswer from "$lib/components/RichAnswer.svelte";
 
   const MAX_BYTES = 4 * 1024 * 1024; // ~4 MB cap to keep costs down
 
@@ -8,8 +9,9 @@
   let question = '';
   let error: string | null = null;
   let answer = '';
-  let answerHtml = '';
+  let answerRich = '';
   let loading = false;
+  let copied = false;
 
   let cameraInput: HTMLInputElement | null = null;
   let uploadInput: HTMLInputElement | null = null;
@@ -22,82 +24,30 @@
     if (uploadInput) uploadInput.value = '';
   }
 
-  function escapeHtml(text: string) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
+  async function ensureCameraPermission() {
+    if (!browser || !navigator.mediaDevices?.getUserMedia) return true;
 
-  function formatInline(text: string) {
-    const escaped = escapeHtml(text);
-    return escaped
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>');
-  }
-
-  function formatAnswer(text: string) {
-    const lines = text.trim().split(/\n+/).map((line) => line.trim());
-    const blocks: string[] = [];
-    let listItems: string[] = [];
-    let orderedItems: string[] = [];
-
-    const flushUnordered = () => {
-      if (listItems.length) {
-        const listHtml = listItems.map((item) => `<li>${formatInline(item)}</li>`).join('');
-        blocks.push(`<ul class="list-disc pl-5 space-y-1">${listHtml}</ul>`);
-        listItems = [];
-      }
-    };
-
-    const flushOrdered = () => {
-      if (orderedItems.length) {
-        const listHtml = orderedItems.map((item) => `<li>${formatInline(item)}</li>`).join('');
-        blocks.push(`<ol class="list-decimal pl-5 space-y-1">${listHtml}</ol>`);
-        orderedItems = [];
-      }
-    };
-
-    const flushLists = () => {
-      flushUnordered();
-      flushOrdered();
-    };
-
-    for (const line of lines) {
-      if (!line) {
-        flushLists();
-        continue;
-      }
-
-      const bullet = line.match(/^[-*]\s+(.+)/);
-      if (bullet) {
-        flushOrdered();
-        listItems.push(bullet[1]);
-        continue;
-      }
-
-      const ordered = line.match(/^\d+[.)]\s+(.+)/);
-      if (ordered) {
-        flushUnordered();
-        orderedItems.push(ordered[1]);
-        continue;
-      }
-
-      const labelled = line.match(/^([A-Za-z][\w\s\/\-]{2,}):\s*(.+)$/);
-      flushLists();
-      if (labelled) {
-        blocks.push(
-          `<p><strong>${formatInline(labelled[1])}:</strong> ${formatInline(labelled[2])}</p>`
-        );
-      } else {
-        blocks.push(`<p>${formatInline(line)}</p>`);
-      }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (err) {
+      console.error('camera permission rejected', err);
+      error = 'Camera permission is needed to take a photo. Please allow access and try again.';
+      return false;
     }
+  }
 
-    flushLists();
-    return blocks.join('');
+  async function openCamera() {
+    error = null;
+    const allowed = await ensureCameraPermission();
+    if (!allowed) return;
+    cameraInput?.click();
+  }
+
+  function openUpload() {
+    error = null;
+    uploadInput?.click();
   }
 
   async function handleFileChange(event: Event) {
@@ -105,7 +55,7 @@
     const file = target.files?.[0];
     error = null;
     answer = '';
-    answerHtml = '';
+    answerRich = '';
 
     if (!file) {
       resetImage();
@@ -146,7 +96,7 @@
     event.preventDefault();
     error = null;
     answer = '';
-    answerHtml = '';
+    answerRich = '';
 
     const trimmedQuestion = question.trim();
 
@@ -175,7 +125,7 @@
 
       const data = (await res.json()) as { answer?: string };
       answer = (data.answer || 'No answer received.').trim();
-      answerHtml = formatAnswer(answer);
+      answerRich = answer;
     } catch (err) {
       console.error('image QA failed', err);
       error = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -188,8 +138,19 @@
     resetImage();
     question = '';
     answer = '';
-    answerHtml = '';
+    answerRich = '';
     error = null;
+  }
+
+  async function copyAnswer() {
+    try {
+      await navigator.clipboard.writeText(answerRich || '');
+      copied = true;
+      setTimeout(() => (copied = false), 1500);
+    } catch (err) {
+      console.error('copy failed', err);
+      error = 'Could not copy the response. Please try again.';
+    }
   }
 </script>
 
@@ -213,17 +174,17 @@
         <label class="text-sm font-semibold text-gray-800" for="photo-upload">Add a photo to troubleshoot</label>
         <div class="flex flex-wrap items-center gap-3">
           {#if isMobileDevice}
-            <button type="button" class="btn btn-outline" on:click={() => cameraInput?.click()}>
+            <button type="button" class="btn btn-outline" on:click={openCamera}>
               Take a photo
             </button>
           {/if}
-          <button type="button" class="btn" on:click={() => uploadInput?.click()}>
+          <button type="button" class="btn" on:click={openUpload}>
             Upload from library
           </button>
-          <span class="text-xs text-gray-500">Max 4 MB. Larger files are blocked to keep things fast.</span>
+          <span class="text-xs text-gray-500">Max 4 MB (JPEG/PNG). Larger files are blocked to keep things fast.</span>
         </div>
-        <p class="text-xs text-gray-500">
-          Use your camera or an existing photo. Your device will prompt if camera permission is needed.
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Use your camera or an existing photo. If your browser needs it, you’ll see a camera permission prompt before capture.
         </p>
         <input
           id="photo-upload"
@@ -275,7 +236,7 @@
         </div>
       {/if}
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <button type="submit" class="btn btn-primary" disabled={loading}>
           {#if loading}
             <span class="loading loading-spinner"></span>
@@ -287,13 +248,16 @@
         <button type="button" class="btn btn-ghost" on:click={resetConversation} disabled={loading}>
           Reset
         </button>
-        <p class="text-xs text-gray-500">Powered by AI vision tuned for trade diagnostics.</p>
+        <p class="text-xs text-gray-500 leading-snug sm:whitespace-normal sm:text-left">Powered by AI vision tuned for trade diagnostics.</p>
       </div>
 
       {#if answer}
-        <div class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
-          <p class="text-sm font-semibold text-primary">Assistant response</p>
-          <div class="prose prose-sm mt-2 text-gray-800">{@html answerHtml}</div>
+        <div class="mt-4 space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2 justify-between text-sm font-semibold text-primary">
+            <span>Assistant response</span>
+            <button type="button" class="btn btn-ghost btn-xs" on:click={copyAnswer}>{copied ? 'Copied!' : 'Copy'}</button>
+          </div>
+          <RichAnswer text={answerRich} />
         </div>
       {/if}
 
