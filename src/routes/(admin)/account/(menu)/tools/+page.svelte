@@ -150,5 +150,6 @@
         <span class="btn btn-sm btn-primary self-start">Open<span class="ml-1" aria-hidden="true">→</span></span>
       </div>
     </a>
+
   </div>
 </section>

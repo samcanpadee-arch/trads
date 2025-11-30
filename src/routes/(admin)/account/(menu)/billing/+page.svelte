@@ -38,7 +38,7 @@
       return {
         title: 'Ready for site-ready AI?',
         body:
-          'Unlock Standard for Smart Chat, or jump to Pro for the Tradie Library plus quoting workflows built for busy tradies.',
+          'Unlock Standard for Smart Chat and Smart Vision, or jump to Pro for the Tradie Library plus quoting workflows built for busy tradies.',
         badges: ['Standard', 'Pro'],
         actions: [
           { label: 'Upgrade to Standard', href: `/account/subscribe/${STANDARD_MONTHLY}`, primary: true },
@@ -46,6 +46,7 @@
         ],
         list: [
           'Smart Chat for quotes, SMS, and site notes (Standard)',
+          'Smart Vision for photo-based diagnostics (Standard & Pro)',
           'Job-ready workflows for proposals, pricing, and paperwork',
           'Tradie Library answers with manuals, specs & guides (Pro)'
         ]
@@ -67,6 +68,7 @@
         ],
         list: [
           'Smart Assistant with manuals, specs & job guides on tap',
+          'Smart Vision keeps site photo Q&A in the same workspace',
           'Reference standards while you draft quotes and client comms',
           'Bigger quoting & paperwork automations for complex jobs'
         ]
@@ -187,7 +189,7 @@
       <aside class="rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-inner">
         <h3 class="text-lg font-semibold text-gray-900">You're all set</h3>
         <p class="mt-2 text-sm text-gray-600">
-          Pro plans already include the Tradie Library, workflows, and Smart Chat. Visit Stripe any time if you need to update billing.
+          Pro plans already include Smart Vision, Smart Chat, workflows, and the Tradie Library. Visit Stripe any time if you need to update billing.
         </p>
         {#if data.portalUrl}
           <a class="btn btn-ghost mt-4" href={data.portalUrl}>Open billing portal</a>
