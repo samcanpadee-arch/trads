@@ -120,6 +120,15 @@
         </a>
       </li>
       <li>
+        <a href="/account/image" class="gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+            <path d="M3 7a2 2 0 0 1 2-2h2l1-2h6l1 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          Photo Q&amp;A
+        </a>
+      </li>
+      <li>
         <a href="/account/assistant" class="gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 4l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"></path>
