@@ -7,14 +7,18 @@
 	import { LocalStorage } from '$lib/hooks/local-storage.svelte';
 	import { innerWidth } from 'svelte/reactivity/window';
 	import type { Attachment } from 'ai';
-	import { toast } from 'svelte-sonner';
-	import { Button } from './ui/button';
-	import PaperclipIcon from './icons/paperclip.svelte';
-	import StopIcon from './icons/stop.svelte';
-	import ArrowUpIcon from './icons/arrow-up.svelte';
-	import SuggestedActions from './suggested-actions.svelte';
-	import { replaceState } from '$app/navigation';
-	import type { User } from '$lib/server/db/schema';
+        import { toast } from 'svelte-sonner';
+        import { Button } from './ui/button';
+        import PaperclipIcon from './icons/paperclip.svelte';
+        import StopIcon from './icons/stop.svelte';
+        import ArrowUpIcon from './icons/arrow-up.svelte';
+        import CameraIcon from './icons/camera.svelte';
+        import SuggestedActions from './suggested-actions.svelte';
+        import { replaceState } from '$app/navigation';
+        import type { User } from '$lib/server/db/schema';
+        import { CHAT_CAMERA_CAPTURE_ENABLED } from '$lib/config/featureFlags';
+        import { requestCameraPermission } from '$lib/utils/camera';
+        import { emitAnalytics } from '$lib/utils/analytics';
 
 	let {
 		attachments = $bindable(),
@@ -29,9 +33,10 @@
 	} = $props();
 
 	let mounted = $state(false);
-	let textareaRef = $state<HTMLTextAreaElement | null>(null);
-	let fileInputRef = $state<HTMLInputElement | null>(null);
-	let uploadQueue = $state<string[]>([]);
+        let textareaRef = $state<HTMLTextAreaElement | null>(null);
+        let fileInputRef = $state<HTMLInputElement | null>(null);
+        let cameraInputRef = $state<HTMLInputElement | null>(null);
+        let uploadQueue = $state<string[]>([]);
 	const storedInput = new LocalStorage('input', '');
 	const loading = $derived(chatClient.status === 'streaming' || chatClient.status === 'submitted');
 
@@ -81,45 +86,66 @@
 				body: formData
 			});
 
-			if (response.ok) {
-				const data = await response.json();
-				const { url, pathname, contentType } = data;
+                        if (response.ok) {
+                                const data = await response.json();
+                                const { url, pathname, contentType } = data;
 
-				return {
-					url,
-					name: pathname,
-					contentType: contentType
-				};
-			}
-			const { message } = await response.json();
-			toast.error(message);
-		} catch {
-			toast.error('Failed to upload file, please try again!');
-		}
-	}
+                                await emitAnalytics('chat_capture_upload_success', { filename: pathname });
+
+                                return {
+                                        url,
+                                        name: pathname,
+                                        contentType: contentType
+                                };
+                        }
+                        const { message } = await response.json();
+                        toast.error(message);
+                        await emitAnalytics('chat_capture_upload_failed', { reason: message });
+                } catch {
+                        toast.error('Failed to upload file, please try again!');
+                        await emitAnalytics('chat_capture_upload_failed');
+                }
+        }
 
 	async function handleFileChange(
-		event: Event & {
-			currentTarget: EventTarget & HTMLInputElement;
-		}
-	) {
-		const files = Array.from(event.currentTarget.files || []);
-		uploadQueue = files.map((file) => file.name);
+                event: Event & {
+                        currentTarget: EventTarget & HTMLInputElement;
+                }
+        ) {
+                const files = Array.from(event.currentTarget.files || []);
+                uploadQueue = files.map((file) => file.name);
 
-		try {
-			const uploadPromises = files.map((file) => uploadFile(file));
+                if (files.length) {
+                        await emitAnalytics('chat_camera_capture', { count: files.length });
+                }
+
+                try {
+                        const uploadPromises = files.map((file) => uploadFile(file));
 			const uploadedAttachments = await Promise.all(uploadPromises);
 			const successfullyUploadedAttachments = uploadedAttachments.filter(
 				(attachment) => attachment !== undefined
 			);
 
-			attachments = [...attachments, ...successfullyUploadedAttachments];
-		} catch (error) {
-			console.error('Error uploading files!', error);
-		} finally {
-			uploadQueue = [];
-		}
-	}
+                        attachments = [...attachments, ...successfullyUploadedAttachments];
+                } catch (error) {
+                        console.error('Error uploading files!', error);
+                        await emitAnalytics('chat_capture_upload_failed', { reason: 'unknown' });
+                } finally {
+                        uploadQueue = [];
+                }
+        }
+
+        async function handleCameraClick(event: Event) {
+                event.preventDefault();
+                await emitAnalytics('chat_camera_open');
+
+                if (!(await requestCameraPermission())) {
+                        toast.error('Camera permission denied. Please enable access to capture a photo.');
+                        return;
+                }
+
+                cameraInputRef?.click();
+        }
 
 	onMount(() => {
 		chatClient.input = storedInput.value;
@@ -137,14 +163,26 @@
 		<SuggestedActions {user} {chatClient} />
 	{/if}
 
-	<input
-		type="file"
-		class="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
-		bind:this={fileInputRef}
-		multiple
-		onchange={handleFileChange}
-		tabIndex={-1}
-	/>
+        <input
+                type="file"
+                class="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+                bind:this={fileInputRef}
+                multiple
+                onchange={handleFileChange}
+                tabIndex={-1}
+        />
+
+        {#if CHAT_CAMERA_CAPTURE_ENABLED}
+                <input
+                        type="file"
+                        class="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+                        bind:this={cameraInputRef}
+                        accept="image/*"
+                        capture="environment"
+                        onchange={handleFileChange}
+                        tabIndex={-1}
+                />
+        {/if}
 
 	{#if attachments.length > 0 || uploadQueue.length > 0}
 		<div class="flex flex-row items-end gap-2 overflow-x-scroll">
@@ -188,9 +226,12 @@
 		}}
 	/>
 
-	<div class="absolute bottom-0 flex w-fit flex-row justify-start p-2">
-		{@render attachmentsButton()}
-	</div>
+        <div class="absolute bottom-0 flex w-fit flex-row justify-start p-2">
+                {@render attachmentsButton()}
+                {#if CHAT_CAMERA_CAPTURE_ENABLED}
+                        {@render cameraButton()}
+                {/if}
+        </div>
 
 	<div class="absolute right-0 bottom-0 flex w-fit flex-row justify-end p-2">
 		{#if loading}
@@ -202,17 +243,28 @@
 </div>
 
 {#snippet attachmentsButton()}
-	<Button
-		class="h-fit rounded-md rounded-bl-lg p-[7px] hover:bg-zinc-200 dark:border-zinc-700 hover:dark:bg-zinc-900"
-		onclick={(event) => {
-			event.preventDefault();
+        <Button
+                class="h-fit rounded-md rounded-bl-lg p-[7px] hover:bg-zinc-200 dark:border-zinc-700 hover:dark:bg-zinc-900"
+                onclick={(event) => {
+                        event.preventDefault();
 			fileInputRef?.click();
 		}}
 		disabled={loading}
 		variant="ghost"
 	>
 		<PaperclipIcon size={14} />
-	</Button>
+        </Button>
+{/snippet}
+
+{#snippet cameraButton()}
+        <Button
+                class="h-fit rounded-md rounded-bl-lg p-[7px] hover:bg-zinc-200 dark:border-zinc-700 hover:dark:bg-zinc-900"
+                onclick={handleCameraClick}
+                disabled={loading}
+                variant="ghost"
+        >
+                <CameraIcon size={14} />
+        </Button>
 {/snippet}
 
 {#snippet stopButton()}

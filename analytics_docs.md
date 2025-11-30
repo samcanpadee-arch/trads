@@ -19,3 +19,15 @@ Since each analytics platform has different setup instructions, we've created a 
 Follow the [Google Analytics Guide](https://support.google.com/analytics/answer/9304153?hl=en) to add Google Analytics to your project.
 
 The ideal place to add Google Analytics is in `src/routes/+layout.svelte`.
+
+### Chat camera events
+
+The chat camera capture UI is gated behind the `PUBLIC_CHAT_CAMERA_CAPTURE_ENABLED` flag. When enabled, the client emits the
+following events that can be wired to your analytics platform of choice:
+
+- `chat_camera_open`: the capture button was tapped and permission requested.
+- `chat_camera_capture`: a photo was captured and queued for upload (payload includes a `count`).
+- `chat_capture_upload_success` / `chat_capture_upload_failed`: upload outcomes.
+
+Hook these into your analytics sink by implementing a `/api/analytics` endpoint that records the payload from
+`src/lib/utils/analytics.ts`.
