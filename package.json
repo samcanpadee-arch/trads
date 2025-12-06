@@ -77,6 +77,10 @@
     },
     "@sveltejs/kit": {
       "cookie": "^0.7.0"
+    },
+    "react-server-dom-webpack": "19.2.1",
+    "react-server-dom-parcel": "19.2.1",
+    "react-server-dom-turbopack": "19.2.1"
     }
   }
 }
